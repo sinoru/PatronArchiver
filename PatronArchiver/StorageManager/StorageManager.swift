@@ -2,9 +2,9 @@ import Foundation
 import OSLog
 
 enum StorageManager {
-    private static let logger = Logger(subsystem: "com.sinoru.PatronArchiver", category: "StorageManager")
+    nonisolated private static let logger = Logger(subsystem: "com.sinoru.PatronArchiver", category: "StorageManager")
 
-    private static let dateFormatter: DateFormatter = {
+    nonisolated private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HHmmss'Z'"
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -75,7 +75,7 @@ enum StorageManager {
 
     nonisolated static func makePostFolderURL(metadata: PostMetadata, baseDirectory: URL) -> URL {
         let authorFolder = FileNameSanitizer.sanitize(metadata.authorName)
-        let dateString = dateFormatter.string(from: metadata.displayDate)
+        let dateString = dateFormatter.string(from: metadata.modifiedAt ?? metadata.createdAt)
         let postFolder = FileNameSanitizer.sanitize(
             "\(metadata.postID) - \(metadata.title) (\(dateString))"
         )

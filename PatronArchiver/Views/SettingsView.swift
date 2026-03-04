@@ -167,9 +167,10 @@ struct SettingsView: View {
 
         await withTaskGroup(of: (String, AccountInfo?).self) { group in
             for providerType in providerTypes {
+                let identifier = providerType.siteIdentifier
                 group.addTask {
                     let info = await LoginChecker.check(for: providerType, dataStore: dataStore)
-                    return (providerType.siteIdentifier, info)
+                    return (identifier, info)
                 }
             }
             for await (identifier, info) in group {

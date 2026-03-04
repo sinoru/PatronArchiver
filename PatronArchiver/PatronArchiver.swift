@@ -110,7 +110,7 @@ class PatronArchiver {
                 redirectChain: redirectChain
             )
             job.metadata = metadata
-            let pageTitle = await webView.title ?? metadata.title
+            let pageTitle = webView.title ?? metadata.title
             Self.logger.info("Metadata extracted — title: \(metadata.title, privacy: .private), author: \(metadata.authorName, privacy: .private), pageTitle: \(pageTitle, privacy: .private)")
 
             // 6. Extract media URLs
@@ -148,7 +148,7 @@ class PatronArchiver {
             job.status = .saving
             let baseDir = resolveBaseDirectory()
             Self.logger.debug("Saving to: \(baseDir.path(), privacy: .private)")
-            try await BookmarkManager.withAccess(to: baseDir) {
+            try BookmarkManager.withAccess(to: baseDir) {
                 try StorageManager.save(
                     metadata: metadata,
                     pageTitle: pageTitle,
