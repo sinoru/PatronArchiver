@@ -1,17 +1,26 @@
-//
-//  PatronArchiverApp.swift
-//  PatronArchiver
-//
-//  Created by 강재홍 on 3/4/26.
-//
-
 import SwiftUI
 
 @main
 struct PatronArchiverApp: App {
+    @State private var settings = AppSettings()
+    @State private var jobEngine: JobEngine?
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if let jobEngine {
+                MainView(jobEngine: jobEngine, settings: settings)
+            } else {
+                ProgressView()
+                    .task {
+                        jobEngine = JobEngine(settings: settings)
+                    }
+            }
         }
+
+        #if os(macOS)
+        Settings {
+            SettingsView(settings: settings)
+        }
+        #endif
     }
 }
