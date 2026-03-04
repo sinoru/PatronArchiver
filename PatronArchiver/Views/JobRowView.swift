@@ -8,22 +8,12 @@ struct JobRowView: View {
         HStack {
             statusIcon
             VStack(alignment: .leading, spacing: 4) {
-                Text(job.metadata?.title ?? job.inputURL.absoluteString)
+                Text(jobTitle)
                     .font(.body)
                     .lineLimit(1)
-                HStack(spacing: 4) {
-                    if let metadata = job.metadata {
-                        Text(metadata.authorName)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text("·")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                    Text(job.status.displayName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                Text(job.status.displayName)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
                 if !job.status.isTerminal {
                     ProgressView(value: job.progress)
                 }
@@ -77,6 +67,13 @@ struct JobRowView: View {
                 Label("Remove", systemImage: "trash")
             }
         }
+    }
+
+    private var jobTitle: String {
+        if let metadata = job.metadata {
+            return "\(metadata.siteIdentifier.capitalized) - \(metadata.authorName) - \(metadata.title) (\(metadata.postID))"
+        }
+        return job.inputURL.absoluteString
     }
 
     @ViewBuilder

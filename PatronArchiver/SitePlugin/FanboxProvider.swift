@@ -120,25 +120,24 @@ struct FanboxProvider: PatronServiceProvider {
                 }
             }
 
-            // Date — parse from PostHeadBottom (no <time datetime> on Fanbox)
-            const dateEl = document.querySelector('[class*="PostHeadBottom"]');
-            if (dateEl) {
-                const dateText = dateEl.textContent.split('・')[0].trim();
-                // JA: 2026年3月4日 21:11 / KO: 2026년3월4일 21:11
-                let m = dateText.match(/(\\d{4})[年년](\\d{1,2})[月월](\\d{1,2})[日일]\\s*(\\d{2}):(\\d{2})/);
-                if (m) {
-                    meta.createdAt = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).toISOString();
-                } else {
-                    // EN: March 4th, 2026 21:11
-                    const months = { January:0, February:1, March:2, April:3, May:4, June:5, July:6, August:7, September:8, October:9, November:10, December:11 };
-                    m = dateText.match(/(\\w+)\\s+(\\d{1,2})\\w*,?\\s*(\\d{4})\\s*(\\d{2}):(\\d{2})/);
-                    if (m && months[m[1]] !== undefined) {
-                        meta.createdAt = new Date(+m[3], months[m[1]], +m[2], +m[4], +m[5]).toISOString();
-                    } else {
-                        meta.createdAt = new Date().toISOString();
+            // Date — from ld+json structured data
+            const ldJson = document.querySelector('script[type="application/ld+json"]');
+            if (ldJson) {
+                try {
+                    const ldData = JSON.parse(ldJson.textContent);
+                    const entries = Array.isArray(ldData) ? ldData : [ldData];
+                    const blogPost = entries.find(e => e['@type'] === 'BlogPosting');
+                    if (blogPost) {
+                        if (blogPost.dateModified) {
+                            meta.modifiedAt = new Date(blogPost.dateModified).toISOString();
+                        }
+                        if (blogPost.datePublished) {
+                            meta.createdAt = new Date(blogPost.datePublished).toISOString();
+                        }
                     }
-                }
-            } else {
+                } catch {}
+            }
+            if (!meta.createdAt) {
                 meta.createdAt = new Date().toISOString();
             }
 

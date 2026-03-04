@@ -78,11 +78,20 @@ extension PatronServiceProvider {
         let authorName = dict["authorName"] as? String ?? ""
         let tags = dict["tags"] as? [String] ?? []
 
+        let isoFormatter: ISO8601DateFormatter = {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            return formatter
+        }()
+        let isoFormatterNoFraction = ISO8601DateFormatter()
+
         let createdAt: Date
         if let timestamp = dict["createdAt"] as? Double {
             createdAt = Date(timeIntervalSince1970: timestamp / 1000)
         } else if let dateString = dict["createdAt"] as? String {
-            createdAt = ISO8601DateFormatter().date(from: dateString) ?? Date()
+            createdAt = isoFormatter.date(from: dateString)
+                ?? isoFormatterNoFraction.date(from: dateString)
+                ?? Date()
         } else {
             createdAt = Date()
         }
@@ -91,7 +100,8 @@ extension PatronServiceProvider {
         if let timestamp = dict["modifiedAt"] as? Double {
             modifiedAt = Date(timeIntervalSince1970: timestamp / 1000)
         } else if let dateString = dict["modifiedAt"] as? String {
-            modifiedAt = ISO8601DateFormatter().date(from: dateString)
+            modifiedAt = isoFormatter.date(from: dateString)
+                ?? isoFormatterNoFraction.date(from: dateString)
         } else {
             modifiedAt = nil
         }
