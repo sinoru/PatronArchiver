@@ -2,7 +2,7 @@ import Foundation
 import WebKit
 
 @Observable
-class JobEngine {
+class PatronArchiver {
     private(set) var jobs: [ArchiveJob] = []
     private let webViewPool: WebViewPool
     private let settings: AppSettings
@@ -62,8 +62,8 @@ class JobEngine {
         }
 
         do {
-            // 1. Identify site plugin
-            guard let plugin = SitePluginRegistry.shared.plugin(for: job.inputURL) else {
+            // 1. Identify service provider
+            guard let provider = PatronServiceManager.shared.provider(for: job.inputURL) else {
                 throw JobError.unsupportedSite
             }
 
@@ -74,20 +74,20 @@ class JobEngine {
             let redirectChain = try await tracker.load(job.inputURL, in: webView)
 
             // 3. Check login
-            let isLoggedIn = try await plugin.checkLoginStatus(in: webView)
+            let isLoggedIn = try await provider.checkLoginStatus(in: webView)
             if !isLoggedIn {
-                throw JobError.loginRequired(type(of: plugin).siteIdentifier)
+                throw JobError.loginRequired(type(of: provider).siteIdentifier)
             }
 
             // 4. Preload
             job.status = .preloading
             job.progress = 0.2
             try await Preloader.preload(in: webView, scrollDelay: settings.scrollDelay)
-            try await plugin.preloadContent(in: webView)
+            try await provider.preloadContent(in: webView)
             job.progress = 0.3
 
             // 5. Extract metadata
-            var metadata = try await plugin.extractMetadata(in: webView)
+            var metadata = try await provider.extractMetadata(in: webView)
             metadata = PostMetadata(
                 siteIdentifier: metadata.siteIdentifier,
                 postID: metadata.postID,
@@ -102,7 +102,7 @@ class JobEngine {
             job.metadata = metadata
 
             // 6. Extract media URLs
-            let mediaItems = try await plugin.extractMediaURLs(in: webView)
+            let mediaItems = try await provider.extractMediaURLs(in: webView)
             job.mediaItems = mediaItems
             job.progress = 0.4
 

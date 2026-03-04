@@ -1,12 +1,37 @@
 import Foundation
 import WebKit
 
-struct FantiaPlugin: SitePlugin {
+struct FantiaProvider: PatronServiceProvider {
     static let matchPatterns = [
         "https://fantia.jp/posts/*",
     ]
     static let loginURL = URL(string: "https://fantia.jp/sessions/signin")!
+    static let accountCheckURL = URL(string: "https://fantia.jp/mypage")!
     static let siteIdentifier = "fantia"
+
+    static func parseAccountInfo(from data: Data) -> AccountInfo? {
+        guard let html = String(data: data, encoding: .utf8) else { return nil }
+        // Look for username in mypage HTML
+        if let range = html.range(of: #"class="[^"]*user-name[^"]*"[^>]*>([^<]+)<"#, options: .regularExpression) {
+            let match = String(html[range])
+            if let gtIndex = match.lastIndex(of: ">"),
+               let ltIndex = match.lastIndex(of: "<") {
+                let name = String(match[match.index(after: gtIndex)..<ltIndex])
+                    .trimmingCharacters(in: .whitespaces)
+                if !name.isEmpty { return AccountInfo(displayName: name) }
+            }
+        }
+        // Fallback: parse <title>
+        if let titleStart = html.range(of: "<title>"),
+           let titleEnd = html.range(of: "</title>", range: titleStart.upperBound..<html.endIndex) {
+            let title = String(html[titleStart.upperBound..<titleEnd.lowerBound])
+                .trimmingCharacters(in: .whitespaces)
+            if !title.isEmpty, !title.contains("Fantia") || title.count > 10 {
+                return AccountInfo(displayName: title)
+            }
+        }
+        return nil
+    }
 
     func checkLoginStatus(in webView: WKWebView) async throws -> Bool {
         let result = try await evaluateJavaScript(
@@ -117,7 +142,7 @@ struct FantiaPlugin: SitePlugin {
                   redirectChain: []
               )
         else {
-            throw PluginError.metadataExtractionFailed
+            throw ProviderError.metadataExtractionFailed
         }
         return metadata
     }

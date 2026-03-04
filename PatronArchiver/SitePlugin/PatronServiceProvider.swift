@@ -1,9 +1,14 @@
 import Foundation
 import WebKit
 
-protocol SitePlugin: Sendable {
+struct AccountInfo: Sendable {
+    let displayName: String
+}
+
+protocol PatronServiceProvider: Sendable {
     static var matchPatterns: [String] { get }
     static var loginURL: URL { get }
+    static var accountCheckURL: URL { get }
     static var siteIdentifier: String { get }
 
     init()
@@ -12,9 +17,11 @@ protocol SitePlugin: Sendable {
     func preloadContent(in webView: WKWebView) async throws
     func extractMediaURLs(in webView: WKWebView) async throws -> [MediaItem]
     func extractMetadata(in webView: WKWebView) async throws -> PostMetadata
+
+    static func parseAccountInfo(from data: Data) -> AccountInfo?
 }
 
-extension SitePlugin {
+extension PatronServiceProvider {
     func evaluateJavaScript(_ script: String, in webView: WKWebView) async throws -> Any? {
         try await webView.evaluateJavaScript(script)
     }

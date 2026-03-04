@@ -1,12 +1,50 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import WebKit
 
 struct SettingsView: View {
     @Bindable var settings: AppSettings
     @State private var isPickingFolder = false
+    @State private var loginEntry: SiteEntry?
+    @State private var accountInfoByIdentifier: [String: AccountInfo] = [:]
+    @State private var isCheckingLogin = false
+
+    private var siteEntries: [SiteEntry] {
+        PatronServiceManager.shared.allProviderTypes.map { providerType in
+            SiteEntry(
+                identifier: providerType.siteIdentifier,
+                loginURL: providerType.loginURL,
+                providerType: providerType
+            )
+        }
+    }
 
     var body: some View {
         Form {
+            Section("Accounts") {
+                ForEach(siteEntries) { entry in
+                    HStack {
+                        Label(entry.identifier.capitalized, systemImage: "globe")
+                        Spacer()
+                        if isCheckingLogin {
+                            ProgressView()
+                                #if os(macOS)
+                                .controlSize(.small)
+                                #endif
+                        } else if let info = accountInfoByIdentifier[entry.identifier] {
+                            Text(info.displayName)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            Text("Not logged in")
+                                .foregroundStyle(.tertiary)
+                        }
+                        Button("Login") {
+                            loginEntry = entry
+                        }
+                    }
+                }
+            }
+
             Section("Rendering") {
                 Stepper(
                     "Render Width: \(settings.renderWidth)px",
@@ -73,5 +111,87 @@ struct SettingsView: View {
         .frame(width: 450)
         .padding()
         #endif
+        .task {
+            await checkAllLoginStatus()
+        }
+        .sheet(item: $loginEntry) { entry in
+            NavigationStack {
+                LoginWebView(
+                    url: entry.loginURL,
+                    providerType: entry.providerType,
+                    onLoginDetected: {
+                        loginEntry = nil
+                    }
+                )
+                .navigationTitle("Login")
+                #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+                #endif
+                .toolbar {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Done") {
+                            loginEntry = nil
+                        }
+                    }
+                }
+            }
+            #if os(macOS)
+            .frame(width: 800, height: 600)
+            #endif
+        }
+        .onChange(of: loginEntry) { oldValue, newValue in
+            if newValue == nil, let closedEntry = oldValue {
+                Task {
+                    // Brief delay to allow cookies to propagate
+                    try? await Task.sleep(for: .milliseconds(500))
+                    await checkLoginStatus(for: closedEntry.providerType)
+                }
+            }
+        }
+    }
+
+    private func checkAllLoginStatus() async {
+        isCheckingLogin = true
+        defer { isCheckingLogin = false }
+
+        let dataStore = WKWebsiteDataStore.default()
+        let providerTypes = PatronServiceManager.shared.allProviderTypes
+
+        await withTaskGroup(of: (String, AccountInfo?).self) { group in
+            for providerType in providerTypes {
+                group.addTask {
+                    let info = await LoginChecker.check(for: providerType, dataStore: dataStore)
+                    return (providerType.siteIdentifier, info)
+                }
+            }
+            for await (identifier, info) in group {
+                if let info {
+                    accountInfoByIdentifier[identifier] = info
+                } else {
+                    accountInfoByIdentifier.removeValue(forKey: identifier)
+                }
+            }
+        }
+    }
+
+    private func checkLoginStatus(for providerType: any PatronServiceProvider.Type) async {
+        let dataStore = WKWebsiteDataStore.default()
+        let info = await LoginChecker.check(for: providerType, dataStore: dataStore)
+        if let info {
+            accountInfoByIdentifier[providerType.siteIdentifier] = info
+        } else {
+            accountInfoByIdentifier.removeValue(forKey: providerType.siteIdentifier)
+        }
+    }
+}
+
+private struct SiteEntry: Identifiable, Equatable {
+    let identifier: String
+    let loginURL: URL
+    let providerType: any PatronServiceProvider.Type
+    var id: String { identifier }
+
+    static func == (lhs: SiteEntry, rhs: SiteEntry) -> Bool {
+        lhs.identifier == rhs.identifier
     }
 }

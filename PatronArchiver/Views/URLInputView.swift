@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct URLInputView: View {
-    var jobEngine: JobEngine
+    var archiver: PatronArchiver
     @State private var urlText = ""
 
     var body: some View {
@@ -30,7 +30,7 @@ struct URLInputView: View {
         for line in lines {
             let urlString = line.trimmingCharacters(in: .whitespacesAndNewlines)
             guard let url = URL(string: urlString), url.scheme != nil else { continue }
-            jobEngine.enqueue(url: url)
+            archiver.enqueue(url: url)
         }
         urlText = ""
     }

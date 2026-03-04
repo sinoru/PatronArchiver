@@ -1,11 +1,11 @@
 import SwiftUI
 
 struct JobListView: View {
-    var jobEngine: JobEngine
+    var archiver: PatronArchiver
 
     var body: some View {
         Group {
-            if jobEngine.jobs.isEmpty {
+            if archiver.jobs.isEmpty {
                 ContentUnavailableView(
                     "No Jobs",
                     systemImage: "tray",
@@ -13,8 +13,8 @@ struct JobListView: View {
                 )
             } else {
                 List {
-                    ForEach(jobEngine.jobs) { job in
-                        JobRowView(job: job, jobEngine: jobEngine)
+                    ForEach(archiver.jobs) { job in
+                        JobRowView(job: job, archiver: archiver)
                     }
                 }
                 .listStyle(.plain)

@@ -1,13 +1,36 @@
 import Foundation
 import WebKit
 
-struct FanboxPlugin: SitePlugin {
+struct FanboxProvider: PatronServiceProvider {
     static let matchPatterns = [
         "https://*.fanbox.cc/@*/posts/*",
         "https://www.fanbox.cc/@*/posts/*",
     ]
     static let loginURL = URL(string: "https://www.fanbox.cc/login")!
+    static let accountCheckURL = URL(string: "https://www.fanbox.cc/user/settings")!
     static let siteIdentifier = "fanbox"
+
+    static func parseAccountInfo(from data: Data) -> AccountInfo? {
+        guard let html = String(data: data, encoding: .utf8) else { return nil }
+
+        // Parse user name from #metadata content attribute JSON
+        // e.g. <meta id="metadata" name="metadata" content='{"context":{"user":{"name":"..."}}}'>
+        if let contentRange = html.range(of: #"<meta[^>]+id="metadata"[^>]+content='([^']+)'"#, options: .regularExpression),
+           let jsonStart = html[contentRange].range(of: "content='") {
+            let jsonFragment = html[contentRange][jsonStart.upperBound...]
+                .prefix(while: { $0 != "'" })
+            if let jsonData = String(jsonFragment).data(using: .utf8),
+               let root = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
+               let context = root["context"] as? [String: Any],
+               let user = context["user"] as? [String: Any],
+               let name = user["name"] as? String,
+               !name.isEmpty {
+                return AccountInfo(displayName: name)
+            }
+        }
+
+        return nil
+    }
 
     func checkLoginStatus(in webView: WKWebView) async throws -> Bool {
         let result = try await evaluateJavaScript(
@@ -116,7 +139,7 @@ struct FanboxPlugin: SitePlugin {
                   redirectChain: []
               )
         else {
-            throw PluginError.metadataExtractionFailed
+            throw ProviderError.metadataExtractionFailed
         }
         return metadata
     }

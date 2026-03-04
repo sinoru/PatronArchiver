@@ -2,7 +2,7 @@ import SwiftUI
 
 struct JobRowView: View {
     var job: ArchiveJob
-    var jobEngine: JobEngine
+    var archiver: PatronArchiver
 
     var body: some View {
         HStack {
@@ -49,16 +49,16 @@ struct JobRowView: View {
         Menu {
             if case .failed = job.status {
                 Button("Retry") {
-                    jobEngine.retryJob(job)
+                    archiver.retryJob(job)
                 }
             }
             if !job.status.isTerminal {
                 Button("Cancel") {
-                    jobEngine.cancelJob(job)
+                    archiver.cancelJob(job)
                 }
             }
             Button("Remove", role: .destructive) {
-                jobEngine.removeJob(job)
+                archiver.removeJob(job)
             }
         } label: {
             Image(systemName: "ellipsis.circle")

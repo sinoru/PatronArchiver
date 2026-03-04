@@ -1,13 +1,41 @@
 import Foundation
 import WebKit
 
-struct PatreonPlugin: SitePlugin {
+struct PatreonProvider: PatronServiceProvider {
     static let matchPatterns = [
         "https://www.patreon.com/posts/*",
         "https://patreon.com/posts/*",
     ]
     static let loginURL = URL(string: "https://www.patreon.com/login")!
+    static let accountCheckURL = URL(string: "https://www.patreon.com/settings/profile")!
     static let siteIdentifier = "patreon"
+
+    static func parseAccountInfo(from data: Data) -> AccountInfo? {
+        guard let html = String(data: data, encoding: .utf8) else { return nil }
+        // Try __NEXT_DATA__ JSON for user info
+        if let startRange = html.range(of: "<script id=\"__NEXT_DATA__\" type=\"application/json\">"),
+           let endRange = html.range(of: "</script>", range: startRange.upperBound..<html.endIndex),
+           let jsonData = String(html[startRange.upperBound..<endRange.lowerBound]).data(using: .utf8),
+           let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
+           let props = json["props"] as? [String: Any],
+           let pageProps = props["pageProps"] as? [String: Any],
+           let bootstrap = (pageProps["bootstrapEnvelope"] as? [String: Any])?["bootstrap"] as? [String: Any],
+           let userData = bootstrap["currentUser"] as? [String: Any],
+           let attributes = userData["data"] as? [String: Any],
+           let name = (attributes["attributes"] as? [String: Any])?["full_name"] as? String {
+            return AccountInfo(displayName: name)
+        }
+        // Fallback: parse <title> — typically "Settings | Name | Patreon"
+        if let titleStart = html.range(of: "<title>"),
+           let titleEnd = html.range(of: "</title>", range: titleStart.upperBound..<html.endIndex) {
+            let title = String(html[titleStart.upperBound..<titleEnd.lowerBound])
+            let parts = title.components(separatedBy: "|").map { $0.trimmingCharacters(in: .whitespaces) }
+            if parts.count >= 2, !parts[1].isEmpty, parts[1] != "Patreon" {
+                return AccountInfo(displayName: parts[1])
+            }
+        }
+        return nil
+    }
 
     func checkLoginStatus(in webView: WKWebView) async throws -> Bool {
         let result = try await evaluateJavaScript(
@@ -154,13 +182,13 @@ struct PatreonPlugin: SitePlugin {
                   redirectChain: []
               )
         else {
-            throw PluginError.metadataExtractionFailed
+            throw ProviderError.metadataExtractionFailed
         }
         return metadata
     }
 }
 
-enum PluginError: LocalizedError {
+enum ProviderError: LocalizedError {
     case metadataExtractionFailed
     case mediaExtractionFailed
 

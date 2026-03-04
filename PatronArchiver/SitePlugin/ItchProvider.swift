@@ -1,12 +1,37 @@
 import Foundation
 import WebKit
 
-struct ItchPlugin: SitePlugin {
+struct ItchProvider: PatronServiceProvider {
     static let matchPatterns = [
         "https://*.itch.io/*",
     ]
     static let loginURL = URL(string: "https://itch.io/login")!
+    static let accountCheckURL = URL(string: "https://itch.io/dashboard")!
     static let siteIdentifier = "itch"
+
+    static func parseAccountInfo(from data: Data) -> AccountInfo? {
+        guard let html = String(data: data, encoding: .utf8) else { return nil }
+        // Look for username in user panel
+        if let range = html.range(of: #"class="[^"]*user_name[^"]*"[^>]*>([^<]+)<"#, options: .regularExpression) {
+            let match = String(html[range])
+            if let gtIndex = match.lastIndex(of: ">"),
+               let ltIndex = match.lastIndex(of: "<") {
+                let name = String(match[match.index(after: gtIndex)..<ltIndex])
+                    .trimmingCharacters(in: .whitespaces)
+                if !name.isEmpty { return AccountInfo(displayName: name) }
+            }
+        }
+        // Fallback: parse <title> — typically "Dashboard - itch.io" or "username - Dashboard"
+        if let titleStart = html.range(of: "<title>"),
+           let titleEnd = html.range(of: "</title>", range: titleStart.upperBound..<html.endIndex) {
+            let title = String(html[titleStart.upperBound..<titleEnd.lowerBound])
+            let parts = title.components(separatedBy: "-").map { $0.trimmingCharacters(in: .whitespaces) }
+            if let name = parts.first, !name.isEmpty, name != "Dashboard" {
+                return AccountInfo(displayName: name)
+            }
+        }
+        return nil
+    }
 
     func checkLoginStatus(in webView: WKWebView) async throws -> Bool {
         let result = try await evaluateJavaScript(
@@ -101,7 +126,7 @@ struct ItchPlugin: SitePlugin {
                   redirectChain: []
               )
         else {
-            throw PluginError.metadataExtractionFailed
+            throw ProviderError.metadataExtractionFailed
         }
         return metadata
     }

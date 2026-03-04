@@ -1,41 +1,41 @@
 import Foundation
 
-struct SitePluginRegistry: Sendable {
+struct PatronServiceManager: Sendable {
     struct Entry: Sendable {
         let regex: Regex<AnyRegexOutput>
-        let pluginType: any SitePlugin.Type
+        let pluginType: any PatronServiceProvider.Type
 
-        func makePlugin() -> any SitePlugin {
+        func makeProvider() -> any PatronServiceProvider {
             pluginType.init()
         }
     }
 
     private let entries: [Entry]
 
-    static let shared = SitePluginRegistry()
+    static let shared = PatronServiceManager()
 
     private init() {
-        let pluginTypes: [any SitePlugin.Type] = [
-            PatreonPlugin.self,
-            FanboxPlugin.self,
-            FantiaPlugin.self,
-            ItchPlugin.self,
-            SubscribeStarPlugin.self,
+        let providerTypes: [any PatronServiceProvider.Type] = [
+            PatreonProvider.self,
+            FanboxProvider.self,
+            FantiaProvider.self,
+            ItchProvider.self,
+            SubscribeStarProvider.self,
         ]
 
-        self.entries = pluginTypes.flatMap { pluginType in
-            pluginType.matchPatterns.compactMap { pattern in
+        self.entries = providerTypes.flatMap { providerType in
+            providerType.matchPatterns.compactMap { pattern in
                 guard let regex = Self.globToRegex(pattern) else { return nil }
-                return Entry(regex: regex, pluginType: pluginType)
+                return Entry(regex: regex, pluginType: providerType)
             }
         }
     }
 
-    func plugin(for url: URL) -> (any SitePlugin)? {
+    func provider(for url: URL) -> (any PatronServiceProvider)? {
         let urlString = url.absoluteString
         for entry in entries {
             if urlString.wholeMatch(of: entry.regex) != nil {
-                return entry.makePlugin()
+                return entry.makeProvider()
             }
         }
         // Fallback: match against host + path
@@ -43,13 +43,13 @@ struct SitePluginRegistry: Sendable {
         let hostPath = host + url.path()
         for entry in entries {
             if hostPath.wholeMatch(of: entry.regex) != nil {
-                return entry.makePlugin()
+                return entry.makeProvider()
             }
         }
         return nil
     }
 
-    var allPluginTypes: [any SitePlugin.Type] {
+    var allProviderTypes: [any PatronServiceProvider.Type] {
         let seen = NSMutableSet()
         return entries.compactMap { entry in
             let typeName = String(describing: entry.pluginType)

@@ -1,13 +1,39 @@
 import Foundation
 import WebKit
 
-struct SubscribeStarPlugin: SitePlugin {
+struct SubscribeStarProvider: PatronServiceProvider {
     static let matchPatterns = [
         "https://subscribestar.adult/posts/*",
         "https://www.subscribestar.adult/posts/*",
     ]
     static let loginURL = URL(string: "https://subscribestar.adult/login")!
+    static let accountCheckURL = URL(string: "https://subscribestar.adult/profile/settings")!
     static let siteIdentifier = "subscribestar"
+
+    static func parseAccountInfo(from data: Data) -> AccountInfo? {
+        guard let html = String(data: data, encoding: .utf8) else { return nil }
+        // Look for profile name
+        if let range = html.range(of: #"class="[^"]*profile-name[^"]*"[^>]*>([^<]+)<"#, options: .regularExpression) {
+            let match = String(html[range])
+            if let gtIndex = match.lastIndex(of: ">"),
+               let ltIndex = match.lastIndex(of: "<") {
+                let name = String(match[match.index(after: gtIndex)..<ltIndex])
+                    .trimmingCharacters(in: .whitespaces)
+                if !name.isEmpty { return AccountInfo(displayName: name) }
+            }
+        }
+        // Fallback: user-menu text
+        if let range = html.range(of: #"class="[^"]*user-menu[^"]*"[^>]*>([^<]+)<"#, options: .regularExpression) {
+            let match = String(html[range])
+            if let gtIndex = match.lastIndex(of: ">"),
+               let ltIndex = match.lastIndex(of: "<") {
+                let name = String(match[match.index(after: gtIndex)..<ltIndex])
+                    .trimmingCharacters(in: .whitespaces)
+                if !name.isEmpty { return AccountInfo(displayName: name) }
+            }
+        }
+        return nil
+    }
 
     func checkLoginStatus(in webView: WKWebView) async throws -> Bool {
         let result = try await evaluateJavaScript(
@@ -122,7 +148,7 @@ struct SubscribeStarPlugin: SitePlugin {
                   redirectChain: []
               )
         else {
-            throw PluginError.metadataExtractionFailed
+            throw ProviderError.metadataExtractionFailed
         }
         return metadata
     }

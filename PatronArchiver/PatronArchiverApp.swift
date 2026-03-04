@@ -3,16 +3,16 @@ import SwiftUI
 @main
 struct PatronArchiverApp: App {
     @State private var settings = AppSettings()
-    @State private var jobEngine: JobEngine?
+    @State private var archiver: PatronArchiver?
 
     var body: some Scene {
         WindowGroup {
-            if let jobEngine {
-                MainView(jobEngine: jobEngine, settings: settings)
+            if let archiver {
+                MainView(archiver: archiver, settings: settings)
             } else {
                 ProgressView()
                     .task {
-                        jobEngine = JobEngine(settings: settings)
+                        archiver = PatronArchiver(settings: settings)
                     }
             }
         }
