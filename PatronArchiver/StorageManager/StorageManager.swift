@@ -1,6 +1,9 @@
 import Foundation
+import OSLog
 
 enum StorageManager {
+    private static let logger = Logger(subsystem: "com.sinoru.PatronArchiver", category: "StorageManager")
+
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
@@ -16,8 +19,10 @@ enum StorageManager {
         to baseDirectory: URL
     ) throws {
         let postFolder = makePostFolderURL(metadata: metadata, baseDirectory: baseDirectory)
+        logger.info("Post folder: \(postFolder.path(), privacy: .private)")
 
         try FileManager.default.createDirectory(at: postFolder, withIntermediateDirectories: true)
+        logger.debug("Directory created")
 
         // Save PDF
         if let pdfData {
@@ -43,7 +48,12 @@ enum StorageManager {
         let fm = FileManager.default
         for media in downloadedMedia {
             let destURL = postFolder.appendingPathComponent(media.localURL.lastPathComponent)
-            if fm.fileExists(atPath: destURL.path) {
+            let sourceExists = fm.fileExists(atPath: media.localURL.path(percentEncoded: false))
+            let destDirExists = fm.fileExists(atPath: postFolder.path(percentEncoded: false))
+            logger.debug("Moving \(media.localURL.lastPathComponent) — source exists: \(sourceExists), dest dir exists: \(destDirExists)")
+            logger.debug("  from: \(media.localURL.path(percentEncoded: false), privacy: .private)")
+            logger.debug("  to:   \(destURL.path(percentEncoded: false), privacy: .private)")
+            if fm.fileExists(atPath: destURL.path(percentEncoded: false)) {
                 try fm.removeItem(at: destURL)
             }
             try fm.moveItem(at: media.localURL, to: destURL)

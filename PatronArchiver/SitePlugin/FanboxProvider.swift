@@ -3,7 +3,7 @@ import WebKit
 
 struct FanboxProvider: PatronServiceProvider {
     static let matchPatterns = [
-        "https://*.fanbox.cc/@*/posts/*",
+        "https://*.fanbox.cc/posts/*",
         "https://www.fanbox.cc/@*/posts/*",
     ]
     static let loginURL = URL(string: "https://www.fanbox.cc/login")!

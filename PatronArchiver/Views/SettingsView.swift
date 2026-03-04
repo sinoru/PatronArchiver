@@ -38,8 +38,16 @@ struct SettingsView: View {
                             Text("Not logged in")
                                 .foregroundStyle(.tertiary)
                         }
-                        Button("Login") {
-                            loginEntry = entry
+                        if accountInfoByIdentifier[entry.identifier] != nil {
+                            Button("Logout") {
+                                Task {
+                                    await logout(for: entry)
+                                }
+                            }
+                        } else {
+                            Button("Login") {
+                                loginEntry = entry
+                            }
                         }
                     }
                 }
@@ -172,6 +180,22 @@ struct SettingsView: View {
                 }
             }
         }
+    }
+
+    private func logout(for entry: SiteEntry) async {
+        let dataStore = WKWebsiteDataStore.default()
+        let cookieStore = dataStore.httpCookieStore
+        let allCookies = await cookieStore.allCookies()
+        guard let host = entry.loginURL.host() else { return }
+
+        for cookie in allCookies {
+            let domain = cookie.domain.hasPrefix(".") ? String(cookie.domain.dropFirst()) : cookie.domain
+            if host.hasSuffix(domain) {
+                await cookieStore.deleteCookie(cookie)
+            }
+        }
+
+        accountInfoByIdentifier.removeValue(forKey: entry.identifier)
     }
 
     private func checkLoginStatus(for providerType: any PatronServiceProvider.Type) async {

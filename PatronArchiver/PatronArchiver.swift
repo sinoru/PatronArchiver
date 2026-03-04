@@ -1,8 +1,10 @@
 import Foundation
+import OSLog
 import WebKit
 
 @Observable
 class PatronArchiver {
+    private static let logger = Logger(subsystem: "com.sinoru.PatronArchiver", category: "PatronArchiver")
     private(set) var jobs: [ArchiveJob] = []
     private let webViewPool: WebViewPool
     private let settings: AppSettings
@@ -63,18 +65,23 @@ class PatronArchiver {
 
         do {
             // 1. Identify service provider
+            Self.logger.info("Starting job for URL: \(job.inputURL, privacy: .private)")
             guard let provider = PatronServiceManager.shared.provider(for: job.inputURL) else {
                 throw JobError.unsupportedSite
             }
+            Self.logger.info("Matched provider: \(type(of: provider).siteIdentifier, privacy: .public)")
 
             // 2. Load page
             job.status = .loading
             job.progress = 0.1
             let tracker = RedirectTracker()
+            Self.logger.debug("Loading page...")
             let redirectChain = try await tracker.load(job.inputURL, in: webView)
+            Self.logger.debug("Page loaded, redirect chain count: \(redirectChain.count)")
 
             // 3. Check login
             let isLoggedIn = try await provider.checkLoginStatus(in: webView)
+            Self.logger.info("Login status: \(isLoggedIn)")
             if !isLoggedIn {
                 throw JobError.loginRequired(type(of: provider).siteIdentifier)
             }
@@ -82,11 +89,14 @@ class PatronArchiver {
             // 4. Preload
             job.status = .preloading
             job.progress = 0.2
+            Self.logger.debug("Preloading...")
             try await Preloader.preload(in: webView, scrollDelay: settings.scrollDelay)
             try await provider.preloadContent(in: webView)
+            Self.logger.debug("Preload complete")
             job.progress = 0.3
 
             // 5. Extract metadata
+            Self.logger.debug("Extracting metadata...")
             var metadata = try await provider.extractMetadata(in: webView)
             metadata = PostMetadata(
                 siteIdentifier: metadata.siteIdentifier,
@@ -100,36 +110,45 @@ class PatronArchiver {
                 redirectChain: redirectChain
             )
             job.metadata = metadata
+            Self.logger.info("Metadata extracted — title: \(metadata.title, privacy: .private), author: \(metadata.authorName, privacy: .private)")
 
             // 6. Extract media URLs
             let mediaItems = try await provider.extractMediaURLs(in: webView)
             job.mediaItems = mediaItems
             job.progress = 0.4
+            Self.logger.info("Found \(mediaItems.count) media items")
 
             // 7. Page dump (PDF → MHTML, sequential)
             job.status = .dumping
+            Self.logger.debug("Generating PDF...")
             let pdfData = try await PDFDumper.createPDF(from: webView)
+            Self.logger.debug("PDF generated (\(pdfData.count) bytes)")
             job.progress = 0.5
 
+            Self.logger.debug("Generating MHTML...")
             let mhtmlData = try await MHTMLDumper.createMHTML(
                 from: webView,
                 dataStore: webViewPool.sharedDataStore
             )
+            Self.logger.debug("MHTML generated (\(mhtmlData.count) bytes)")
             job.progress = 0.6
 
             // 8. Download media
             job.status = .downloading
+            Self.logger.debug("Downloading media...")
             let tempDir = try StorageManager.temporaryDownloadDirectory()
             let downloadedMedia = try await MediaDownloader.download(
                 items: mediaItems,
                 to: tempDir,
                 dataStore: webViewPool.sharedDataStore
             )
+            Self.logger.info("Downloaded \(downloadedMedia.count) media files")
             job.progress = 0.8
 
             // 9. Save
             job.status = .saving
             let baseDir = resolveBaseDirectory()
+            Self.logger.debug("Saving to: \(baseDir.path(), privacy: .private)")
             try await BookmarkManager.withAccess(to: baseDir) {
                 try StorageManager.save(
                     metadata: metadata,
@@ -141,7 +160,9 @@ class PatronArchiver {
             }
             job.progress = 1.0
             job.status = .completed
+            Self.logger.info("Job completed successfully")
         } catch {
+            Self.logger.error("Job failed: \(error.localizedDescription, privacy: .public)")
             job.status = .failed(error)
         }
     }

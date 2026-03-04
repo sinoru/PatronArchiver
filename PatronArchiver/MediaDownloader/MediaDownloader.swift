@@ -19,11 +19,12 @@ enum MediaDownloader {
                     let request = await CookieHelper.configuredRequest(for: item.url, dataStore: dataStore)
                     let (tempURL, response) = try await URLSession.shared.download(for: request)
 
-                    let filename = resolveFilename(
+                    let baseFilename = resolveFilename(
                         for: item,
                         response: response as? HTTPURLResponse,
                         index: index
                     )
+                    let filename = addIndexPrefix(baseFilename, index: index)
                     let sanitized = FileNameSanitizer.sanitize(filename)
                     let destinationURL = directory.appendingPathComponent(sanitized)
 
@@ -81,5 +82,10 @@ enum MediaDownloader {
         case .other: "bin"
         }
         return "\(item.type)_\(String(format: "%03d", index + 1)).\(ext)"
+    }
+
+    nonisolated private static func addIndexPrefix(_ filename: String, index: Int) -> String {
+        let prefix = String(format: "%02d", index + 1)
+        return "\(prefix) - \(filename)"
     }
 }

@@ -29,6 +29,7 @@ class AppSettings {
     var defaultSaveDirectory: URL {
         #if os(macOS)
         FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
+            .appending(path: "PatronArchiver", directoryHint: .isDirectory)
         #else
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         #endif
