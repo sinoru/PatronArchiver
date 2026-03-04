@@ -110,7 +110,8 @@ class PatronArchiver {
                 redirectChain: redirectChain
             )
             job.metadata = metadata
-            Self.logger.info("Metadata extracted — title: \(metadata.title, privacy: .private), author: \(metadata.authorName, privacy: .private)")
+            let pageTitle = await webView.title ?? metadata.title
+            Self.logger.info("Metadata extracted — title: \(metadata.title, privacy: .private), author: \(metadata.authorName, privacy: .private), pageTitle: \(pageTitle, privacy: .private)")
 
             // 6. Extract media URLs
             let mediaItems = try await provider.extractMediaURLs(in: webView)
@@ -118,19 +119,17 @@ class PatronArchiver {
             job.progress = 0.4
             Self.logger.info("Found \(mediaItems.count) media items")
 
-            // 7. Page dump (PDF → MHTML, sequential)
+            // 7. Page dump (MHTML first to preserve original HTML, then PDF)
             job.status = .dumping
-            Self.logger.debug("Generating PDF...")
-            let pdfData = try await PDFDumper.createPDF(from: webView)
-            Self.logger.debug("PDF generated (\(pdfData.count) bytes)")
-            job.progress = 0.5
 
             Self.logger.debug("Generating MHTML...")
-            let mhtmlData = try await MHTMLDumper.createMHTML(
-                from: webView,
-                dataStore: webViewPool.sharedDataStore
-            )
+            let mhtmlData = try await webView.mhtml(dataStore: webViewPool.sharedDataStore)
             Self.logger.debug("MHTML generated (\(mhtmlData.count) bytes)")
+            job.progress = 0.5
+
+            Self.logger.debug("Generating PDF...")
+            let pdfData = try await webView.fullPagePDF()
+            Self.logger.debug("PDF generated (\(pdfData.count) bytes)")
             job.progress = 0.6
 
             // 8. Download media
@@ -152,6 +151,7 @@ class PatronArchiver {
             try await BookmarkManager.withAccess(to: baseDir) {
                 try StorageManager.save(
                     metadata: metadata,
+                    pageTitle: pageTitle,
                     pdfData: pdfData,
                     mhtmlData: mhtmlData,
                     downloadedMedia: downloadedMedia,

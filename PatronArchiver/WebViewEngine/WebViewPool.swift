@@ -2,6 +2,8 @@ import WebKit
 
 #if os(iOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
 #endif
 
 class WebViewPool {
@@ -13,6 +15,8 @@ class WebViewPool {
 
     #if os(iOS)
     private var renderWindow: UIWindow?
+    #elseif os(macOS)
+    private var renderWindow: NSWindow?
     #endif
 
     init(poolSize: Int = 3, renderWidth: CGFloat = 1920) {
@@ -30,9 +34,7 @@ class WebViewPool {
 
     private func makeWebView() -> WKWebView {
         let webView = WKWebView(frame: CGRect(x: 0, y: 0, width: renderWidth, height: renderHeight), configuration: configuration)
-        #if os(iOS)
         attachToRenderWindow(webView)
-        #endif
         return webView
     }
 
@@ -47,6 +49,23 @@ class WebViewPool {
             renderWindow = window
         }
         renderWindow?.rootViewController?.view.addSubview(webView)
+    }
+    #elseif os(macOS)
+    private func attachToRenderWindow(_ webView: WKWebView) {
+        if renderWindow == nil {
+            let window = NSWindow(
+                contentRect: CGRect(x: 0, y: 0, width: renderWidth, height: renderHeight),
+                styleMask: [.borderless],
+                backing: .buffered,
+                defer: false
+            )
+            window.isReleasedWhenClosed = false
+            window.ignoresMouseEvents = true
+            window.collectionBehavior = [.stationary, .ignoresCycle, .canJoinAllSpaces]
+            window.orderBack(nil)
+            renderWindow = window
+        }
+        renderWindow?.contentView?.addSubview(webView)
     }
     #endif
 

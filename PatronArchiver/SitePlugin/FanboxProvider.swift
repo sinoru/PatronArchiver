@@ -60,7 +60,7 @@ struct FanboxProvider: PatronServiceProvider {
         (() => {
             const media = [];
 
-            // Article type: links with target=_blank (download links)
+            // Article type: links with target=_blank (download links) — full size originals
             document.querySelectorAll('article a[target="_blank"]').forEach(a => {
                 const href = a.href;
                 if (href && (href.includes('downloads.fanbox.cc') || href.includes('fanbox.pixiv.net'))) {
@@ -68,9 +68,9 @@ struct FanboxProvider: PatronServiceProvider {
                 }
             });
 
-            // Image posts: img tags in post body
-            document.querySelectorAll('img[src*="fanbox"], img[src*="pximg"]').forEach(img => {
-                if (img.src && !media.some(m => m.url === img.src)) {
+            // Image posts: img tags inside article, NOT inside a download link
+            document.querySelectorAll('article img').forEach(img => {
+                if (img.src && !img.closest('a[target="_blank"]') && !media.some(m => m.url === img.src)) {
                     media.push({ url: img.src, type: 'image', filename: null });
                 }
             });
@@ -105,26 +105,45 @@ struct FanboxProvider: PatronServiceProvider {
             const pathMatch = location.pathname.match(/posts\\/(\\d+)/);
             meta.postID = pathMatch ? pathMatch[1] : '';
 
-            // Title
-            const titleEl = document.querySelector('h1, [class*="PostTitle"], article h1');
+            // Title — PostTitle class (not generic h1 which matches author name first)
+            const titleEl = document.querySelector('[class*="PostTitle"]');
             meta.title = titleEl?.textContent?.trim() || document.title;
 
-            // Author from URL or page
-            const hostMatch = location.hostname.match(/^([^.]+)\\.fanbox\\.cc$/);
-            if (hostMatch) {
-                meta.authorName = hostMatch[1];
-            }
-            const authorEl = document.querySelector('[class*="CreatorName"], [class*="creator-name"]');
+            // Author — UserNameText in creator header (not CreatorName which matches footer recommendations)
+            const authorEl = document.querySelector('[class*="UserNameText"]');
             if (authorEl) {
                 meta.authorName = authorEl.textContent.trim();
+            } else {
+                const hostMatch = location.hostname.match(/^([^.]+)\\.fanbox\\.cc$/);
+                if (hostMatch) {
+                    meta.authorName = hostMatch[1];
+                }
             }
 
-            // Date
-            const timeEl = document.querySelector('time[datetime]');
-            meta.createdAt = timeEl?.getAttribute('datetime') || new Date().toISOString();
+            // Date — parse from PostHeadBottom (no <time datetime> on Fanbox)
+            const dateEl = document.querySelector('[class*="PostHeadBottom"]');
+            if (dateEl) {
+                const dateText = dateEl.textContent.split('・')[0].trim();
+                // JA: 2026年3月4日 21:11 / KO: 2026년3월4일 21:11
+                let m = dateText.match(/(\\d{4})[年년](\\d{1,2})[月월](\\d{1,2})[日일]\\s*(\\d{2}):(\\d{2})/);
+                if (m) {
+                    meta.createdAt = new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).toISOString();
+                } else {
+                    // EN: March 4th, 2026 21:11
+                    const months = { January:0, February:1, March:2, April:3, May:4, June:5, July:6, August:7, September:8, October:9, November:10, December:11 };
+                    m = dateText.match(/(\\w+)\\s+(\\d{1,2})\\w*,?\\s*(\\d{4})\\s*(\\d{2}):(\\d{2})/);
+                    if (m && months[m[1]] !== undefined) {
+                        meta.createdAt = new Date(+m[3], months[m[1]], +m[2], +m[4], +m[5]).toISOString();
+                    } else {
+                        meta.createdAt = new Date().toISOString();
+                    }
+                }
+            } else {
+                meta.createdAt = new Date().toISOString();
+            }
 
             // Tags
-            meta.tags = Array.from(document.querySelectorAll('[class*="Tag"] a, a[href*="/tags/"]'))
+            meta.tags = Array.from(document.querySelectorAll('[class*="Tag__Text"]'))
                 .map(el => el.textContent.trim())
                 .filter(t => t.length > 0);
 

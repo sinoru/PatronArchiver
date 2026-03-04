@@ -6,13 +6,15 @@ enum StorageManager {
 
     private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd HH:mm"
+        formatter.dateFormat = "yyyy-MM-dd'T'HHmmss'Z'"
         formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(identifier: "UTC")
         return formatter
     }()
 
     nonisolated static func save(
         metadata: PostMetadata,
+        pageTitle: String,
         pdfData: Data?,
         mhtmlData: Data?,
         downloadedMedia: [MediaDownloader.DownloadedMedia],
@@ -25,8 +27,9 @@ enum StorageManager {
         logger.debug("Directory created")
 
         // Save PDF
+        let sanitizedPageTitle = FileNameSanitizer.sanitize(pageTitle)
         if let pdfData {
-            let pdfURL = postFolder.appendingPathComponent("\(metadata.siteIdentifier).pdf")
+            let pdfURL = postFolder.appendingPathComponent("\(sanitizedPageTitle).pdf")
             try pdfData.write(to: pdfURL)
             try? XattrHelper.setWhereFroms(
                 metadata.redirectChain.isEmpty ? [metadata.originalURL] : metadata.redirectChain,
@@ -36,7 +39,7 @@ enum StorageManager {
 
         // Save MHTML
         if let mhtmlData {
-            let mhtmlURL = postFolder.appendingPathComponent("\(metadata.siteIdentifier).mhtml")
+            let mhtmlURL = postFolder.appendingPathComponent("\(sanitizedPageTitle).mhtml")
             try mhtmlData.write(to: mhtmlURL)
             try? XattrHelper.setWhereFroms(
                 metadata.redirectChain.isEmpty ? [metadata.originalURL] : metadata.redirectChain,
