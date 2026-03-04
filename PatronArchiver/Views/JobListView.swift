@@ -4,20 +4,18 @@ struct JobListView: View {
     var archiver: PatronArchiver
 
     var body: some View {
-        Group {
+        List {
+            ForEach(archiver.jobs) { job in
+                JobRowView(job: job, archiver: archiver)
+            }
+        }
+        .overlay {
             if archiver.jobs.isEmpty {
                 ContentUnavailableView(
                     "No Jobs",
                     systemImage: "tray",
-                    description: Text("Enter a URL above to start archiving.")
+                    description: Text("Enter a URL to start archiving.")
                 )
-            } else {
-                List {
-                    ForEach(archiver.jobs) { job in
-                        JobRowView(job: job, archiver: archiver)
-                    }
-                }
-                .listStyle(.plain)
             }
         }
     }
