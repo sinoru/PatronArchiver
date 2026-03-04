@@ -44,8 +44,9 @@ class WebViewPool {
             let window = UIWindow(windowScene: scene)
             window.frame = CGRect(x: 0, y: 0, width: renderWidth, height: renderHeight)
             window.rootViewController = UIViewController()
-            window.isHidden = true
-            window.makeKeyAndVisible()
+            window.windowLevel = UIWindow.Level(rawValue: -1)
+            window.alpha = 0
+            window.isHidden = false
             renderWindow = window
         }
         renderWindow?.rootViewController?.view.addSubview(webView)
