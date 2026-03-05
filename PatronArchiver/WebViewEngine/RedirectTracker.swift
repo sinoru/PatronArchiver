@@ -18,7 +18,7 @@ class RedirectTracker: NSObject, WKNavigationDelegate {
         decidePolicyFor navigationAction: WKNavigationAction
     ) async -> WKNavigationActionPolicy {
         if let url = navigationAction.request.url,
-           navigationAction.navigationType == .other || navigationAction.targetFrame?.isMainFrame == true {
+           navigationAction.targetFrame?.isMainFrame == true {
             if redirectChain.last != url {
                 redirectChain.append(url)
             }
