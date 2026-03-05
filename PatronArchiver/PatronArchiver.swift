@@ -11,6 +11,12 @@ class PatronArchiver {
     private let settings: AppSettings
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
 
+    #if os(macOS)
+    private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = .withSecurityScope
+    #else
+    private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = []
+    #endif
+
     init(settings: AppSettings) {
         self.settings = settings
         self.webViewPool = WebViewPool(
@@ -170,7 +176,7 @@ class PatronArchiver {
             job.progress = 0.9
 
             // 10. Check if post folder already exists
-            let folderExists = BookmarkManager.withAccess(to: baseDir) {
+            let folderExists = baseDir.withSecurityScopedAccess {
                 StorageManager.postFolderExists(metadata: metadata, baseDirectory: baseDir)
             }
 
@@ -183,7 +189,7 @@ class PatronArchiver {
             }
 
             // 11. Commit save
-            try BookmarkManager.withAccess(to: baseDir) {
+            try baseDir.withSecurityScopedAccess {
                 try StorageManager.commitSave(preparedSave, overwrite: false)
             }
             job.progress = 1.0
@@ -201,7 +207,7 @@ class PatronArchiver {
 
         do {
             let baseDir = resolveBaseDirectory()
-            try BookmarkManager.withAccess(to: baseDir) {
+            try baseDir.withSecurityScopedAccess {
                 try StorageManager.commitSave(preparedSave, overwrite: true)
             }
             job.pendingSave = nil
@@ -233,8 +239,13 @@ class PatronArchiver {
     }
 
     private func resolveBaseDirectory() -> URL {
+        var isStale = false
         if let bookmarkData = settings.savedDirectoryBookmark,
-           let url = try? BookmarkManager.resolveBookmark(bookmarkData) {
+           let url = try? URL(
+            resolvingBookmarkData: bookmarkData,
+            options: Self.bookmarkResolutionOptions,
+            bookmarkDataIsStale: &isStale
+           ) {
             return url
         }
         return settings.defaultSaveDirectory

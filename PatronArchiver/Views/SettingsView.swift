@@ -9,6 +9,14 @@ struct SettingsView: View {
     @State private var accountInfoByIdentifier: [String: AccountInfo] = [:]
     @State private var isCheckingLogin = false
 
+    #if os(macOS)
+    private static let bookmarkCreationOptions: URL.BookmarkCreationOptions = .withSecurityScope
+    private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = .withSecurityScope
+    #else
+    private static let bookmarkCreationOptions: URL.BookmarkCreationOptions = []
+    private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = []
+    #endif
+
     private var siteEntries: [SiteEntry] {
         PatronServiceManager.allProviderTypes.map { providerType in
             SiteEntry(
@@ -86,7 +94,14 @@ struct SettingsView: View {
                     Text("Save Directory")
                     Spacer()
                     if let bookmark = settings.savedDirectoryBookmark,
-                       let url = try? BookmarkManager.resolveBookmark(bookmark) {
+                       let url = try? {
+                        var isStale = false
+                        return try URL(
+                            resolvingBookmarkData: bookmark,
+                            options: Self.bookmarkResolutionOptions,
+                            bookmarkDataIsStale: &isStale
+                        )
+                       }() {
                         Text(url.lastPathComponent)
                             .foregroundStyle(.secondary)
                     } else {
@@ -103,7 +118,11 @@ struct SettingsView: View {
                     allowedContentTypes: [.folder]
                 ) { result in
                     if case .success(let url) = result {
-                        settings.savedDirectoryBookmark = try? BookmarkManager.saveBookmark(for: url)
+                        settings.savedDirectoryBookmark = try? url.bookmarkData(
+                            options: Self.bookmarkCreationOptions,
+                            includingResourceValuesForKeys: nil,
+                            relativeTo: nil
+                        )
                     }
                 }
 
