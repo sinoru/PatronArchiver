@@ -5,6 +5,7 @@ enum MediaDownloader {
     struct DownloadedMedia: Sendable {
         let item: MediaItem
         let localURL: URL
+        let downloadRedirects: [URL]
     }
 
     @concurrent
@@ -17,7 +18,11 @@ enum MediaDownloader {
             for (index, item) in items.enumerated() {
                 group.addTask {
                     let request = await CookieHelper.configuredRequest(for: item.url, dataStore: dataStore)
-                    let (tempURL, response) = try await URLSession.shared.download(for: request)
+                    let redirectCollector = RedirectCollector()
+                    let (tempURL, response) = try await URLSession.shared.download(
+                        for: request,
+                        delegate: redirectCollector
+                    )
 
                     let baseFilename = resolveFilename(
                         for: item,
@@ -33,7 +38,11 @@ enum MediaDownloader {
                     }
                     try FileManager.default.moveItem(at: tempURL, to: destinationURL)
 
-                    return DownloadedMedia(item: item, localURL: destinationURL)
+                    return DownloadedMedia(
+                        item: item,
+                        localURL: destinationURL,
+                        downloadRedirects: redirectCollector.redirectedURLs
+                    )
                 }
             }
 
@@ -87,5 +96,26 @@ enum MediaDownloader {
     nonisolated private static func addIndexPrefix(_ filename: String, index: Int) -> String {
         let prefix = String(format: "%02d", index + 1)
         return "\(prefix) - \(filename)"
+    }
+}
+
+private final class RedirectCollector: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+    private let lock = NSLock()
+    private var _urls: [URL] = []
+
+    var redirectedURLs: [URL] {
+        lock.withLock { _urls }
+    }
+
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest
+    ) async -> URLRequest? {
+        if let url = request.url {
+            lock.withLock { _urls.append(url) }
+        }
+        return request
     }
 }

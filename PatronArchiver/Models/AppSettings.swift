@@ -10,10 +10,6 @@ class AppSettings {
         didSet { UserDefaults.standard.set(scrollDelay, forKey: "scrollDelay") }
     }
 
-    var maxConcurrentJobs: Int {
-        didSet { UserDefaults.standard.set(maxConcurrentJobs, forKey: "maxConcurrentJobs") }
-    }
-
     var savedDirectoryBookmark: Data? {
         didSet { UserDefaults.standard.set(savedDirectoryBookmark, forKey: "savedDirectoryBookmark") }
     }
@@ -22,7 +18,6 @@ class AppSettings {
         let defaults = UserDefaults.standard
         self.renderWidth = defaults.object(forKey: "renderWidth") as? Int ?? 1920
         self.scrollDelay = defaults.object(forKey: "scrollDelay") as? Double ?? 300
-        self.maxConcurrentJobs = defaults.object(forKey: "maxConcurrentJobs") as? Int ?? 3
         self.savedDirectoryBookmark = defaults.data(forKey: "savedDirectoryBookmark")
     }
 

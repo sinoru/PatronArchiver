@@ -1,8 +1,11 @@
 import SwiftUI
+import WebKit
 
 struct JobRowView: View {
     var job: ArchiveJob
     var archiver: PatronArchiver
+
+    private let previewWidth: CGFloat = 160
 
     var body: some View {
         HStack {
@@ -33,6 +36,7 @@ struct JobRowView: View {
                 }
             }
             Spacer()
+            webViewPreview
         }
         .padding(.vertical, 4)
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -100,6 +104,23 @@ struct JobRowView: View {
             return "\(metadata.siteIdentifier.capitalized) - \(metadata.authorName) - \(metadata.title) (\(metadata.postID))"
         }
         return job.inputURL.absoluteString
+    }
+
+    @ViewBuilder
+    private var webViewPreview: some View {
+        if archiver.activeJobID == job.id, let webView = archiver.activeWebView {
+            let renderSize = archiver.renderSize
+            let scale = previewWidth / renderSize.width
+            let previewHeight = renderSize.height * scale
+
+            ArchiveWebViewRepresentable(webView: webView)
+                .frame(width: renderSize.width, height: renderSize.height)
+                .scaleEffect(scale, anchor: .topLeading)
+                .frame(width: previewWidth, height: previewHeight, alignment: .topLeading)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .shadow(radius: 2)
+                .allowsHitTesting(false)
+        }
     }
 
     @ViewBuilder

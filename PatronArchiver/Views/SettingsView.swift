@@ -81,14 +81,6 @@ struct SettingsView: View {
                 }
             }
 
-            Section("Processing") {
-                Stepper(
-                    "Max Concurrent Jobs: \(settings.maxConcurrentJobs)",
-                    value: $settings.maxConcurrentJobs,
-                    in: 1...10
-                )
-            }
-
             Section("Storage") {
                 HStack {
                     Text("Save Directory")

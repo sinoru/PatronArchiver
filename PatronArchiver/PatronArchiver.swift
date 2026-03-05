@@ -7,7 +7,9 @@ import WebKit
 class PatronArchiver {
     private static let logger = Logger(subsystem: "com.sinoru.PatronArchiver", category: "PatronArchiver")
     private(set) var jobs: [ArchiveJob] = []
-    private let webViewPool: WebViewPool
+    private(set) var activeWebView: WKWebView?
+    private(set) var activeJobID: UUID?
+    private let webViewConfiguration: WKWebViewConfiguration
     private let settings: AppSettings
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
 
@@ -17,12 +19,15 @@ class PatronArchiver {
     private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = []
     #endif
 
+    var renderSize: CGSize {
+        CGSize(width: CGFloat(settings.renderWidth), height: 1080)
+    }
+
     init(settings: AppSettings) {
         self.settings = settings
-        self.webViewPool = WebViewPool(
-            poolSize: settings.maxConcurrentJobs,
-            renderWidth: CGFloat(settings.renderWidth)
-        )
+        let config = WKWebViewConfiguration()
+        config.websiteDataStore = .default()
+        self.webViewConfiguration = config
     }
 
     func enqueue(url: URL) {
@@ -34,10 +39,15 @@ class PatronArchiver {
     func cancelJob(_ job: ArchiveJob) {
         activeTasks[job.id]?.cancel()
         activeTasks[job.id] = nil
+        if activeJobID == job.id {
+            activeWebView = nil
+            activeJobID = nil
+        }
         discardPendingSaveIfNeeded(job)
         if !job.status.isTerminal {
             job.status = .failed(CancellationError())
         }
+        processNextQueuedJob()
     }
 
     func removeJob(_ job: ArchiveJob) {
@@ -62,8 +72,7 @@ class PatronArchiver {
     }
 
     private func startJobIfPossible(_ job: ArchiveJob) {
-        let activeCount = activeTasks.count
-        guard activeCount < settings.maxConcurrentJobs else { return }
+        guard activeTasks.isEmpty else { return }
 
         let task = Task {
             await processJob(job)
@@ -72,11 +81,31 @@ class PatronArchiver {
     }
 
     private func processJob(_ job: ArchiveJob) async {
-        let webView = await webViewPool.acquire()
+        let webView = WKWebView(
+            frame: CGRect(origin: .zero, size: renderSize),
+            configuration: webViewConfiguration
+        )
+        activeWebView = webView
+        activeJobID = job.id
+
         defer {
-            webViewPool.release(webView)
+            activeWebView = nil
+            activeJobID = nil
             activeTasks[job.id] = nil
             processNextQueuedJob()
+        }
+
+        // Wait for SwiftUI to attach the WebView to the view hierarchy
+        if webView.window == nil {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                var observation: NSKeyValueObservation?
+                observation = webView.observe(\.window, options: [.new]) { webView, _ in
+                    guard webView.window != nil else { return }
+                    observation?.invalidate()
+                    observation = nil
+                    continuation.resume()
+                }
+            }
         }
 
         do {
@@ -138,8 +167,10 @@ class PatronArchiver {
             // 7. Page dump (MHTML first to preserve original HTML, then PDF)
             job.status = .dumping
 
+            let dataStore = sharedDataStore
+
             Self.logger.debug("Generating MHTML...")
-            let mhtmlData = try await webView.mhtml(dataStore: webViewPool.sharedDataStore)
+            let mhtmlData = try await webView.mhtml(dataStore: dataStore)
             Self.logger.debug("MHTML generated (\(mhtmlData.count) bytes)")
             job.progress = 0.5
 
@@ -148,6 +179,10 @@ class PatronArchiver {
             Self.logger.debug("PDF generated (\(pdfData.count) bytes)")
             job.progress = 0.6
 
+            // Release WebView — no longer needed after dumping
+            activeWebView = nil
+            activeJobID = nil
+
             // 8. Download media
             job.status = .downloading
             Self.logger.debug("Downloading media...")
@@ -155,7 +190,7 @@ class PatronArchiver {
             let downloadedMedia = try await MediaDownloader.download(
                 items: mediaItems,
                 to: tempDir,
-                dataStore: webViewPool.sharedDataStore
+                dataStore: dataStore
             )
             Self.logger.info("Downloaded \(downloadedMedia.count) media files")
             job.progress = 0.8
@@ -249,6 +284,10 @@ class PatronArchiver {
             return url
         }
         return settings.defaultSaveDirectory
+    }
+
+    var sharedDataStore: WKWebsiteDataStore {
+        webViewConfiguration.websiteDataStore
     }
 }
 

@@ -50,8 +50,11 @@ enum StorageManager {
         }
 
         // Set xattr on media files (already in staging from MediaDownloader)
+        let landingURL = metadata.redirectChain.last ?? metadata.originalURL
         for media in downloadedMedia {
-            try? XattrHelper.setWhereFroms([media.item.url], on: media.localURL.path)
+            var mediaWhereFroms = [landingURL, media.item.url]
+            mediaWhereFroms.append(contentsOf: media.downloadRedirects)
+            try? XattrHelper.setWhereFroms(mediaWhereFroms, on: media.localURL.path)
         }
 
         // Set xattr on staging folder
