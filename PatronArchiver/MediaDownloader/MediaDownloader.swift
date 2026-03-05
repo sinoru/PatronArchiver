@@ -18,7 +18,7 @@ enum MediaDownloader {
         try await withThrowingTaskGroup(of: DownloadedMedia?.self) { group in
             for (index, item) in items.enumerated() {
                 group.addTask {
-                    let request = await CookieHelper.configuredRequest(for: item.url, dataStore: dataStore)
+                    let request = await dataStore.urlRequest(for: item.url)
                     let redirectCollector = RedirectCollector()
                     let (tempURL, response) = try await URLSession.shared.download(
                         for: request,

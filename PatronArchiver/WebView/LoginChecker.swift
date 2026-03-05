@@ -10,7 +10,7 @@ enum LoginChecker {
         dataStore: WKWebsiteDataStore
     ) async -> AccountInfo? {
         let url = providerType.accountCheckURL
-        let request = await CookieHelper.configuredRequest(for: url, dataStore: dataStore)
+        let request = await dataStore.urlRequest(for: url)
 
         let delegate = NoRedirectDelegate()
         let session = URLSession(configuration: .ephemeral, delegate: delegate, delegateQueue: nil)

@@ -272,7 +272,7 @@ private func downloadResources(
         for url in urls {
             group.addTask {
                 do {
-                    let request = await CookieHelper.configuredRequest(for: url, dataStore: dataStore)
+                    let request = await dataStore.urlRequest(for: url)
                     let (data, response) = try await URLSession.shared.data(for: request)
                     let contentType = (response as? HTTPURLResponse)?
                         .value(forHTTPHeaderField: "Content-Type") ?? "application/octet-stream"
@@ -312,9 +312,7 @@ private func collectIframeResources(
                 } else {
                     // Cross-origin: download via URLSession
                     do {
-                        let request = await CookieHelper.configuredRequest(
-                            for: url, dataStore: dataStore
-                        )
+                        let request = await dataStore.urlRequest(for: url)
                         let (data, response) = try await URLSession.shared.data(for: request)
                         let contentType = (response as? HTTPURLResponse)?
                             .value(forHTTPHeaderField: "Content-Type") ?? "text/html"

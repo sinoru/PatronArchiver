@@ -55,7 +55,7 @@ URL 입력 → 사이트 식별(PatronServiceManager)
 
 - `@MainActor` — WebView 조작은 메인 스레드
 - View hierarchy에 부착되어야 렌더링됨 (숨김 윈도우 사용)
-- `WKHTTPCookieStore` ↔ `HTTPCookieStorage`는 자동 동기화 안 됨 → `CookieHelper`로 URLRequest에 쿠키 수동 설정
+- `WKHTTPCookieStore` ↔ `HTTPCookieStorage`는 자동 동기화 안 됨 → `WKWebsiteDataStore.urlRequest(for:)`로 쿠키 수동 설정
 
 ### Preloader 스크롤 전략
 
@@ -100,8 +100,8 @@ URL 입력 → 사이트 식별(PatronServiceManager)
 
 ## 코드 컨벤션
 
-- 인스턴스 불필요한 utility → `enum` (예: `Preloader`, `StorageManager`, `CookieHelper`)
-- WKWebView 기능 확장 → `extension WKWebView` (예: `mhtml(dataStore:)`, `fullPagePDF()`)
+- 특정 타입에 의존적인 기능 → `extension` (예: `WKWebView.mhtml(dataStore:)`, `WKWebsiteDataStore.urlRequest(for:)`)
+- 독립적인 utility → 관련 class/struct에 `static func`으로 배치
 - Protocol 공통 헬퍼 → protocol extension default implementation
 - JS: IIFE로 전역 오염 방지, 비동기는 `callAsyncJavaScript` + async IIFE
 - 로깅: `OSLog` `Logger`, subsystem `com.sinoru.PatronArchiver`, 개인정보는 `.private`
