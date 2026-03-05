@@ -74,13 +74,11 @@ struct MainView: View {
     }
 
     private func submitURL() {
-        let trimmed = urlText.trimmingCharacters(in: .whitespacesAndNewlines)
-        let lines = trimmed.components(separatedBy: .newlines).filter { !$0.isEmpty }
-        for line in lines {
-            let urlString = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard let url = URL(string: urlString), url.scheme != nil else { continue }
-            archiver.enqueue(url: url)
-        }
+        let urlString = urlText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard var components = URLComponents(string: urlString), components.scheme != nil else { return }
+        components.query = nil
+        components.fragment = nil
+        guard let url = components.url else { return }
         urlText = ""
     }
 }
