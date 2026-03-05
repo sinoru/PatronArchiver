@@ -28,6 +28,7 @@ class PatronArchiver {
     func cancelJob(_ job: ArchiveJob) {
         activeTasks[job.id]?.cancel()
         activeTasks[job.id] = nil
+        discardPendingSaveIfNeeded(job)
         if !job.status.isTerminal {
             job.status = .failed(CancellationError())
         }
@@ -39,11 +40,19 @@ class PatronArchiver {
     }
 
     func retryJob(_ job: ArchiveJob) {
+        discardPendingSaveIfNeeded(job)
         job.status = .queued
         job.progress = 0
         job.metadata = nil
         job.mediaItems = []
         startJobIfPossible(job)
+    }
+
+    private func discardPendingSaveIfNeeded(_ job: ArchiveJob) {
+        if let preparedSave = job.pendingSave {
+            StorageManager.discardPreparedSave(preparedSave)
+            job.pendingSave = nil
+        }
     }
 
     private func startJobIfPossible(_ job: ArchiveJob) {
@@ -145,19 +154,37 @@ class PatronArchiver {
             Self.logger.info("Downloaded \(downloadedMedia.count) media files")
             job.progress = 0.8
 
-            // 9. Save
+            // 9. Prepare save (write PDF/MHTML to staging + xattr)
             job.status = .saving
             let baseDir = resolveBaseDirectory()
-            Self.logger.debug("Saving to: \(baseDir.path(), privacy: .private)")
+            Self.logger.debug("Preparing save to: \(baseDir.path(), privacy: .private)")
+            let preparedSave = try StorageManager.prepareSave(
+                metadata: metadata,
+                pageTitle: pageTitle,
+                pdfData: pdfData,
+                mhtmlData: mhtmlData,
+                downloadedMedia: downloadedMedia,
+                stagingDirectory: tempDir,
+                baseDirectory: baseDir
+            )
+            job.progress = 0.9
+
+            // 10. Check if post folder already exists
+            let folderExists = BookmarkManager.withAccess(to: baseDir) {
+                StorageManager.postFolderExists(metadata: metadata, baseDirectory: baseDir)
+            }
+
+            if folderExists {
+                // Await user confirmation
+                Self.logger.info("Post folder already exists, awaiting overwrite confirmation")
+                job.pendingSave = preparedSave
+                job.status = .awaitingOverwriteConfirmation
+                return
+            }
+
+            // 11. Commit save
             try BookmarkManager.withAccess(to: baseDir) {
-                try StorageManager.save(
-                    metadata: metadata,
-                    pageTitle: pageTitle,
-                    pdfData: pdfData,
-                    mhtmlData: mhtmlData,
-                    downloadedMedia: downloadedMedia,
-                    to: baseDir
-                )
+                try StorageManager.commitSave(preparedSave, overwrite: false)
             }
             job.progress = 1.0
             job.status = .completed
@@ -166,6 +193,35 @@ class PatronArchiver {
             Self.logger.error("Job failed: \(error.localizedDescription, privacy: .public)")
             job.status = .failed(error)
         }
+    }
+
+    func confirmOverwrite(_ job: ArchiveJob) {
+        guard let preparedSave = job.pendingSave else { return }
+        job.status = .saving
+
+        do {
+            let baseDir = resolveBaseDirectory()
+            try BookmarkManager.withAccess(to: baseDir) {
+                try StorageManager.commitSave(preparedSave, overwrite: true)
+            }
+            job.pendingSave = nil
+            job.progress = 1.0
+            job.status = .completed
+            Self.logger.info("Overwrite confirmed and save committed")
+        } catch {
+            job.pendingSave = nil
+            Self.logger.error("Overwrite commit failed: \(error.localizedDescription, privacy: .public)")
+            job.status = .failed(error)
+        }
+    }
+
+    func skipOverwrite(_ job: ArchiveJob) {
+        if let preparedSave = job.pendingSave {
+            StorageManager.discardPreparedSave(preparedSave)
+        }
+        job.pendingSave = nil
+        job.status = .failed(JobError.overwriteDeclined)
+        Self.logger.info("Overwrite declined, staging discarded")
     }
 
     private func processNextQueuedJob() {
@@ -188,6 +244,7 @@ class PatronArchiver {
 enum JobError: LocalizedError {
     case unsupportedSite
     case loginRequired(String)
+    case overwriteDeclined
 
     var errorDescription: String? {
         switch self {
@@ -195,6 +252,8 @@ enum JobError: LocalizedError {
             "This site is not supported."
         case .loginRequired(let site):
             "Login required for \(site)."
+        case .overwriteDeclined:
+            "Overwrite declined by user."
         }
     }
 }

@@ -14,7 +14,21 @@ struct JobRowView: View {
                 Text(job.status.displayName)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                if !job.status.isTerminal {
+                if case .awaitingOverwriteConfirmation = job.status {
+                    HStack(spacing: 8) {
+                        Button("Overwrite") {
+                            archiver.confirmOverwrite(job)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.orange)
+                        .controlSize(.small)
+                        Button("Skip") {
+                            archiver.skipOverwrite(job)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                    }
+                } else if !job.status.isTerminal {
                     ProgressView(value: job.progress)
                 }
             }
@@ -47,6 +61,18 @@ struct JobRowView: View {
             }
         }
         .contextMenu {
+            if case .awaitingOverwriteConfirmation = job.status {
+                Button {
+                    archiver.confirmOverwrite(job)
+                } label: {
+                    Label("Overwrite", systemImage: "arrow.triangle.2.circlepath")
+                }
+                Button {
+                    archiver.skipOverwrite(job)
+                } label: {
+                    Label("Skip", systemImage: "forward")
+                }
+            }
             if case .failed = job.status {
                 Button {
                     archiver.retryJob(job)
@@ -88,6 +114,9 @@ struct JobRowView: View {
         case .queued:
             Image(systemName: "clock")
                 .foregroundStyle(.secondary)
+        case .awaitingOverwriteConfirmation:
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
         default:
             ProgressView()
                 #if os(macOS)
