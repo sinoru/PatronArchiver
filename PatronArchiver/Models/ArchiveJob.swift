@@ -4,15 +4,17 @@ import Foundation
 class ArchiveJob: Identifiable {
     let id: UUID
     let inputURL: URL
+    let provider: (any PatronServiceProvider)?
     var status: JobStatus
     var metadata: PostMetadata?
     var mediaItems: [MediaItem]
     var progress: Double
     var pendingSave: StorageManager.PreparedSave?
 
-    init(id: UUID = UUID(), inputURL: URL) {
+    init(id: UUID = UUID(), inputURL: URL, provider: (any PatronServiceProvider)? = nil) {
         self.id = id
         self.inputURL = inputURL
+        self.provider = provider
         self.status = .queued
         self.metadata = nil
         self.mediaItems = []

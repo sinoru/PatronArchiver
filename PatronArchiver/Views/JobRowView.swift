@@ -14,9 +14,8 @@ struct JobRowView: View {
                 Text(jobTitle)
                     .font(.body)
                     .lineLimit(1)
-                Text(job.status.displayName)
+                statusText
                     .font(.caption)
-                    .foregroundStyle(.secondary)
                 if case .awaitingOverwriteConfirmation = job.status {
                     HStack(spacing: 8) {
                         Button("Overwrite") {
@@ -101,9 +100,22 @@ struct JobRowView: View {
 
     private var jobTitle: String {
         if let metadata = job.metadata {
-            return "\(metadata.siteIdentifier.capitalized) - \(metadata.authorName) - \(metadata.title) (\(metadata.postID))"
+            return "\(metadata.authorName) - \(metadata.title) (\(metadata.postID))"
         }
         return job.inputURL.absoluteString
+    }
+
+    private var statusText: Text {
+        if let provider = job.provider {
+            return Text(type(of: provider).siteIdentifier.capitalized)
+                .foregroundStyle(.tertiary)
+            + Text(" · ")
+                .foregroundStyle(.tertiary)
+            + Text(job.status.displayName)
+                .foregroundStyle(.secondary)
+        }
+        return Text(job.status.displayName)
+            .foregroundStyle(.secondary)
     }
 
     @ViewBuilder

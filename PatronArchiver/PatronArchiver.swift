@@ -31,7 +31,8 @@ class PatronArchiver {
     }
 
     func enqueue(url: URL) {
-        let job = ArchiveJob(inputURL: url)
+        let provider = PatronServiceManager.shared.provider(for: url)
+        let job = ArchiveJob(inputURL: url, provider: provider)
         jobs.append(job)
         startJobIfPossible(job)
     }
@@ -111,7 +112,7 @@ class PatronArchiver {
         do {
             // 1. Identify service provider
             Self.logger.info("Starting job for URL: \(job.inputURL, privacy: .private)")
-            guard let provider = PatronServiceManager.shared.provider(for: job.inputURL) else {
+            guard let provider = job.provider else {
                 throw JobError.unsupportedSite
             }
             Self.logger.info("Matched provider: \(type(of: provider).siteIdentifier, privacy: .public)")
