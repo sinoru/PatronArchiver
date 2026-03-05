@@ -2,9 +2,8 @@ import Foundation
 import WebKit
 
 struct SubscribeStarProvider: PatronServiceProvider {
-    static let matchPatterns = [
-        "https://subscribestar.adult/posts/*",
-        "https://www.subscribestar.adult/posts/*",
+    static let matchPatterns: [any RegexComponent] = [
+        /https:\/\/(www\.)?subscribestar\.adult\/posts\/.+/,
     ]
     static let loginURL = URL(string: "https://subscribestar.adult/login")!
     static let accountCheckURL = URL(string: "https://subscribestar.adult/profile/settings")!

@@ -2,8 +2,8 @@ import Foundation
 import WebKit
 
 struct ItchProvider: PatronServiceProvider {
-    static let matchPatterns = [
-        "https://*.itch.io/*",
+    static let matchPatterns: [any RegexComponent] = [
+        /https:\/\/[^\/]+\.itch\.io\/.+/,
     ]
     static let loginURL = URL(string: "https://itch.io/login")!
     static let accountCheckURL = URL(string: "https://itch.io/dashboard")!

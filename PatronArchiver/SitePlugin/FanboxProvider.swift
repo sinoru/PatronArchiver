@@ -2,9 +2,9 @@ import Foundation
 import WebKit
 
 struct FanboxProvider: PatronServiceProvider {
-    static let matchPatterns = [
-        "https://*.fanbox.cc/posts/*",
-        "https://www.fanbox.cc/@*/posts/*",
+    static let matchPatterns: [any RegexComponent] = [
+        /https:\/\/[^\/]+\.fanbox\.cc\/posts\/.+/,
+        /https:\/\/www\.fanbox\.cc\/@[^\/]+\/posts\/.+/,
     ]
     static let loginURL = URL(string: "https://www.fanbox.cc/login")!
     static let accountCheckURL = URL(string: "https://www.fanbox.cc/user/settings")!

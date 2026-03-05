@@ -10,7 +10,7 @@ struct SettingsView: View {
     @State private var isCheckingLogin = false
 
     private var siteEntries: [SiteEntry] {
-        PatronServiceManager.shared.allProviderTypes.map { providerType in
+        PatronServiceManager.allProviderTypes.map { providerType in
             SiteEntry(
                 identifier: providerType.siteIdentifier,
                 loginURL: providerType.loginURL,
@@ -163,7 +163,7 @@ struct SettingsView: View {
         defer { isCheckingLogin = false }
 
         let dataStore = WKWebsiteDataStore.default()
-        let providerTypes = PatronServiceManager.shared.allProviderTypes
+        let providerTypes = PatronServiceManager.allProviderTypes
 
         await withTaskGroup(of: (String, AccountInfo?).self) { group in
             for providerType in providerTypes {

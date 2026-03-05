@@ -52,7 +52,7 @@ struct PatronServiceManagerTests {
     }
 
     @Test func allProviderTypesReturnsAllFive() {
-        let types = PatronServiceManager.shared.allProviderTypes
+        let types = PatronServiceManager.allProviderTypes
         #expect(types.count == 5)
     }
 }

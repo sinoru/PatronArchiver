@@ -6,7 +6,7 @@ struct AccountInfo: Sendable {
 }
 
 protocol PatronServiceProvider: Sendable {
-    static var matchPatterns: [String] { get }
+    static var matchPatterns: [any RegexComponent] { get }
     static var loginURL: URL { get }
     static var accountCheckURL: URL { get }
     static var siteIdentifier: String { get }

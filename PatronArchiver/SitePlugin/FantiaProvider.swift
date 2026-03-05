@@ -2,8 +2,8 @@ import Foundation
 import WebKit
 
 struct FantiaProvider: PatronServiceProvider {
-    static let matchPatterns = [
-        "https://fantia.jp/posts/*",
+    static let matchPatterns: [any RegexComponent] = [
+        /https:\/\/fantia\.jp\/posts\/.+/,
     ]
     static let loginURL = URL(string: "https://fantia.jp/sessions/signin")!
     static let accountCheckURL = URL(string: "https://fantia.jp/mypage")!
