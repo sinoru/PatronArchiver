@@ -1,4 +1,5 @@
 import Foundation
+import UniformTypeIdentifiers
 import WebKit
 
 enum MediaDownloader {
@@ -24,14 +25,12 @@ enum MediaDownloader {
                         delegate: redirectCollector
                     )
 
-                    let baseFilename = resolveFilename(
+                    let destinationURL = resolveDestinationURL(
                         for: item,
+                        in: directory,
                         response: response as? HTTPURLResponse,
                         index: index
                     )
-                    let filename = addIndexPrefix(baseFilename, index: index)
-                    let sanitized = FileNameSanitizer.sanitize(filename)
-                    let destinationURL = directory.appendingPathComponent(sanitized)
 
                     if FileManager.default.fileExists(atPath: destinationURL.path) {
                         try FileManager.default.removeItem(at: destinationURL)
@@ -54,14 +53,32 @@ enum MediaDownloader {
         }
     }
 
-    nonisolated private static func resolveFilename(
+    nonisolated private static func resolveDestinationURL(
         for item: MediaItem,
+        in directory: URL,
         response: HTTPURLResponse?,
         index: Int
-    ) -> String {
+    ) -> URL {
+        let prefix = String(format: "%02d", index + 1)
+        let baseURL = resolveBaseURL(for: item, in: directory, response: response, index: index)
+        let stem = FileNameSanitizer.sanitize(baseURL.deletingPathExtension().lastPathComponent)
+        var destinationURL = directory.appending(component: "\(prefix) - \(stem)")
+        let pathExtension = baseURL.pathExtension
+        if !pathExtension.isEmpty {
+            destinationURL.appendPathExtension(pathExtension)
+        }
+        return destinationURL
+    }
+
+    nonisolated private static func resolveBaseURL(
+        for item: MediaItem,
+        in directory: URL,
+        response: HTTPURLResponse?,
+        index: Int
+    ) -> URL {
         // 1. Use explicit filename if provided
         if let filename = item.filename, !filename.isEmpty {
-            return filename
+            return directory.appending(component: filename)
         }
 
         // 2. Try Content-Disposition header
@@ -72,30 +89,25 @@ enum MediaDownloader {
             if let semicolonIndex = filename.firstIndex(of: ";") {
                 filename = String(filename[..<semicolonIndex])
             }
-            if !filename.isEmpty { return filename }
+            if !filename.isEmpty {
+                return directory.appending(component: filename)
+            }
         }
 
         // 3. Fall back to URL last path component
         let lastComponent = item.url.lastPathComponent
         if !lastComponent.isEmpty && lastComponent != "/" {
-            return lastComponent
+            return directory.appending(component: lastComponent)
         }
 
-        // 4. Generate indexed filename
-        let ext = switch item.type {
-        case .image: "jpg"
-        case .video: "mp4"
-        case .audio: "mp3"
-        case .archive: "zip"
-        case .game: "zip"
-        case .other: "bin"
+        // 4. Generate indexed filename, using UTType for extension when possible
+        var fileURL = directory.appending(component: "\(item.type)_\(String(format: "%03d", index + 1))")
+        if let mimeType = response?.mimeType,
+           let utType = UTType(mimeType: mimeType),
+           let ext = utType.preferredFilenameExtension {
+            fileURL.appendPathExtension(ext)
         }
-        return "\(item.type)_\(String(format: "%03d", index + 1)).\(ext)"
-    }
-
-    nonisolated private static func addIndexPrefix(_ filename: String, index: Int) -> String {
-        let prefix = String(format: "%02d", index + 1)
-        return "\(prefix) - \(filename)"
+        return fileURL
     }
 }
 
