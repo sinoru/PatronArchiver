@@ -6,6 +6,7 @@ import UIKit
 import AppKit
 #endif
 
+@MainActor
 class WebViewPool {
     private var available: [WKWebView] = []
     private var inUse: Set<ObjectIdentifier> = []

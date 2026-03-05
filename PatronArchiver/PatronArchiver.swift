@@ -2,6 +2,7 @@ import Foundation
 import OSLog
 import WebKit
 
+@MainActor
 @Observable
 class PatronArchiver {
     private static let logger = Logger(subsystem: "com.sinoru.PatronArchiver", category: "PatronArchiver")
