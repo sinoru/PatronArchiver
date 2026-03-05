@@ -211,8 +211,8 @@ class PatronArchiver {
             job.progress = 0.9
 
             // 10. Check if post folder already exists
-            let folderExists = baseDir.withSecurityScopedAccess {
-                StorageManager.postFolderExists(metadata: metadata, baseDirectory: baseDir)
+            let folderExists = try baseDir.withSecurityScopedAccess {
+                try StorageManager.postFolderExists(metadata: metadata, baseDirectory: baseDir)
             }
 
             if folderExists {

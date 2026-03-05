@@ -25,7 +25,7 @@ enum MediaDownloader {
                         delegate: redirectCollector
                     )
 
-                    let destinationURL = resolveDestinationURL(
+                    let destinationURL = try resolveDestinationURL(
                         for: item,
                         in: directory,
                         response: response as? HTTPURLResponse,
@@ -58,10 +58,12 @@ enum MediaDownloader {
         in directory: URL,
         response: HTTPURLResponse?,
         index: Int
-    ) -> URL {
+    ) throws -> URL {
         let prefix = String(format: "%02d", index + 1)
         let baseURL = resolveBaseURL(for: item, in: directory, response: response, index: index)
-        let stem = FileNameSanitizer.sanitize(baseURL.deletingPathExtension().lastPathComponent)
+        guard let stem = FileNameSanitizer.sanitize(baseURL.deletingPathExtension().lastPathComponent) else {
+            throw FileNameSanitizer.FileNameSanitizerError.emptyFileName
+        }
         var destinationURL = directory.appending(component: "\(prefix) - \(stem)")
         let pathExtension = baseURL.pathExtension
         if !pathExtension.isEmpty {

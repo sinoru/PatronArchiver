@@ -28,8 +28,10 @@ enum StorageManager {
         stagingDirectory: URL,
         baseDirectory: URL
     ) throws -> PreparedSave {
-        let finalDirectory = makePostFolderURL(metadata: metadata, baseDirectory: baseDirectory)
-        let sanitizedPageTitle = FileNameSanitizer.sanitize(pageTitle)
+        let finalDirectory = try makePostFolderURL(metadata: metadata, baseDirectory: baseDirectory)
+        guard let sanitizedPageTitle = FileNameSanitizer.sanitize(pageTitle) else {
+            throw FileNameSanitizer.FileNameSanitizerError.emptyFileName
+        }
         let whereFroms = metadata.redirectChain.isEmpty ? [metadata.originalURL] : metadata.redirectChain
 
         logger.info("Preparing save in staging: \(stagingDirectory.path(), privacy: .private)")
@@ -89,8 +91,8 @@ enum StorageManager {
 
     // MARK: - Check if post folder already exists
 
-    nonisolated static func postFolderExists(metadata: PostMetadata, baseDirectory: URL) -> Bool {
-        let postFolder = makePostFolderURL(metadata: metadata, baseDirectory: baseDirectory)
+    nonisolated static func postFolderExists(metadata: PostMetadata, baseDirectory: URL) throws -> Bool {
+        let postFolder = try makePostFolderURL(metadata: metadata, baseDirectory: baseDirectory)
         return FileManager.default.fileExists(atPath: postFolder.path(percentEncoded: false))
     }
 
@@ -105,12 +107,16 @@ enum StorageManager {
         }
     }
 
-    nonisolated static func makePostFolderURL(metadata: PostMetadata, baseDirectory: URL) -> URL {
-        let authorFolder = FileNameSanitizer.sanitize(metadata.authorName)
+    nonisolated static func makePostFolderURL(metadata: PostMetadata, baseDirectory: URL) throws -> URL {
+        guard let authorFolder = FileNameSanitizer.sanitize(metadata.authorName) else {
+            throw FileNameSanitizer.FileNameSanitizerError.emptyFileName
+        }
         let dateString = dateFormatter.string(from: metadata.modifiedAt ?? metadata.createdAt)
-        let postFolder = FileNameSanitizer.sanitize(
+        guard let postFolder = FileNameSanitizer.sanitize(
             "\(metadata.postID) - \(metadata.title) (\(dateString))"
-        )
+        ) else {
+            throw FileNameSanitizer.FileNameSanitizerError.emptyFileName
+        }
         return baseDirectory
             .appendingPathComponent(authorFolder)
             .appendingPathComponent(postFolder)
