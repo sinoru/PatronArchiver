@@ -4,6 +4,7 @@ struct MainView: View {
     @State var archiver: PatronArchiver
     @State var settings: AppSettings
     @State private var urlText = ""
+    @State private var isResolving = false
     #if os(iOS)
     @State private var showSettings = false
     #endif
@@ -21,13 +22,17 @@ struct MainView: View {
                         TextField("Enter post URL...", text: $urlText)
                             .keyboardType(.URL)
                             .textInputAutocapitalization(.never)
-                            .onSubmit { submitURL() }
+                            .onSubmit { Task { await submitURL() } }
                     }
                     ToolbarItem(placement: .bottomBar) {
-                        Button { submitURL() } label: {
-                            Image(systemName: "plus")
+                        if isResolving {
+                            ProgressView()
+                        } else {
+                            Button { Task { await submitURL() } } label: {
+                                Image(systemName: "plus")
+                            }
+                            .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
-                        .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
@@ -40,14 +45,19 @@ struct MainView: View {
                     ToolbarItem(placement: .principal) {
                         TextField("Enter post URL...", text: $urlText)
                             .textFieldStyle(.roundedBorder)
-                            .onSubmit { submitURL() }
+                            .onSubmit { Task { await submitURL() } }
                             .frame(width: 300)
                     }
                     ToolbarItem(placement: .principal) {
-                        Button { submitURL() } label: {
-                            Image(systemName: "plus")
+                        if isResolving {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Button { Task { await submitURL() } } label: {
+                                Image(systemName: "plus")
+                            }
+                            .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                         }
-                        .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     #endif
                 }
@@ -73,12 +83,21 @@ struct MainView: View {
         }
     }
 
-    private func submitURL() {
+    private func submitURL() async {
         let urlString = urlText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard var components = URLComponents(string: urlString), components.scheme != nil else { return }
+        guard let inputURL = URL(string: urlString), inputURL.scheme != nil else { return }
+
+        isResolving = true
+        defer { isResolving = false }
+
+        let resolved = await URLResolver.resolve(inputURL)
+
+        guard var components = URLComponents(url: resolved, resolvingAgainstBaseURL: false) else { return }
         components.query = nil
         components.fragment = nil
         guard let url = components.url else { return }
+
+        archiver.enqueue(url: url)
         urlText = ""
     }
 }
