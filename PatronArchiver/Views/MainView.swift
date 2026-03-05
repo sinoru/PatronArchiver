@@ -24,9 +24,10 @@ struct MainView: View {
                             .onSubmit { submitURL() }
                     }
                     ToolbarItem(placement: .bottomBar) {
-                        Button("Archive") { submitURL() }
-                            .buttonStyle(.borderedProminent)
-                            .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        Button { submitURL() } label: {
+                            Image(systemName: "plus")
+                        }
+                        .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     ToolbarItem(placement: .topBarTrailing) {
                         Button {
@@ -43,10 +44,10 @@ struct MainView: View {
                             .frame(width: 300)
                     }
                     ToolbarItem(placement: .principal) {
-                        Button("Archive") { submitURL() }
-                            .buttonStyle(.borderedProminent)
-                            .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                            .keyboardShortcut(.return, modifiers: .command)
+                        Button { submitURL() } label: {
+                            Image(systemName: "plus")
+                        }
+                        .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
                     #endif
                 }
