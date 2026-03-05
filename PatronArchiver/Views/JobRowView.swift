@@ -107,12 +107,13 @@ struct JobRowView: View {
 
     private var statusText: Text {
         if let provider = job.provider {
-            return Text(type(of: provider).siteIdentifier.capitalized)
+            let site = Text(type(of: provider).siteIdentifier.capitalized)
                 .foregroundStyle(.tertiary)
-            + Text(" · ")
+            let separator = Text(" · ")
                 .foregroundStyle(.tertiary)
-            + Text(job.status.displayName)
+            let status = Text(job.status.displayName)
                 .foregroundStyle(.secondary)
+            return Text("\(site)\(separator)\(status)")
         }
         return Text(job.status.displayName)
             .foregroundStyle(.secondary)
