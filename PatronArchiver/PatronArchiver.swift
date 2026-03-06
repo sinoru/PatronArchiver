@@ -187,12 +187,12 @@ class PatronArchiver {
             // MHTML + PDF on WebView (sequential, needs WebView)
             Self.logger.debug("Generating MHTML...")
             let mhtmlData = try await webView.mhtml(dataStore: dataStore)
-            Self.logger.debug("MHTML generated (\(mhtmlData.count) bytes)")
+            Self.logger.debug("MHTML generated (\(mhtmlData.count.formatted(.byteCount(style: .binary, spellsOutZero: false, includesActualByteCount: true))))")
             job.progress.completedUnitCount = 50
 
             Self.logger.debug("Generating PDF...")
             let pdfData = try await webView.fullPagePDF()
-            Self.logger.debug("PDF generated (\(pdfData.count) bytes)")
+            Self.logger.debug("PDF generated (\(pdfData.count.formatted(.byteCount(style: .binary, spellsOutZero: false, includesActualByteCount: true))))")
             let alreadyCompleted = completedMediaCount.withLock { $0 }
             job.progress.completedUnitCount = 60 + Int64(alreadyCompleted * 20 / max(totalMedia, 1))
 
