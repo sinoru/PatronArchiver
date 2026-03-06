@@ -42,6 +42,13 @@ enum JobStatus {
         }
     }
 
+    var isInProgress: Bool {
+        switch self {
+        case .loading, .preloading, .dumping, .downloading, .saving: true
+        default: false
+        }
+    }
+
     var displayName: String {
         switch self {
         case .queued: "Queued"

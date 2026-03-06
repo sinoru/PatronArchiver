@@ -27,8 +27,9 @@ struct JobRowView: View {
                         .buttonStyle(.bordered)
                         .controlSize(.small)
                     }
-                } else if !job.status.isTerminal {
-                    ProgressView(job.progress)
+                } else if job.status.isInProgress {
+                    ProgressView(value: Double(job.progress.completedUnitCount),
+                                 total: Double(job.progress.totalUnitCount))
                 }
             }
             Spacer()
