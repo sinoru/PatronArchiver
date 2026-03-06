@@ -109,10 +109,6 @@ struct MainView: View {
         let scale = previewHeight / renderSize.height
         let previewWidth = renderSize.width * scale
 
-        #if os(macOS)
-        Divider()
-        #endif
-
         ArchiveWebViewRepresentable(webView: webView)
             .frame(width: renderSize.width, height: renderSize.height)
             .scaleEffect(scale, anchor: .topLeading)
