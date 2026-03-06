@@ -1,5 +1,6 @@
 import WebKit
 
+@MainActor
 class RedirectTracker: NSObject, WKNavigationDelegate {
     private(set) var redirectChain: [URL] = []
     private var continuation: CheckedContinuation<[URL], any Error>?
