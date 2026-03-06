@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 import WebKit
 #if os(iOS)
-import BackgroundTasks
+@preconcurrency import BackgroundTasks
 #endif
 
 @MainActor
