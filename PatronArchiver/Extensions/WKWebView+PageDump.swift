@@ -387,50 +387,54 @@ private func assembleMHTML(
     let boundary = "----=_Part_\(UUID().uuidString)"
     let dateString = MHTMLDateFormatter.shared.string(from: Date())
 
-    var mhtml = ""
+    var mhtml = Data()
+
+    func append(_ string: String) {
+        mhtml.append(contentsOf: string.utf8)
+    }
 
     // MHTML header (RFC 2557 + Chromium conventions)
-    mhtml += "From: <Saved by PatronArchiver>\r\n"
-    mhtml += "Snapshot-Content-Location: \(pageURL.absoluteString)\r\n"
-    mhtml += "Subject: \(title.isEmpty ? pageURL.absoluteString : title)\r\n"
-    mhtml += "Date: \(dateString)\r\n"
-    mhtml += "MIME-Version: 1.0\r\n"
-    mhtml += "Content-Type: multipart/related; type=\"text/html\"; boundary=\"\(boundary)\"\r\n"
-    mhtml += "\r\n"
+    append("From: <Saved by PatronArchiver>\r\n")
+    append("Snapshot-Content-Location: \(pageURL.absoluteString)\r\n")
+    append("Subject: \(title.isEmpty ? pageURL.absoluteString : title)\r\n")
+    append("Date: \(dateString)\r\n")
+    append("MIME-Version: 1.0\r\n")
+    append("Content-Type: multipart/related; type=\"text/html\"; boundary=\"\(boundary)\"\r\n")
+    append("\r\n")
 
     // HTML part
-    mhtml += "--\(boundary)\r\n"
-    mhtml += "Content-Type: text/html; charset=\"utf-8\"\r\n"
-    mhtml += "Content-Transfer-Encoding: quoted-printable\r\n"
-    mhtml += "Content-Location: \(pageURL.absoluteString)\r\n"
-    mhtml += "\r\n"
-    mhtml += quotedPrintableEncode(html)
-    mhtml += "\r\n"
+    append("--\(boundary)\r\n")
+    append("Content-Type: text/html; charset=\"utf-8\"\r\n")
+    append("Content-Transfer-Encoding: quoted-printable\r\n")
+    append("Content-Location: \(pageURL.absoluteString)\r\n")
+    append("\r\n")
+    mhtml.append(quotedPrintableEncode(html))
+    append("\r\n")
 
     // Resource parts
     for resource in resources {
-        mhtml += "--\(boundary)\r\n"
-        mhtml += "Content-Type: \(resource.contentType)\r\n"
+        append("--\(boundary)\r\n")
+        append("Content-Type: \(resource.contentType)\r\n")
 
         if isTextBasedContentType(resource.contentType),
            let text = String(data: resource.data, encoding: .utf8)
         {
-            mhtml += "Content-Transfer-Encoding: quoted-printable\r\n"
-            mhtml += "Content-Location: \(resource.url.absoluteString)\r\n"
-            mhtml += "\r\n"
-            mhtml += quotedPrintableEncode(text)
+            append("Content-Transfer-Encoding: quoted-printable\r\n")
+            append("Content-Location: \(resource.url.absoluteString)\r\n")
+            append("\r\n")
+            mhtml.append(quotedPrintableEncode(text))
         } else {
-            mhtml += "Content-Transfer-Encoding: base64\r\n"
-            mhtml += "Content-Location: \(resource.url.absoluteString)\r\n"
-            mhtml += "\r\n"
-            mhtml += resource.data.base64EncodedString(options: .lineLength76Characters)
+            append("Content-Transfer-Encoding: base64\r\n")
+            append("Content-Location: \(resource.url.absoluteString)\r\n")
+            append("\r\n")
+            mhtml.append(resource.data.base64EncodedData(options: .lineLength76Characters))
         }
-        mhtml += "\r\n"
+        append("\r\n")
     }
 
-    mhtml += "--\(boundary)--\r\n"
+    append("--\(boundary)--\r\n")
 
-    return Data(mhtml.utf8)
+    return mhtml
 }
 
 /// Determines whether the given Content-Type should use quoted-printable encoding.
@@ -451,9 +455,14 @@ nonisolated private func isTextBasedContentType(_ contentType: String) -> Bool {
 
 // MARK: - Quoted-Printable Encoding (RFC 2045)
 
-nonisolated private func quotedPrintableEncode(_ string: String) -> String {
+private nonisolated let crlf: [UInt8] = [0x0D, 0x0A]
+private nonisolated let softLineBreak: [UInt8] = [0x3D, 0x0D, 0x0A] // "=\r\n"
+private nonisolated let hexDigits: [UInt8] = Array("0123456789ABCDEF".utf8)
+
+nonisolated private func quotedPrintableEncode(_ string: String) -> Data {
     let bytes = Array(string.utf8)
-    var result = ""
+    var result = Data()
+    result.reserveCapacity(bytes.count + bytes.count / 10)
     var lineLength = 0
     let count = bytes.count
 
@@ -463,7 +472,7 @@ nonisolated private func quotedPrintableEncode(_ string: String) -> String {
 
         // CR LF — emit line break and reset
         if byte == 0x0D, i + 1 < count, bytes[i + 1] == 0x0A {
-            result += "\r\n"
+            result.append(contentsOf: crlf)
             lineLength = 0
             i += 2
             continue
@@ -471,7 +480,7 @@ nonisolated private func quotedPrintableEncode(_ string: String) -> String {
 
         // Bare LF — normalize to CRLF
         if byte == 0x0A {
-            result += "\r\n"
+            result.append(contentsOf: crlf)
             lineLength = 0
             i += 1
             continue
@@ -479,37 +488,37 @@ nonisolated private func quotedPrintableEncode(_ string: String) -> String {
 
         // Bare CR — normalize to CRLF
         if byte == 0x0D {
-            result += "\r\n"
+            result.append(contentsOf: crlf)
             lineLength = 0
             i += 1
             continue
         }
 
         // Determine the encoded form
-        let encoded: String
+        let encoded: [UInt8]
         if byte == 0x3D { // '='
-            encoded = "=3D"
+            encoded = [0x3D, 0x33, 0x44] // "=3D"
         } else if byte == 0x20 || byte == 0x09 { // space or tab
             // RFC 2045: trailing whitespace at line end must be encoded
             let isTrailing = isTrailingWhitespace(bytes: bytes, from: i)
             if isTrailing {
-                encoded = byte == 0x20 ? "=20" : "=09"
+                encoded = [0x3D, hexDigits[Int(byte >> 4)], hexDigits[Int(byte & 0x0F)]]
             } else {
-                encoded = String(UnicodeScalar(byte))
+                encoded = [byte]
             }
         } else if byte >= 0x21, byte <= 0x7E {
-            encoded = String(UnicodeScalar(byte))
+            encoded = [byte]
         } else {
-            encoded = String(format: "=%02X", byte)
+            encoded = [0x3D, hexDigits[Int(byte >> 4)], hexDigits[Int(byte & 0x0F)]]
         }
 
         // Soft line break if needed (max 76 chars including soft break "=")
         if lineLength + encoded.count > 75 {
-            result += "=\r\n"
+            result.append(contentsOf: softLineBreak)
             lineLength = 0
         }
 
-        result += encoded
+        result.append(contentsOf: encoded)
         lineLength += encoded.count
         i += 1
     }
