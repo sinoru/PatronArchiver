@@ -10,9 +10,10 @@ import BackgroundTasks
 class PatronArchiver {
     private static let logger = Logger(subsystem: "com.sinoru.PatronArchiver", category: "PatronArchiver")
     private(set) var jobs: [ArchiveJob] = []
-    private(set) var activeWebView: WKWebView?
-    private(set) var activeJobID: UUID?
-    private let webViewConfiguration: WKWebViewConfiguration
+    var webView: WKWebView? {
+        didSet { processNextQueuedJob() }
+    }
+    let webViewConfiguration: WKWebViewConfiguration
     private let settings: AppSettings
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
 
@@ -49,10 +50,6 @@ class PatronArchiver {
     func cancelJob(_ job: ArchiveJob) {
         activeTasks[job.id]?.cancel()
         activeTasks[job.id] = nil
-        if activeJobID == job.id {
-            activeWebView = nil
-            activeJobID = nil
-        }
         discardPendingSaveIfNeeded(job)
         if !job.status.isTerminal {
             job.status = .failed(CancellationError())
@@ -82,7 +79,7 @@ class PatronArchiver {
     }
 
     private func startJobIfPossible(_ job: ArchiveJob) {
-        guard activeTasks.isEmpty else { return }
+        guard activeTasks.isEmpty, webView != nil else { return }
 
         let task = Task {
             await processJob(job)
@@ -99,31 +96,12 @@ class PatronArchiver {
     }
 
     private func processJob(_ job: ArchiveJob) async {
-        let webView = WKWebView(
-            frame: CGRect(origin: .zero, size: renderSize),
-            configuration: webViewConfiguration
-        )
-        activeWebView = webView
-        activeJobID = job.id
+        guard let webView else { return }
 
         defer {
-            activeWebView = nil
-            activeJobID = nil
+            webView.load(URLRequest(url: URL(string: "about:blank")!))
             activeTasks[job.id] = nil
             processNextQueuedJob()
-        }
-
-        // Wait for SwiftUI to attach the WebView to the view hierarchy
-        if webView.window == nil {
-            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-                var observation: NSKeyValueObservation?
-                observation = webView.observe(\.window, options: [.new]) { webView, _ in
-                    guard webView.window != nil else { return }
-                    observation?.invalidate()
-                    observation = nil
-                    continuation.resume()
-                }
-            }
         }
 
         do {
@@ -200,10 +178,6 @@ class PatronArchiver {
             let pdfData = try await webView.fullPagePDF()
             Self.logger.debug("PDF generated (\(pdfData.count) bytes)")
             job.progress.completedUnitCount = 60
-
-            // Release WebView — no longer needed after dumping
-            activeWebView = nil
-            activeJobID = nil
 
             // 8. Download media
             try Task.checkCancellation()

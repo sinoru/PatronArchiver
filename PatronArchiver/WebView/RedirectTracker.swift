@@ -30,17 +30,20 @@ class RedirectTracker: NSObject, WKNavigationDelegate {
         if let finalURL = webView.url, redirectChain.last != finalURL {
             redirectChain.append(finalURL)
         }
+        webView.navigationDelegate = nil
         let chain = redirectChain
         continuation?.resume(returning: chain)
         continuation = nil
     }
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
+        webView.navigationDelegate = nil
         continuation?.resume(throwing: error)
         continuation = nil
     }
 
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: any Error) {
+        webView.navigationDelegate = nil
         continuation?.resume(throwing: error)
         continuation = nil
     }
