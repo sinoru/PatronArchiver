@@ -163,12 +163,22 @@ class PatronArchiver {
             job.progress.completedUnitCount = 40
             Self.logger.info("Found \(mediaItems.count) media items")
 
-            // 7. Page dump (MHTML first to preserve original HTML, then PDF)
+            // 7. Page dump + media download (concurrent)
             try Task.checkCancellation()
             job.status = .dumping
 
             let dataStore = sharedDataStore
+            let tempDir = try StorageManager.temporaryDownloadDirectory()
 
+            // Start media download in background (no WebView dependency)
+            Self.logger.debug("Starting media download concurrently...")
+            async let mediaResult = MediaDownloader.download(
+                items: mediaItems,
+                to: tempDir,
+                dataStore: dataStore
+            )
+
+            // MHTML + PDF on WebView (sequential, needs WebView)
             Self.logger.debug("Generating MHTML...")
             let mhtmlData = try await webView.mhtml(dataStore: dataStore)
             Self.logger.debug("MHTML generated (\(mhtmlData.count) bytes)")
@@ -179,16 +189,8 @@ class PatronArchiver {
             Self.logger.debug("PDF generated (\(pdfData.count) bytes)")
             job.progress.completedUnitCount = 60
 
-            // 8. Download media
-            try Task.checkCancellation()
-            job.status = .downloading
-            Self.logger.debug("Downloading media...")
-            let tempDir = try StorageManager.temporaryDownloadDirectory()
-            let downloadedMedia = try await MediaDownloader.download(
-                items: mediaItems,
-                to: tempDir,
-                dataStore: dataStore
-            )
+            // Await media download completion
+            let downloadedMedia = try await mediaResult
             Self.logger.info("Downloaded \(downloadedMedia.count) media files")
             job.progress.completedUnitCount = 80
 
