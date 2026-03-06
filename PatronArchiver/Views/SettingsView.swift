@@ -201,8 +201,14 @@ struct SettingsView: View {
         guard let host = entry.loginURL.host() else { return }
 
         for cookie in allCookies {
-            let domain = cookie.domain.hasPrefix(".") ? String(cookie.domain.dropFirst()) : cookie.domain
-            if host.hasSuffix(domain) {
+            let matches: Bool
+            if cookie.domain.hasPrefix(".") {
+                let domain = String(cookie.domain.dropFirst())
+                matches = host == domain || host.hasSuffix("." + domain)
+            } else {
+                matches = host == cookie.domain
+            }
+            if matches {
                 await cookieStore.deleteCookie(cookie)
             }
         }

@@ -6,8 +6,12 @@ extension WKWebsiteDataStore {
         let allCookies = await httpCookieStore.allCookies()
         guard let host = url.host() else { return [] }
         return allCookies.filter { cookie in
-            let domain = cookie.domain.hasPrefix(".") ? String(cookie.domain.dropFirst()) : cookie.domain
-            return host.hasSuffix(domain)
+            if cookie.domain.hasPrefix(".") {
+                let domain = String(cookie.domain.dropFirst())
+                return host == domain || host.hasSuffix("." + domain)
+            } else {
+                return host == cookie.domain
+            }
         }
     }
 
