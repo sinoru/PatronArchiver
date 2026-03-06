@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 import os
 import WebKit
@@ -252,14 +253,12 @@ class PatronArchiver {
     private func loadBlankPage(in webView: WKWebView) async {
         webView.load(URLRequest(url: URL(string: "about:blank")!))
         guard webView.isLoading else { return }
-        await withCheckedContinuation { continuation in
-            var observation: NSKeyValueObservation?
-            observation = webView.observe(\.isLoading) { webView, _ in
-                if !webView.isLoading {
-                    observation?.invalidate()
-                    observation = nil
-                    continuation.resume()
-                }
+        for await isLoading in webView.publisher(for: \.isLoading)
+            .buffer(size: .max, prefetch: .byRequest, whenFull: .dropOldest)
+            .values
+        {
+            if !isLoading {
+                break
             }
         }
     }
