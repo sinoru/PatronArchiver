@@ -15,10 +15,16 @@ enum MediaDownloader {
         to directory: URL,
         dataStore: WKWebsiteDataStore
     ) async throws -> [DownloadedMedia] {
-        try await withThrowingTaskGroup(of: DownloadedMedia?.self) { group in
+        // Batch urlRequest creation to minimize main actor hops
+        var requests: [URL: URLRequest] = [:]
+        for item in items {
+            requests[item.url] = await dataStore.urlRequest(for: item.url)
+        }
+
+        return try await withThrowingTaskGroup(of: DownloadedMedia?.self) { group in
             for (index, item) in items.enumerated() {
+                let request = requests[item.url]!
                 group.addTask {
-                    let request = await dataStore.urlRequest(for: item.url)
                     let redirectCollector = RedirectCollector()
                     let (tempURL, response) = try await URLSession.shared.download(
                         for: request,

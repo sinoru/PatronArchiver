@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 @Observable
 class AppSettings {
     var renderWidth: Int {

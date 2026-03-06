@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 @Observable
 class ArchiveJob: Identifiable {
     let id: UUID

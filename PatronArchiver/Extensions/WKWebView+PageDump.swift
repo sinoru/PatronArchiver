@@ -28,7 +28,7 @@ extension WKWebView {
 
         // 3. Second-pass: extract CSS subresource URLs and download missing ones
         let alreadyDownloaded = Set(firstPassResources.map(\.url.absoluteString))
-        let cssSubresourceURLs = extractCSSSubresourceURLs(from: firstPassResources)
+        let cssSubresourceURLs = await extractCSSSubresourceURLs(from: firstPassResources)
             .filter { !alreadyDownloaded.contains($0.absoluteString) }
 
         let secondPassResources = await downloadResources(
@@ -45,7 +45,7 @@ extension WKWebView {
         let allResources = firstPassResources + secondPassResources + iframeResources
 
         // 5. Assemble MHTML
-        return assembleMHTML(
+        return await assembleMHTML(
             pageURL: pageURL,
             title: collectResult.title,
             html: collectResult.html,
@@ -268,11 +268,17 @@ private func downloadResources(
     urls: [URL],
     dataStore: WKWebsiteDataStore
 ) async -> [CollectedResource] {
-    await withTaskGroup(of: CollectedResource?.self) { group in
+    // Batch urlRequest creation to minimize main actor hops
+    var requests: [URL: URLRequest] = [:]
+    for url in urls {
+        requests[url] = await dataStore.urlRequest(for: url)
+    }
+
+    return await withTaskGroup(of: CollectedResource?.self) { group in
         for url in urls {
+            let request = requests[url]!
             group.addTask {
                 do {
-                    let request = await dataStore.urlRequest(for: url)
                     let (data, response) = try await URLSession.shared.data(for: request)
                     let contentType = (response as? HTTPURLResponse)?
                         .value(forHTTPHeaderField: "Content-Type") ?? "application/octet-stream"
@@ -290,19 +296,29 @@ private func downloadResources(
     }
 }
 
-// MARK: - Iframe Sub-Document Collection
+// MARK: - Iframe Sub-document Collection
 
 @concurrent
 private func collectIframeResources(
     iframes: [IframeInfo],
     dataStore: WKWebsiteDataStore
 ) async -> [CollectedResource] {
-    await withTaskGroup(of: CollectedResource?.self) { group in
-        for iframe in iframes {
-            group.addTask {
-                guard let url = URL(string: iframe.url) else { return nil }
+    // Batch urlRequest creation for cross-origin iframes
+    var requestsBuilder: [String: URLRequest] = [:]
+    for iframe in iframes where iframe.html == nil {
+        guard let url = URL(string: iframe.url) else { continue }
+        requestsBuilder[iframe.url] = await dataStore.urlRequest(for: url)
+    }
+    let requests = requestsBuilder
 
-                if let html = iframe.html {
+    return await withTaskGroup(of: CollectedResource?.self) { group in
+        for iframe in iframes {
+            let iframeURL = iframe.url
+            let iframeHTML = iframe.html
+            group.addTask {
+                guard let url = URL(string: iframeURL) else { return nil }
+
+                if let html = iframeHTML {
                     // Same-origin: already captured from contentDocument
                     return CollectedResource(
                         url: url,
@@ -311,8 +327,8 @@ private func collectIframeResources(
                     )
                 } else {
                     // Cross-origin: download via URLSession
+                    guard let request = requests[iframeURL] else { return nil }
                     do {
-                        let request = await dataStore.urlRequest(for: url)
                         let (data, response) = try await URLSession.shared.data(for: request)
                         let contentType = (response as? HTTPURLResponse)?
                             .value(forHTTPHeaderField: "Content-Type") ?? "text/html"
@@ -335,7 +351,8 @@ private func collectIframeResources(
 
 // MARK: - CSS Subresource Extraction (2nd Pass)
 
-private func extractCSSSubresourceURLs(from resources: [CollectedResource]) -> [URL] {
+@concurrent
+private func extractCSSSubresourceURLs(from resources: [CollectedResource]) async -> [URL] {
     let cssURLPattern = /url\(["']?([^"')]+)["']?\)/
 
     var discovered: [URL] = []
@@ -360,12 +377,13 @@ private func extractCSSSubresourceURLs(from resources: [CollectedResource]) -> [
 
 // MARK: - MHTML Assembly
 
+@concurrent
 private func assembleMHTML(
     pageURL: URL,
     title: String,
     html: String,
     resources: [CollectedResource]
-) -> Data {
+) async -> Data {
     let boundary = "----=_Part_\(UUID().uuidString)"
     let dateString = MHTMLDateFormatter.shared.string(from: Date())
 
@@ -416,7 +434,7 @@ private func assembleMHTML(
 }
 
 /// Determines whether the given Content-Type should use quoted-printable encoding.
-private func isTextBasedContentType(_ contentType: String) -> Bool {
+nonisolated private func isTextBasedContentType(_ contentType: String) -> Bool {
     let mimeType = contentType
         .split(separator: ";").first?
         .trimmingCharacters(in: .whitespaces)
@@ -433,7 +451,7 @@ private func isTextBasedContentType(_ contentType: String) -> Bool {
 
 // MARK: - Quoted-Printable Encoding (RFC 2045)
 
-private func quotedPrintableEncode(_ string: String) -> String {
+nonisolated private func quotedPrintableEncode(_ string: String) -> String {
     let bytes = Array(string.utf8)
     var result = ""
     var lineLength = 0
@@ -500,7 +518,7 @@ private func quotedPrintableEncode(_ string: String) -> String {
 }
 
 /// Check if the whitespace byte at `from` is trailing (followed only by whitespace until line end or EOF).
-private func isTrailingWhitespace(bytes: [UInt8], from index: Int) -> Bool {
+nonisolated private func isTrailingWhitespace(bytes: [UInt8], from index: Int) -> Bool {
     var j = index + 1
     while j < bytes.count {
         let b = bytes[j]
@@ -519,7 +537,7 @@ private func isTrailingWhitespace(bytes: [UInt8], from index: Int) -> Bool {
 // MARK: - RFC 2822 Date Formatter
 
 private enum MHTMLDateFormatter {
-    static let shared: DateFormatter = {
+    nonisolated static let shared: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"
