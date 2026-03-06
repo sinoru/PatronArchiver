@@ -15,11 +15,21 @@ class AppSettings {
         didSet { UserDefaults.standard.set(savedDirectoryBookmark, forKey: "savedDirectoryBookmark") }
     }
 
+    var includesWhereFroms: Bool {
+        didSet { UserDefaults.standard.set(includesWhereFroms, forKey: "includesWhereFroms") }
+    }
+
+    var includesFinderTags: Bool {
+        didSet { UserDefaults.standard.set(includesFinderTags, forKey: "includesFinderTags") }
+    }
+
     init() {
         let defaults = UserDefaults.standard
         self.renderWidth = defaults.object(forKey: "renderWidth") as? Int ?? 1920
         self.scrollDelay = defaults.object(forKey: "scrollDelay") as? Double ?? 300
         self.savedDirectoryBookmark = defaults.data(forKey: "savedDirectoryBookmark")
+        self.includesWhereFroms = defaults.object(forKey: "includesWhereFroms") as? Bool ?? true
+        self.includesFinderTags = defaults.object(forKey: "includesFinderTags") as? Bool ?? true
     }
 
     var defaultSaveDirectory: URL {

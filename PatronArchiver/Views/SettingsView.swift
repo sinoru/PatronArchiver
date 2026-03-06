@@ -81,6 +81,11 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Metadata") {
+                Toggle("Where Froms", isOn: $settings.includesWhereFroms)
+                Toggle("Finder Tags", isOn: $settings.includesFinderTags)
+            }
+
             Section("Storage") {
                 HStack {
                     Text("Save Directory")

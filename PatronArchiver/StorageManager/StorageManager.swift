@@ -26,7 +26,9 @@ enum StorageManager {
         mhtmlData: Data?,
         downloadedMedia: [MediaDownloader.DownloadedMedia],
         stagingDirectory: URL,
-        baseDirectory: URL
+        baseDirectory: URL,
+        includesWhereFroms: Bool = true,
+        includesFinderTags: Bool = true
     ) throws -> PreparedSave {
         let finalDirectory = try makePostFolderURL(metadata: metadata, baseDirectory: baseDirectory)
         guard let sanitizedPageTitle = FileNameSanitizer.sanitize(pageTitle) else {
@@ -41,27 +43,35 @@ enum StorageManager {
         if let pdfData {
             let pdfURL = stagingDirectory.appendingPathComponent("\(sanitizedPageTitle).pdf")
             try pdfData.write(to: pdfURL, options: .atomic)
-            try? XattrHelper.setWhereFroms(whereFroms, on: pdfURL.path)
+            if includesWhereFroms {
+                try? XattrHelper.setWhereFroms(whereFroms, on: pdfURL.path)
+            }
         }
 
         // Write MHTML to staging
         if let mhtmlData {
             let mhtmlURL = stagingDirectory.appendingPathComponent("\(sanitizedPageTitle).mhtml")
             try mhtmlData.write(to: mhtmlURL, options: .atomic)
-            try? XattrHelper.setWhereFroms(whereFroms, on: mhtmlURL.path)
+            if includesWhereFroms {
+                try? XattrHelper.setWhereFroms(whereFroms, on: mhtmlURL.path)
+            }
         }
 
         // Set xattr on media files (already in staging from MediaDownloader)
-        let landingURL = metadata.redirectChain.last ?? metadata.originalURL
-        for media in downloadedMedia {
-            var mediaWhereFroms = [landingURL, media.item.url]
-            mediaWhereFroms.append(contentsOf: media.downloadRedirects)
-            try? XattrHelper.setWhereFroms(mediaWhereFroms, on: media.localURL.path)
+        if includesWhereFroms {
+            let landingURL = metadata.redirectChain.last ?? metadata.originalURL
+            for media in downloadedMedia {
+                var mediaWhereFroms = [landingURL, media.item.url]
+                mediaWhereFroms.append(contentsOf: media.downloadRedirects)
+                try? XattrHelper.setWhereFroms(mediaWhereFroms, on: media.localURL.path)
+            }
         }
 
         // Set xattr on staging folder
-        try? XattrHelper.setWhereFroms(whereFroms, on: stagingDirectory.path)
-        if !metadata.tags.isEmpty {
+        if includesWhereFroms {
+            try? XattrHelper.setWhereFroms(whereFroms, on: stagingDirectory.path)
+        }
+        if includesFinderTags, !metadata.tags.isEmpty {
             try? XattrHelper.setUserTags(metadata.tags, on: stagingDirectory.path)
         }
 

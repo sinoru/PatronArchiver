@@ -213,7 +213,9 @@ class PatronArchiver {
                 mhtmlData: mhtmlData,
                 downloadedMedia: downloadedMedia,
                 stagingDirectory: tempDir,
-                baseDirectory: baseDir
+                baseDirectory: baseDir,
+                includesWhereFroms: settings.includesWhereFroms,
+                includesFinderTags: settings.includesFinderTags
             )
             job.progress.completedUnitCount = 90
 
