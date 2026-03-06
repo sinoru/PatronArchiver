@@ -1,5 +1,5 @@
 import Foundation
-import OSLog
+import os
 import WebKit
 #if os(iOS)
 @preconcurrency import BackgroundTasks
@@ -172,10 +172,22 @@ class PatronArchiver {
 
             // Start media download in background (no WebView dependency)
             Self.logger.debug("Starting media download concurrently...")
+            let totalMedia = mediaItems.count
+            let completedMediaCount = OSAllocatedUnfairLock(initialState: 0)
             async let mediaResult = MediaDownloader.download(
                 items: mediaItems,
                 to: tempDir,
-                dataStore: dataStore
+                dataStore: dataStore,
+                onFileDownloaded: { @Sendable in
+                    let count = completedMediaCount.withLock { value in
+                        value += 1
+                        return value
+                    }
+                    Task { @MainActor in
+                        guard job.progress.completedUnitCount >= 60 else { return }
+                        job.progress.completedUnitCount = 60 + Int64(count * 20 / max(totalMedia, 1))
+                    }
+                }
             )
 
             // MHTML + PDF on WebView (sequential, needs WebView)
@@ -187,7 +199,8 @@ class PatronArchiver {
             Self.logger.debug("Generating PDF...")
             let pdfData = try await webView.fullPagePDF()
             Self.logger.debug("PDF generated (\(pdfData.count) bytes)")
-            job.progress.completedUnitCount = 60
+            let alreadyCompleted = completedMediaCount.withLock { $0 }
+            job.progress.completedUnitCount = 60 + Int64(alreadyCompleted * 20 / max(totalMedia, 1))
 
             // Await media download completion
             let downloadedMedia = try await mediaResult

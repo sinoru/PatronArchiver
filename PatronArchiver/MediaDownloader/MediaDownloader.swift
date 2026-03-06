@@ -13,7 +13,8 @@ enum MediaDownloader {
     static func download(
         items: [MediaItem],
         to directory: URL,
-        dataStore: WKWebsiteDataStore
+        dataStore: WKWebsiteDataStore,
+        onFileDownloaded: (@Sendable () -> Void)? = nil
     ) async throws -> [DownloadedMedia] {
         // Batch urlRequest creation to minimize main actor hops
         var requests: [URL: URLRequest] = [:]
@@ -54,6 +55,7 @@ enum MediaDownloader {
             var results: [DownloadedMedia] = []
             for try await media in group {
                 if let media { results.append(media) }
+                onFileDownloaded?()
             }
             return results
         }
