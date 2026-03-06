@@ -8,7 +8,7 @@ class ArchiveJob: Identifiable {
     var status: JobStatus
     var metadata: PostMetadata?
     var mediaItems: [MediaItem]
-    var progress: Double
+    var progress: Progress
     var pendingSave: StorageManager.PreparedSave?
 
     init(id: UUID = UUID(), inputURL: URL, provider: (any PatronServiceProvider)? = nil) {
@@ -18,7 +18,7 @@ class ArchiveJob: Identifiable {
         self.status = .queued
         self.metadata = nil
         self.mediaItems = []
-        self.progress = 0
+        self.progress = Progress(totalUnitCount: 100)
         self.pendingSave = nil
     }
 }

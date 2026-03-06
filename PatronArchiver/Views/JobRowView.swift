@@ -31,7 +31,7 @@ struct JobRowView: View {
                         .controlSize(.small)
                     }
                 } else if !job.status.isTerminal {
-                    ProgressView(value: job.progress)
+                    ProgressView(job.progress)
                 }
             }
             Spacer()

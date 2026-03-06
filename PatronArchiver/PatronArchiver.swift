@@ -1,6 +1,9 @@
 import Foundation
 import OSLog
 import WebKit
+#if os(iOS)
+import BackgroundTasks
+#endif
 
 @MainActor
 @Observable
@@ -12,6 +15,12 @@ class PatronArchiver {
     private let webViewConfiguration: WKWebViewConfiguration
     private let settings: AppSettings
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
+
+    #if os(iOS)
+    private static let bgTaskIdentifier = "dev.sinoru.PatronArchiver.archive"
+    private var activeBGTask: BGContinuedProcessingTask?
+    private var bgProgressObservation: NSKeyValueObservation?
+    #endif
 
     #if os(macOS)
     private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = .withSecurityScope
@@ -59,7 +68,7 @@ class PatronArchiver {
     func retryJob(_ job: ArchiveJob) {
         discardPendingSaveIfNeeded(job)
         job.status = .queued
-        job.progress = 0
+        job.progress = Progress(totalUnitCount: 100)
         job.metadata = nil
         job.mediaItems = []
         startJobIfPossible(job)
@@ -79,6 +88,14 @@ class PatronArchiver {
             await processJob(job)
         }
         activeTasks[job.id] = task
+
+        #if os(iOS)
+        if activeBGTask == nil {
+            submitBackgroundTask(for: job)
+        } else if let bgTask = activeBGTask {
+            observeJobProgress(job, for: bgTask)
+        }
+        #endif
     }
 
     private func processJob(_ job: ArchiveJob) async {
@@ -119,7 +136,8 @@ class PatronArchiver {
 
             // 2. Load page
             job.status = .loading
-            job.progress = 0.1
+            job.progress.completedUnitCount = 10
+            try Task.checkCancellation()
             let tracker = RedirectTracker()
             Self.logger.debug("Loading page...")
             let redirectChain = try await tracker.load(job.inputURL, in: webView)
@@ -133,15 +151,17 @@ class PatronArchiver {
             }
 
             // 4. Preload
+            try Task.checkCancellation()
             job.status = .preloading
-            job.progress = 0.2
+            job.progress.completedUnitCount = 20
             Self.logger.debug("Preloading...")
             try await Preloader.preload(in: webView, scrollDelay: settings.scrollDelay)
             try await provider.preloadContent(in: webView)
             Self.logger.debug("Preload complete")
-            job.progress = 0.3
+            job.progress.completedUnitCount = 30
 
             // 5. Extract metadata
+            try Task.checkCancellation()
             Self.logger.debug("Extracting metadata...")
             var metadata = try await provider.extractMetadata(in: webView)
             metadata = PostMetadata(
@@ -162,10 +182,11 @@ class PatronArchiver {
             // 6. Extract media URLs
             let mediaItems = try await provider.extractMediaURLs(in: webView)
             job.mediaItems = mediaItems
-            job.progress = 0.4
+            job.progress.completedUnitCount = 40
             Self.logger.info("Found \(mediaItems.count) media items")
 
             // 7. Page dump (MHTML first to preserve original HTML, then PDF)
+            try Task.checkCancellation()
             job.status = .dumping
 
             let dataStore = sharedDataStore
@@ -173,18 +194,19 @@ class PatronArchiver {
             Self.logger.debug("Generating MHTML...")
             let mhtmlData = try await webView.mhtml(dataStore: dataStore)
             Self.logger.debug("MHTML generated (\(mhtmlData.count) bytes)")
-            job.progress = 0.5
+            job.progress.completedUnitCount = 50
 
             Self.logger.debug("Generating PDF...")
             let pdfData = try await webView.fullPagePDF()
             Self.logger.debug("PDF generated (\(pdfData.count) bytes)")
-            job.progress = 0.6
+            job.progress.completedUnitCount = 60
 
             // Release WebView — no longer needed after dumping
             activeWebView = nil
             activeJobID = nil
 
             // 8. Download media
+            try Task.checkCancellation()
             job.status = .downloading
             Self.logger.debug("Downloading media...")
             let tempDir = try StorageManager.temporaryDownloadDirectory()
@@ -194,9 +216,10 @@ class PatronArchiver {
                 dataStore: dataStore
             )
             Self.logger.info("Downloaded \(downloadedMedia.count) media files")
-            job.progress = 0.8
+            job.progress.completedUnitCount = 80
 
             // 9. Prepare save (write PDF/MHTML to staging + xattr)
+            try Task.checkCancellation()
             job.status = .saving
             let baseDir = resolveBaseDirectory()
             Self.logger.debug("Preparing save to: \(baseDir.path(), privacy: .private)")
@@ -209,7 +232,7 @@ class PatronArchiver {
                 stagingDirectory: tempDir,
                 baseDirectory: baseDir
             )
-            job.progress = 0.9
+            job.progress.completedUnitCount = 90
 
             // 10. Check if post folder already exists
             let folderExists = try baseDir.withSecurityScopedAccess {
@@ -228,7 +251,7 @@ class PatronArchiver {
             try baseDir.withSecurityScopedAccess {
                 try StorageManager.commitSave(preparedSave, overwrite: false)
             }
-            job.progress = 1.0
+            job.progress.completedUnitCount = 100
             job.status = .completed
             Self.logger.info("Job completed successfully")
         } catch {
@@ -247,7 +270,7 @@ class PatronArchiver {
                 try StorageManager.commitSave(preparedSave, overwrite: true)
             }
             job.pendingSave = nil
-            job.progress = 1.0
+            job.progress.completedUnitCount = 100
             job.status = .completed
             Self.logger.info("Overwrite confirmed and save committed")
         } catch {
@@ -270,9 +293,69 @@ class PatronArchiver {
         guard let nextJob = jobs.first(where: {
             if case .queued = $0.status { return true }
             return false
-        }) else { return }
+        }) else {
+            #if os(iOS)
+            completeBackgroundTaskIfNeeded()
+            #endif
+            return
+        }
         startJobIfPossible(nextJob)
     }
+
+    // MARK: - iOS Background Task
+
+    #if os(iOS)
+    private func submitBackgroundTask(for job: ArchiveJob) {
+        BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.bgTaskIdentifier, using: .main) { [weak self] bgTask in
+            guard let bgTask = bgTask as? BGContinuedProcessingTask else { return }
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.activeBGTask = bgTask
+                bgTask.progress.totalUnitCount = 100
+                self.observeJobProgress(job, for: bgTask)
+
+                bgTask.expirationHandler = { [weak self] in
+                    Task { @MainActor [weak self] in
+                        guard let self else { return }
+                        for (_, task) in self.activeTasks {
+                            task.cancel()
+                        }
+                        self.bgProgressObservation?.invalidate()
+                        self.bgProgressObservation = nil
+                        self.activeBGTask?.setTaskCompleted(success: false)
+                        self.activeBGTask = nil
+                    }
+                }
+            }
+        }
+
+        let request = BGContinuedProcessingTaskRequest(
+            identifier: Self.bgTaskIdentifier,
+            title: String(localized: "Archiving Post"),
+            subtitle: job.inputURL.host() ?? ""
+        )
+
+        do {
+            try BGTaskScheduler.shared.submit(request)
+        } catch {
+            Self.logger.error("Failed to submit continued processing task: \(error.localizedDescription, privacy: .public)")
+        }
+    }
+
+    private func observeJobProgress(_ job: ArchiveJob, for bgTask: BGContinuedProcessingTask) {
+        bgProgressObservation?.invalidate()
+        bgProgressObservation = job.progress.observe(\.completedUnitCount, options: [.new]) { [weak bgTask] progress, _ in
+            bgTask?.progress.completedUnitCount = progress.completedUnitCount
+        }
+    }
+
+    private func completeBackgroundTaskIfNeeded() {
+        bgProgressObservation?.invalidate()
+        bgProgressObservation = nil
+        activeBGTask?.setTaskCompleted(success: true)
+        activeBGTask = nil
+    }
+    #endif
 
     private func resolveBaseDirectory() -> URL {
         var isStale = false
