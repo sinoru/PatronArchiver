@@ -98,12 +98,6 @@ class PatronArchiver {
     private func processJob(_ job: ArchiveJob) async {
         guard let webView else { return }
 
-        defer {
-            webView.load(URLRequest(url: URL(string: "about:blank")!))
-            activeTasks[job.id] = nil
-            processNextQueuedJob()
-        }
-
         do {
             // 1. Identify service provider
             Self.logger.info("Starting job for URL: \(job.inputURL, privacy: .private)")
@@ -119,7 +113,7 @@ class PatronArchiver {
             let tracker = RedirectTracker()
             Self.logger.debug("Loading page...")
             let redirectChain = try await tracker.load(job.inputURL, in: webView)
-            Self.logger.debug("Page loaded, redirect chain count: \(redirectChain.count)")
+            Self.logger.debug("Page loaded, redirect chain: \(redirectChain.map(\.absoluteString), privacy: .private)")
 
             // 3. Check login
             let isLoggedIn = try await provider.checkLoginStatus(in: webView)
@@ -246,6 +240,25 @@ class PatronArchiver {
         } catch {
             Self.logger.error("Job failed: \(error.localizedDescription, privacy: .public)")
             job.status = .failed(error)
+        }
+
+        await loadBlankPage(in: webView)
+        activeTasks[job.id] = nil
+        processNextQueuedJob()
+    }
+
+    private func loadBlankPage(in webView: WKWebView) async {
+        webView.load(URLRequest(url: URL(string: "about:blank")!))
+        guard webView.isLoading else { return }
+        await withCheckedContinuation { continuation in
+            var observation: NSKeyValueObservation?
+            observation = webView.observe(\.isLoading) { webView, _ in
+                if !webView.isLoading {
+                    observation?.invalidate()
+                    observation = nil
+                    continuation.resume()
+                }
+            }
         }
     }
 
