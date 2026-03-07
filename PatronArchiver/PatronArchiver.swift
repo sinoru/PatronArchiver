@@ -38,6 +38,7 @@ class PatronArchiver {
         self.settings = settings
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default()
+        config.defaultWebpagePreferences.preferredContentMode = .desktop
         self.webViewConfiguration = config
     }
 
@@ -114,6 +115,7 @@ class PatronArchiver {
             let tracker = RedirectTracker()
             Self.logger.debug("Loading page...")
             let redirectChain = try await tracker.load(job.inputURL, in: webView)
+            let userAgent = try await webView.evaluateJavaScript("navigator.userAgent") as? String
             Self.logger.debug("Page loaded, redirect chain: \(redirectChain.map(\.absoluteString), privacy: .private)")
 
             // 3. Check login
@@ -174,6 +176,7 @@ class PatronArchiver {
                 items: mediaItems,
                 to: tempDir,
                 dataStore: dataStore,
+                userAgent: userAgent,
                 onFileDownloaded: { @Sendable in
                     let count = completedMediaCount.withLock { value in
                         value += 1
@@ -188,7 +191,7 @@ class PatronArchiver {
 
             // MHTML + PDF on WebView (sequential, needs WebView)
             Self.logger.debug("Generating MHTML...")
-            let mhtmlData = try await webView.mhtml(dataStore: dataStore)
+            let mhtmlData = try await webView.mhtml(dataStore: dataStore, userAgent: userAgent)
             Self.logger.debug("MHTML generated (\(mhtmlData.count.formatted(.byteCount(style: .binary, spellsOutZero: false, includesActualByteCount: true))))")
             job.progress.completedUnitCount = 50
 

@@ -14,12 +14,13 @@ enum MediaDownloader {
         items: [MediaItem],
         to directory: URL,
         dataStore: WKWebsiteDataStore,
+        userAgent: String? = nil,
         onFileDownloaded: (@Sendable () -> Void)? = nil
     ) async throws -> [DownloadedMedia] {
         // Batch urlRequest creation to minimize main actor hops
         var requests: [URL: URLRequest] = [:]
         for item in items {
-            requests[item.url] = await dataStore.urlRequest(for: item.url)
+            requests[item.url] = await dataStore.urlRequest(for: item.url, userAgent: userAgent)
         }
 
         return try await withThrowingTaskGroup(of: DownloadedMedia?.self) { group in

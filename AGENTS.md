@@ -20,7 +20,16 @@
 
 - `img.src` 직접 설정, CSS 클래스/`style` 속성 변경 금지. 사이트 JS가 상태를 전환하도록 `LazyContentLoader` 스크롤로 유도한다.
 - DOM **읽기**(querySelector, getComputedStyle, outerHTML)는 허용.
-- 유일한 예외: MHTML 직렬화를 위해 불가피한 경우(adopted stylesheet → `<style>` 삽입 등)에만 최소한으로 허용.
+- 유일한 예외: MHTML 직렬화를 위해 불가피한 경우에만 최소한으로 허용. 허용 범위:
+  1. **Mutable stylesheet 재구성**: styled-components 등이 CSSOM을 런타임 수정하면 `style.textContent`(원본)와 `sheet.cssRules`(실제 적용)가 달라진다. `outerHTML` 캡처 전에 `cssRules`로 교체하지 않으면 MHTML에서 스타일이 깨진다.
+  2. **Adopted stylesheet 삽입**: `document.adoptedStyleSheets`는 DOM에 존재하지 않으므로 `outerHTML`에 포함되지 않는다. `<style>` 엘리먼트로 삽입해야 캡처 가능.
+  3. **`</style>` 이스케이프**: `<style>` 내부에 `</style` 시퀀스가 있으면 HTML 파서가 태그 경계를 오인한다. CSS hex escape(`\3C`)로 치환 필요.
+- **Chromium 검증 근거** (`third_party/blink/renderer/core/frame/frame_serializer.cc`):
+  - Chrome도 동일한 세 가지 처리를 수행한다. 다만 Blink 내부 API(`IsMutable()`, `CSSRule::cssText()`)를 사용하는 반면, 우리는 JS에서 CSSOM을 직접 비교한다.
+  - Chrome 주석: *"CSS serialization isn't perfect, it's better to leave the original `<style>` element if possible"* (L689) — `cssText` 재구성 시 주석·공백·shorthand 등이 유실되므로, JS 수정된 stylesheet만 선택적으로 재구성하는 것이 최선이다.
+  - Chrome 주석: *"this process is lossy, and may not perfectly reflect the intended style"* (L1118) — CSS 직렬화의 본질적 한계를 인정.
+  - `</style>` 이스케이프는 Chrome과 동일한 방식(`\3C/style`, case-insensitive).
+  - `kMHTML_Improvements` feature flag(기본 비활성) 뒤의 개선 모드에서만 mutable 선택적 재구성이 적용됨. 현재 출시 Chrome(legacy)은 모든 `<style>`을 `cssText`로 재구성하므로, 우리의 "변경된 것만 재구성" 접근이 Chrome의 개선 방향과 일치한다.
 
 ### LazyContentLoader ↔ 덤퍼 책임 경계
 

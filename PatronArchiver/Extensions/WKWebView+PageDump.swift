@@ -12,7 +12,7 @@ enum MHTMLError: Error {
 
 extension WKWebView {
     /// RFC 2557 MHTML 아카이브 생성
-    func mhtml(dataStore: WKWebsiteDataStore) async throws -> Data {
+    func mhtml(dataStore: WKWebsiteDataStore, userAgent: String? = nil) async throws -> Data {
         guard let pageURL = url else {
             throw MHTMLError.noPageURL
         }
@@ -23,7 +23,8 @@ extension WKWebView {
         // 2. First-pass: download all resources discovered by JS
         let firstPassResources = await downloadResources(
             urls: collectResult.resourceURLs.compactMap { URL(string: $0) },
-            dataStore: dataStore
+            dataStore: dataStore,
+            userAgent: userAgent
         )
 
         // 3. Second-pass: extract CSS subresource URLs and download missing ones
@@ -33,13 +34,15 @@ extension WKWebView {
 
         let secondPassResources = await downloadResources(
             urls: cssSubresourceURLs,
-            dataStore: dataStore
+            dataStore: dataStore,
+            userAgent: userAgent
         )
 
         // 4. Collect iframe sub-document content
         let iframeResources = await collectIframeResources(
             iframes: collectResult.iframes,
-            dataStore: dataStore
+            dataStore: dataStore,
+            userAgent: userAgent
         )
 
         let allResources = firstPassResources + secondPassResources + iframeResources
@@ -266,12 +269,13 @@ private struct CollectedResource: Sendable {
 @concurrent
 private func downloadResources(
     urls: [URL],
-    dataStore: WKWebsiteDataStore
+    dataStore: WKWebsiteDataStore,
+    userAgent: String? = nil
 ) async -> [CollectedResource] {
     // Batch urlRequest creation to minimize main actor hops
     var requests: [URL: URLRequest] = [:]
     for url in urls {
-        requests[url] = await dataStore.urlRequest(for: url)
+        requests[url] = await dataStore.urlRequest(for: url, userAgent: userAgent)
     }
 
     return await withTaskGroup(of: CollectedResource?.self) { group in
@@ -301,13 +305,14 @@ private func downloadResources(
 @concurrent
 private func collectIframeResources(
     iframes: [IframeInfo],
-    dataStore: WKWebsiteDataStore
+    dataStore: WKWebsiteDataStore,
+    userAgent: String? = nil
 ) async -> [CollectedResource] {
     // Batch urlRequest creation for cross-origin iframes
     var requestsBuilder: [String: URLRequest] = [:]
     for iframe in iframes where iframe.html == nil {
         guard let url = URL(string: iframe.url) else { continue }
-        requestsBuilder[iframe.url] = await dataStore.urlRequest(for: url)
+        requestsBuilder[iframe.url] = await dataStore.urlRequest(for: url, userAgent: userAgent)
     }
     let requests = requestsBuilder
 
