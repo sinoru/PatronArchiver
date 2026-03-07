@@ -32,7 +32,7 @@ struct SettingsView: View {
             Section("Accounts") {
                 ForEach(siteEntries) { entry in
                     HStack {
-                        Label(entry.identifier.capitalized, systemImage: "globe")
+                        Label(entry.identifier, systemImage: "globe")
                         Spacer()
                         if isCheckingLogin {
                             ProgressView()

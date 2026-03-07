@@ -6,8 +6,8 @@ struct PatreonProvider: PatronServiceProvider {
         /https:\/\/(www\.)?patreon\.com\/posts\/.+/,
     ]
     static let loginURL = URL(string: "https://www.patreon.com/login")!
-    static let accountCheckURL = URL(string: "https://www.patreon.com/settings/profile")!
-    static let siteIdentifier = "patreon"
+    static let accountCheckURL = URL(string: "https://www.patreon.com/settings/basics")!
+    static let siteIdentifier = "Patreon"
 
     static func parseAccountInfo(from data: Data) -> AccountInfo? {
         guard let html = String(data: data, encoding: .utf8) else { return nil }
@@ -18,11 +18,11 @@ struct PatreonProvider: PatronServiceProvider {
            let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
            let props = json["props"] as? [String: Any],
            let pageProps = props["pageProps"] as? [String: Any],
-           let bootstrap = (pageProps["bootstrapEnvelope"] as? [String: Any])?["bootstrap"] as? [String: Any],
+           let bootstrap = (pageProps["bootstrapEnvelope"] as? [String: Any])?["commonBootstrap"] as? [String: Any],
            let userData = bootstrap["currentUser"] as? [String: Any],
            let attributes = userData["data"] as? [String: Any],
-           let name = (attributes["attributes"] as? [String: Any])?["full_name"] as? String {
-            return AccountInfo(displayName: name)
+           let email = (attributes["attributes"] as? [String: Any])?["email"] as? String {
+            return AccountInfo(displayName: email)
         }
         // Fallback: parse <title> — typically "Settings | Name | Patreon"
         if let titleStart = html.range(of: "<title>"),
@@ -38,77 +38,130 @@ struct PatreonProvider: PatronServiceProvider {
 
     func checkLoginStatus(in webView: WKWebView) async throws -> Bool {
         let result = try await evaluateJavaScript(
-            "document.querySelector('[data-tag=\"logged-in-user\"]') !== null || document.cookie.includes('session_id')",
+            "document.querySelector('[data-tag=\"account-menu-toggle-combined\"]') !== null || document.cookie.includes('session_id')",
             in: webView
         )
         return result as? Bool ?? false
     }
 
     func preloadContent(in webView: WKWebView) async throws {
-        // Expand truncated post content if present
-        _ = try? await evaluateJavaScript("""
-            (() => {
-                const expandButtons = document.querySelectorAll('[data-tag="expand-post"]');
-                expandButtons.forEach(btn => btn.click());
-            })()
-        """, in: webView)
-        try? await Task.sleep(for: .milliseconds(500))
+        // Load all comments and replies
+        for _ in 0..<UInt16.max {
+            let result = try await evaluateJavaScript("""
+                (() => {
+                    const before = document.querySelectorAll('[data-tag="comment-row"]').length;
+                    let clicked = 0;
+                    document.querySelectorAll('button[data-tag="loadMoreCommentsCta"]').forEach(btn => {
+                        btn.click();
+                        clicked++;
+                    });
+                    document.querySelectorAll('button[class*="TextLink"]').forEach(btn => {
+                        if (!btn.hasAttribute('data-tag') && btn.textContent.trim() === 'Load replies') {
+                            btn.click();
+                            clicked++;
+                        }
+                    });
+                    return JSON.stringify({ clicked, before });
+                })()
+            """, in: webView) as? String
+
+            guard let result,
+                  let json = try? JSONSerialization.jsonObject(with: Data(result.utf8)) as? [String: Int],
+                  let clicked = json["clicked"], clicked > 0,
+                  let before = json["before"]
+            else { break }
+
+            // Wait until new comment-rows appear or timeout
+            for _ in 0..<20 {
+                try? await Task.sleep(for: .milliseconds(500))
+                let current = try await evaluateJavaScript(
+                    "document.querySelectorAll('[data-tag=\"comment-row\"]').length",
+                    in: webView
+                ) as? Int ?? 0
+                if current > before { break }
+            }
+        }
     }
 
     func extractMediaURLs(in webView: WKWebView) async throws -> [MediaItem] {
-        // Extract from __NEXT_DATA__ JSON + DOM images
         let script = """
         (() => {
             const media = [];
 
-            // Try __NEXT_DATA__ for structured data
             const nextData = document.getElementById('__NEXT_DATA__');
             if (nextData) {
                 try {
                     const data = JSON.parse(nextData.textContent);
-                    const post = data?.props?.pageProps?.bootstrapEnvelope?.bootstrap?.post;
-                    if (post?.included) {
+                    const post = data?.props?.pageProps?.bootstrapEnvelope?.pageBootstrap?.post;
+                    if (post?.data && post?.included) {
+                        const mediaById = {};
                         for (const item of post.included) {
-                            if (item.type === 'media' && item.attributes) {
-                                const attrs = item.attributes;
-                                const url = attrs.download_url || attrs.image_urls?.original || attrs.image_urls?.url;
-                                if (url) {
-                                    media.push({
-                                        url: url,
-                                        type: attrs.media_type === 'video' ? 'video' : 'image',
-                                        filename: attrs.file_name || null
-                                    });
-                                }
+                            if (item.type === 'media' && item.attributes) mediaById[item.id] = item;
+                        }
+                        const urlOf = (item) => item.attributes.download_url || item.attributes.image_urls?.original || item.attributes.image_urls?.url;
+
+                        // 1. Gallery/header images in image_order
+                        const imageOrder = post.data.attributes?.post_metadata?.image_order || [];
+                        const imageIds = imageOrder.length > 0
+                            ? imageOrder
+                            : (post.data.relationships?.images?.data || []).map(d => d.id);
+                        for (const id of imageIds) {
+                            const item = mediaById[id];
+                            if (item) {
+                                media.push({ url: urlOf(item), type: 'image', filename: item.attributes.file_name || null });
                             }
-                            if (item.type === 'attachment' && item.attributes?.url) {
-                                media.push({
-                                    url: item.attributes.url,
-                                    type: 'archive',
-                                    filename: item.attributes.name || null
-                                });
+                        }
+
+                        // 2. Inline images from content_json_string (in document order)
+                        const contentJson = post.data.attributes?.content_json_string;
+                        if (contentJson) {
+                            const content = JSON.parse(contentJson);
+                            const walk = (nodes) => {
+                                for (const node of (nodes || [])) {
+                                    if (node.type === 'image' && node.attrs?.src) {
+                                        if (!media.some(m => m.url === node.attrs.src)) {
+                                            media.push({ url: node.attrs.src, type: 'image', filename: null });
+                                        }
+                                    }
+                                    if (node.content) walk(node.content);
+                                }
+                            };
+                            walk(content.content);
+                        }
+
+                        // 3. Attachments in attachments_media order
+                        const attachmentIds = (post.data.relationships?.attachments_media?.data || []).map(d => d.id);
+                        for (const id of attachmentIds) {
+                            const item = mediaById[id];
+                            if (item) {
+                                media.push({ url: urlOf(item), type: 'archive', filename: item.attributes.file_name || null });
                             }
                         }
                     }
                 } catch {}
             }
 
-            // Also scan DOM for images not in structured data
-            const postContent = document.querySelector('[data-tag="post-content"]');
-            if (postContent) {
-                postContent.querySelectorAll('img[src]').forEach(img => {
-                    const src = img.src;
-                    if (src && !media.some(m => m.url === src) && !src.includes('emoji')) {
-                        media.push({ url: src, type: 'image', filename: null });
+            // DOM fallback: images
+            if (!media.some(m => m.type === 'image')) {
+                const postCard = document.querySelector('[data-tag="post-card"]');
+                if (postCard) {
+                    postCard.querySelectorAll('img[src*="patreonusercontent.com"]').forEach(img => {
+                        if (!media.some(m => m.url === img.src)) {
+                            media.push({ url: img.src, type: 'image', filename: null });
+                        }
+                    });
+                }
+            }
+
+            // DOM fallback: attachments
+            if (!media.some(m => m.type === 'archive')) {
+                document.querySelectorAll('a[data-tag="post-attachment-link"]').forEach(a => {
+                    if (a.href && !media.some(m => m.url === a.href)) {
+                        const nameEl = a.querySelector('p');
+                        media.push({ url: a.href, type: 'archive', filename: nameEl?.textContent?.trim() || null });
                     }
                 });
             }
-
-            // Download links
-            document.querySelectorAll('a[data-tag="post-download-link"]').forEach(a => {
-                if (a.href) {
-                    media.push({ url: a.href, type: 'archive', filename: a.textContent?.trim() || null });
-                }
-            });
 
             return JSON.stringify(media);
         })()
@@ -125,29 +178,28 @@ struct PatreonProvider: PatronServiceProvider {
         (() => {
             const meta = {};
 
-            // Try __NEXT_DATA__ first
             const nextData = document.getElementById('__NEXT_DATA__');
             if (nextData) {
                 try {
                     const data = JSON.parse(nextData.textContent);
-                    const post = data?.props?.pageProps?.bootstrapEnvelope?.bootstrap?.post;
+                    const post = data?.props?.pageProps?.bootstrapEnvelope?.pageBootstrap?.post;
                     if (post?.data?.attributes) {
                         const attrs = post.data.attributes;
                         meta.postID = post.data.id || '';
                         meta.title = attrs.title || '';
                         meta.createdAt = attrs.published_at || attrs.created_at || '';
                         meta.modifiedAt = attrs.edited_at || null;
-                        if (attrs.tags) {
-                            meta.tags = attrs.tags.map(t => typeof t === 'string' ? t : t.value || '');
-                        }
+
+                        const tagData = post.data.relationships?.user_defined_tags?.data || [];
+                        meta.tags = tagData
+                            .map(t => (t.id || '').replace('user_defined;', ''))
+                            .filter(t => t);
                     }
                     if (post?.included) {
                         for (const item of post.included) {
-                            if (item.type === 'user' || item.type === 'campaign') {
-                                if (item.attributes?.name || item.attributes?.full_name) {
-                                    meta.authorName = item.attributes.full_name || item.attributes.name;
-                                    break;
-                                }
+                            if (item.type === 'campaign' && item.attributes?.name) {
+                                meta.authorName = item.attributes.name;
+                                break;
                             }
                         }
                     }
@@ -156,18 +208,24 @@ struct PatreonProvider: PatronServiceProvider {
 
             // Fallback: DOM scraping
             if (!meta.title) {
-                const titleEl = document.querySelector('h1, [data-tag="post-title"]');
+                const titleEl = document.querySelector('[data-tag="post-title"]');
                 meta.title = titleEl?.textContent?.trim() || document.title;
             }
             if (!meta.authorName) {
-                const authorEl = document.querySelector('[data-tag="creator-name"], a[href*="/c/"]');
+                const authorEl = document.querySelector('[data-tag="post-card"] a[href*="patreon.com/"] > h3');
                 meta.authorName = authorEl?.textContent?.trim() || '';
             }
             if (!meta.postID) {
-                const match = location.pathname.match(/posts\\/(\\d+)/);
+                const match = location.pathname.match(/-(\\d+)(?:[^\\/]*)$/);
                 meta.postID = match ? match[1] : '';
             }
-            meta.tags = meta.tags || [];
+            if (!meta.tags || !meta.tags.length) {
+                meta.tags = [];
+                document.querySelectorAll('a[data-tag="post-tag"] p').forEach(p => {
+                    const tag = p.textContent?.trim();
+                    if (tag) meta.tags.push(tag);
+                });
+            }
             if (!meta.createdAt) meta.createdAt = new Date().toISOString();
 
             return JSON.stringify(meta);

@@ -5,7 +5,7 @@ import Foundation
 struct StorageManagerTests {
     @Test func makePostFolderURLFormatsCorrectly() throws {
         let metadata = PostMetadata(
-            siteIdentifier: "patreon",
+            siteIdentifier: "Patreon",
             postID: "12345",
             title: "Test Post Title",
             authorName: "TestAuthor",
@@ -51,7 +51,7 @@ struct StorageManagerTests {
 
     @Test func makePostFolderURLSanitizesCharacters() throws {
         let metadata = PostMetadata(
-            siteIdentifier: "patreon",
+            siteIdentifier: "Patreon",
             postID: "99999",
             title: "Title/With:Special",
             authorName: "Author/Name",
