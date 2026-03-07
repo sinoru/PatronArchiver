@@ -26,7 +26,7 @@ class AppSettings {
     init() {
         let defaults = UserDefaults.standard
         self.renderWidth = defaults.object(forKey: "renderWidth") as? Int ?? 1920
-        self.scrollDelay = defaults.object(forKey: "scrollDelay") as? Double ?? 300
+        self.scrollDelay = defaults.object(forKey: "scrollDelay") as? Double ?? 150
         self.savedDirectoryBookmark = defaults.data(forKey: "savedDirectoryBookmark")
         self.includesWhereFroms = defaults.object(forKey: "includesWhereFroms") as? Bool ?? true
         self.includesFinderTags = defaults.object(forKey: "includesFinderTags") as? Bool ?? true

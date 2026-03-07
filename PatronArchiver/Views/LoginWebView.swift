@@ -53,7 +53,10 @@ extension LoginWebView {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            guard !hasDetectedLogin else { return }
+            guard !hasDetectedLogin,
+                  let currentURL = webView.url,
+                  currentURL != providerType.loginURL
+            else { return }
             let provider = providerType.init()
             Task { @MainActor in
                 guard let isLoggedIn = try? await provider.checkLoginStatus(in: webView),

@@ -1,7 +1,7 @@
 import WebKit
 
 extension WKWebView {
-    func loadLazyContent(scrollDelay: Double = 300) async throws {
+    func loadLazyContent(scrollDelay: Double = 150) async throws {
         guard let scriptURL = Bundle.main.url(forResource: "LazyContentLoader", withExtension: "js"),
               let script = try? String(contentsOf: scriptURL, encoding: .utf8) else {
             fatalError("LazyContentLoader.js not found in bundle")

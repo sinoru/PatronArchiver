@@ -1,3 +1,8 @@
+// Wait for all initial resources to finish loading
+if (document.readyState !== 'complete') {
+    await new Promise(r => window.addEventListener('load', r, { once: true }));
+}
+
 const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
 const step = Math.floor(viewportHeight * 0.5);
 let currentPosition = 0;

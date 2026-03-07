@@ -130,6 +130,7 @@ class PatronArchiver {
             Self.logger.debug("Loading lazy content...")
             try await webView.loadLazyContent(scrollDelay: settings.scrollDelay)
             try await provider.preloadContent(in: webView)
+            try await webView.loadLazyContent(scrollDelay: settings.scrollDelay)
             Self.logger.debug("Lazy content loaded")
             job.progress.completedUnitCount = 30
 
