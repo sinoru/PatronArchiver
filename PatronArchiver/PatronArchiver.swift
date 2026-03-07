@@ -123,14 +123,14 @@ class PatronArchiver {
                 throw JobError.loginRequired(type(of: provider).siteIdentifier)
             }
 
-            // 4. Preload
+            // 4. Load lazy content
             try Task.checkCancellation()
             job.status = .preloading
             job.progress.completedUnitCount = 20
-            Self.logger.debug("Preloading...")
-            try await Preloader.preload(in: webView, scrollDelay: settings.scrollDelay)
+            Self.logger.debug("Loading lazy content...")
+            try await webView.loadLazyContent(scrollDelay: settings.scrollDelay)
             try await provider.preloadContent(in: webView)
-            Self.logger.debug("Preload complete")
+            Self.logger.debug("Lazy content loaded")
             job.progress.completedUnitCount = 30
 
             // 5. Extract metadata
