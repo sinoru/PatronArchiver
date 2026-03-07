@@ -401,7 +401,7 @@ private func assembleMHTML(
     // MHTML header (RFC 2557 + Chromium conventions)
     append("From: <Saved by PatronArchiver>\r\n")
     append("Snapshot-Content-Location: \(pageURL.absoluteString)\r\n")
-    append("Subject: \(title.isEmpty ? pageURL.absoluteString : title)\r\n")
+    append("Subject: \(rfc2047Encode(title.isEmpty ? pageURL.absoluteString : title))\r\n")
     append("Date: \(dateString)\r\n")
     append("MIME-Version: 1.0\r\n")
     append("Content-Type: multipart/related; type=\"text/html\"; boundary=\"\(boundary)\"\r\n")
@@ -546,6 +546,58 @@ nonisolated private func isTrailingWhitespace(bytes: [UInt8], from index: Int) -
     }
     // EOF counts as trailing
     return true
+}
+
+// MARK: - RFC 2047 Encoded-Word (Subject Header)
+
+/// Encodes a string for use in an RFC 2047 header field.
+///
+/// Returns the original string if it is pure ASCII. Otherwise, produces
+/// one or more `=?UTF-8?B?…?=` encoded-words separated by `CRLF SPACE`,
+/// splitting at UTF-8 character boundaries so that each encoded-word
+/// does not exceed 75 characters (RFC 2047 §2).
+nonisolated private func rfc2047Encode(_ text: String) -> String {
+    // If all ASCII, no encoding needed
+    if text.utf8.allSatisfy({ $0 < 0x80 }) {
+        return text
+    }
+
+    let prefix = "=?UTF-8?B?"  // 10 chars
+    let suffix = "?="           // 2 chars
+    // Max base64 per encoded-word: 75 - 12 (overhead) = 63, rounded down to multiple of 4 → 60
+    // 60 base64 chars encode 45 bytes
+    let maxInputBytes = 45
+
+    let utf8 = Array(text.utf8)
+    var words: [String] = []
+    var offset = 0
+
+    while offset < utf8.count {
+        var end = min(offset + maxInputBytes, utf8.count)
+        // Ensure we don't split a multi-byte UTF-8 character
+        while end < utf8.count, isContinuationByte(utf8[end]) {
+            end -= 1
+        }
+        // Also ensure we don't split backwards past offset
+        if end <= offset {
+            end = offset + 1
+            while end < utf8.count, isContinuationByte(utf8[end]) {
+                end += 1
+            }
+        }
+
+        let chunk = Data(utf8[offset..<end])
+        let encoded = chunk.base64EncodedString()
+        words.append("\(prefix)\(encoded)\(suffix)")
+        offset = end
+    }
+
+    return words.joined(separator: "\r\n ")
+}
+
+/// Returns `true` if the byte is a UTF-8 continuation byte (10xxxxxx).
+nonisolated private func isContinuationByte(_ byte: UInt8) -> Bool {
+    byte & 0xC0 == 0x80
 }
 
 // MARK: - RFC 2822 Date Formatter
