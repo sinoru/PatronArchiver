@@ -95,10 +95,10 @@ enum MediaDownloader {
         if let disposition = response?.value(forHTTPHeaderField: "Content-Disposition"),
            let range = disposition.range(of: "filename=") {
             var filename = String(disposition[range.upperBound...])
-            filename = filename.trimmingCharacters(in: CharacterSet(charactersIn: "\"' "))
             if let semicolonIndex = filename.firstIndex(of: ";") {
                 filename = String(filename[..<semicolonIndex])
             }
+            filename = filename.trimmingCharacters(in: CharacterSet(charactersIn: "\"' "))
             if !filename.isEmpty {
                 return directory.appending(component: filename)
             }
