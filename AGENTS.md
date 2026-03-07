@@ -1,6 +1,18 @@
 # PatronArchiver
 
-후원 플랫폼(Fanbox, Patreon, Fantia, itch.io, SubscribeStar) 포스트를 MHTML + PDF + 미디어로 아카이빙하는 macOS/iOS SwiftUI 앱.
+후원 플랫폼(pixivFANBOX, Patreon, Fantia, itch.io, SubscribeStar) 포스트를 MHTML + PDF + 미디어로 아카이빙하는 macOS/iOS SwiftUI 앱.
+
+### 플랫폼별 구현 상태
+
+| 플랫폼 | 코드 구현 | 실제 테스트 완료 |
+|--------|----------|----------------|
+| pixivFANBOX | O | O |
+| Patreon | O | X |
+| Fantia | O | X |
+| itch.io | O | X |
+| SubscribeStar | O | X |
+
+코드는 모든 플랫폼에 대해 작성되어 있으나, 실제 사이트에서 아카이빙이 검증된 것은 **pixivFANBOX만** 해당. 나머지 플랫폼은 셀렉터·API 응답 구조가 실제와 다를 수 있다.
 
 ## 절대 원칙
 

@@ -1,14 +1,14 @@
 import Foundation
 import WebKit
 
-struct FanboxProvider: PatronServiceProvider {
+struct PixivFanboxProvider: PatronServiceProvider {
     static let matchPatterns: [any RegexComponent] = [
         /https:\/\/[^\/]+\.fanbox\.cc\/posts\/.+/,
         /https:\/\/www\.fanbox\.cc\/@[^\/]+\/posts\/.+/,
     ]
     static let loginURL = URL(string: "https://www.fanbox.cc/login")!
     static let accountCheckURL = URL(string: "https://www.fanbox.cc/user/settings")!
-    static let siteIdentifier = "fanbox"
+    static let siteIdentifier = "pixivFANBOX"
 
     static func parseAccountInfo(from data: Data) -> AccountInfo? {
         guard let html = String(data: data, encoding: .utf8) else { return nil }
@@ -41,7 +41,7 @@ struct FanboxProvider: PatronServiceProvider {
     }
 
     func preloadContent(in webView: WKWebView) async throws {
-        // Fanbox article type posts may have expandable sections
+        // pixivFANBOX article type posts may have expandable sections
         _ = try? await evaluateJavaScript("""
             (() => {
                 // Click any "read more" buttons

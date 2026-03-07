@@ -29,7 +29,7 @@ struct StorageManagerTests {
         let created = Date(timeIntervalSince1970: 0)
         let modified = Date(timeIntervalSince1970: 1_000_000)
         let metadata = PostMetadata(
-            siteIdentifier: "fanbox",
+            siteIdentifier: "pixivFANBOX",
             postID: "67890",
             title: "Modified Post",
             authorName: "Author",

@@ -15,16 +15,16 @@ struct PatronServiceManagerTests {
         #expect(type(of: provider) == PatreonProvider.self)
     }
 
-    @Test func matchesFanboxURL() throws {
+    @Test func matchesPixivFanboxURL() throws {
         let url = URL(string: "https://creator.fanbox.cc/posts/12345")!
         let provider = try #require(PatronServiceManager.shared.provider(for: url))
-        #expect(type(of: provider) == FanboxProvider.self)
+        #expect(type(of: provider) == PixivFanboxProvider.self)
     }
 
-    @Test func matchesFanboxWWWURL() throws {
+    @Test func matchesPixivFanboxWWWURL() throws {
         let url = URL(string: "https://www.fanbox.cc/@creator/posts/12345")!
         let provider = try #require(PatronServiceManager.shared.provider(for: url))
-        #expect(type(of: provider) == FanboxProvider.self)
+        #expect(type(of: provider) == PixivFanboxProvider.self)
     }
 
     @Test func matchesFantiaURL() throws {

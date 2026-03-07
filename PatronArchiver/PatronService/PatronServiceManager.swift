@@ -3,7 +3,7 @@ import Foundation
 struct PatronServiceManager: Sendable {
     static let allProviderTypes: [any PatronServiceProvider.Type] = [
         PatreonProvider.self,
-        FanboxProvider.self,
+        PixivFanboxProvider.self,
         FantiaProvider.self,
         ItchProvider.self,
         SubscribeStarProvider.self,
