@@ -4,9 +4,6 @@ struct PatronServiceManager: Sendable {
     static let allProviderTypes: [any PatronServiceProvider.Type] = [
         PatreonProvider.self,
         PixivFanboxProvider.self,
-        FantiaProvider.self,
-        ItchProvider.self,
-        SubscribeStarProvider.self,
     ]
 
     static let shared = PatronServiceManager()
