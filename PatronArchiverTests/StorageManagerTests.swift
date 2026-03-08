@@ -20,7 +20,7 @@ struct StorageManagerTests {
         let result = try StorageManager.makePostFolderURL(metadata: metadata, baseDirectory: baseDir)
 
         let path = result.absoluteString.removingPercentEncoding ?? result.absoluteString
-        #expect(path.contains("TestAuthor"))
+        #expect(path.contains("Patreon/TestAuthor"))
         #expect(path.contains("12345"))
         #expect(path.contains("Test Post Title"))
     }

@@ -128,6 +128,7 @@ enum StorageManager {
             throw FileNameSanitizer.FileNameSanitizerError.emptyFileName
         }
         return baseDirectory
+            .appendingPathComponent(metadata.siteIdentifier)
             .appendingPathComponent(authorFolder)
             .appendingPathComponent(postFolder)
     }
