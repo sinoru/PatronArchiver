@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Archive box U-shape -->
+  <path d="
+    M 244 512
+    L 348 512 L 348 712 L 676 712 L 676 512 L 780 512
+    L 780 740 C 780 788 744 816 700 816 L 324 816 C 280 816 244 788 244 740 Z
+  " fill="black"/>
+</svg>
