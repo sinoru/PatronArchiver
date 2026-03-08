@@ -21,6 +21,28 @@ struct MainView: View {
         ))
     }
 
+    @ViewBuilder
+    private var urlTextField: some View {
+        TextField("Enter post URL...", text: $urlText)
+            .onSubmit { Task { await submitURL() } }
+    }
+
+    @ViewBuilder
+    private var addButton: some View {
+        if isResolving {
+            ProgressView()
+                #if os(macOS)
+                .controlSize(.small)
+                #endif
+        } else {
+            Button { Task { await submitURL() } } label: {
+                Image(systemName: "plus")
+            }
+            .accessibilityLabel(Text("Add"))
+            .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        }
+    }
+
     var body: some View {
         NavigationStack {
             JobListView(archiver: archiver)
@@ -38,20 +60,12 @@ struct MainView: View {
             .toolbar {
                 #if os(iOS)
                 ToolbarItem(placement: .bottomBar) {
-                    TextField("Enter post URL...", text: $urlText)
+                    urlTextField
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
-                        .onSubmit { Task { await submitURL() } }
                 }
                 ToolbarItem(placement: .bottomBar) {
-                    if isResolving {
-                        ProgressView()
-                    } else {
-                        Button { Task { await submitURL() } } label: {
-                            Image(systemName: "plus")
-                        }
-                        .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
+                    addButton
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -62,21 +76,12 @@ struct MainView: View {
                 }
                 #else
                 ToolbarItem(placement: .principal) {
-                    TextField("Enter post URL...", text: $urlText)
+                    urlTextField
                         .textFieldStyle(.roundedBorder)
-                        .onSubmit { Task { await submitURL() } }
                         .frame(width: 300)
                 }
                 ToolbarItem(placement: .principal) {
-                    if isResolving {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Button { Task { await submitURL() } } label: {
-                            Image(systemName: "plus")
-                        }
-                        .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    }
+                    addButton
                 }
                 #endif
             }
