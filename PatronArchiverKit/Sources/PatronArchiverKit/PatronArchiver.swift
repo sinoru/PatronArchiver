@@ -14,7 +14,6 @@ public class PatronArchiver {
     public var webView: WKWebView? {
         didSet { processNextQueuedJob() }
     }
-    public let webViewConfiguration: WKWebViewConfiguration
     private let settings: AppSettings
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
 
@@ -36,10 +35,6 @@ public class PatronArchiver {
 
     public init(settings: AppSettings) {
         self.settings = settings
-        let config = WKWebViewConfiguration()
-        config.websiteDataStore = .default()
-        config.defaultWebpagePreferences.preferredContentMode = .desktop
-        self.webViewConfiguration = config
     }
 
     public func enqueue(url: URL) {
@@ -165,7 +160,6 @@ public class PatronArchiver {
             try Task.checkCancellation()
             job.status = .dumping
 
-            let dataStore = sharedDataStore
             let tempDir = try StorageManager.temporaryDownloadDirectory()
 
             // Start media download in background (no WebView dependency)
@@ -175,7 +169,7 @@ public class PatronArchiver {
             async let mediaResult = MediaDownloader.download(
                 items: mediaItems,
                 to: tempDir,
-                dataStore: dataStore,
+                websiteDataStore: websiteDataStore,
                 userAgent: userAgent,
                 onFileDownloaded: { @Sendable in
                     let count = completedMediaCount.withLock { value in
@@ -377,8 +371,8 @@ public class PatronArchiver {
         return settings.defaultSaveDirectory
     }
 
-    var sharedDataStore: WKWebsiteDataStore {
-        webViewConfiguration.websiteDataStore
+    var websiteDataStore: WKWebsiteDataStore? {
+        webView?.configuration.websiteDataStore
     }
 }
 

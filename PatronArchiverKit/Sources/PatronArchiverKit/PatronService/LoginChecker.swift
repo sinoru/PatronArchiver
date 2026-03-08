@@ -11,13 +11,14 @@ public enum LoginChecker {
         dataStore: WKWebsiteDataStore
     ) async -> AccountInfo? {
         let url = providerType.accountCheckURL
-        let request = await dataStore.urlRequest(for: url)
+        var urlRequest = URLRequest(url: url)
+        await dataStore.addCookies(to: &urlRequest)
 
         let delegate = NoRedirectDelegate()
         let session = URLSession(configuration: .ephemeral, delegate: delegate, delegateQueue: nil)
         defer { session.invalidateAndCancel() }
 
-        guard let (data, response) = try? await session.data(for: request),
+        guard let (data, response) = try? await session.data(for: urlRequest),
               let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200
         else {

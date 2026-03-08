@@ -15,16 +15,13 @@ extension WKWebsiteDataStore {
         }
     }
 
-    public func urlRequest(for url: URL, userAgent: String? = nil) async -> URLRequest {
-        var request = URLRequest(url: url)
+    public func addCookies(to urlRequest: inout URLRequest) async {
+        guard let url = urlRequest.url else { return }
+
         let cookies = await cookies(for: url)
         let headers = HTTPCookie.requestHeaderFields(with: cookies)
         for (key, value) in headers {
-            request.setValue(value, forHTTPHeaderField: key)
+            urlRequest.setValue(value, forHTTPHeaderField: key)
         }
-        if let userAgent {
-            request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-        }
-        return request
     }
 }

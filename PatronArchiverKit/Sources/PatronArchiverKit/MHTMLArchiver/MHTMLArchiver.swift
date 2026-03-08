@@ -366,7 +366,9 @@ private extension MHTMLArchiver {
         // Batch urlRequest creation to minimize main actor hops
         var requests: [URL: URLRequest] = [:]
         for url in urls {
-            requests[url] = await dataStore.urlRequest(for: url, userAgent: userAgent)
+            var urlRequest = URLRequest(url: url)
+            await dataStore.addCookies(to: &urlRequest)
+            requests[url] = urlRequest
         }
 
         return await withTaskGroup(of: Resource?.self) { group in
@@ -405,7 +407,9 @@ private extension MHTMLArchiver {
         var requestsBuilder: [String: URLRequest] = [:]
         for iframe in iframes where iframe.html == nil {
             guard let url = URL(string: iframe.url) else { continue }
-            requestsBuilder[iframe.url] = await dataStore.urlRequest(for: url, userAgent: userAgent)
+            var urlRequest = URLRequest(url: url)
+            await dataStore.addCookies(to: &urlRequest)
+            requestsBuilder[iframe.url] = urlRequest
         }
         let requests = requestsBuilder
 

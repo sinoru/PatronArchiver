@@ -3,6 +3,13 @@ import WebKit
 import PatronArchiverKit
 
 struct MainView: View {
+    private static var webViewConfiguration: WKWebViewConfiguration {
+        let config = WKWebViewConfiguration()
+        config.defaultWebpagePreferences.preferredContentMode = .desktop
+
+        return config
+    }
+
     @State private var archiver: PatronArchiver
     @State private var settings: AppSettings
     @State private var webView: WKWebView
@@ -16,9 +23,10 @@ struct MainView: View {
         self._settings = State(initialValue: settings)
         let archiver = PatronArchiver(settings: settings)
         self._archiver = State(initialValue: archiver)
+
         self._webView = State(initialValue: WKWebView(
             frame: CGRect(origin: .zero, size: archiver.renderSize),
-            configuration: archiver.webViewConfiguration
+            configuration: Self.webViewConfiguration
         ))
     }
 
