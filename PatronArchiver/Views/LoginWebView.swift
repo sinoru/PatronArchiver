@@ -6,6 +6,7 @@ import PatronArchiverKit
 struct LoginWebView: NSViewRepresentable {
     let url: URL
     let providerType: any PatronServiceProvider.Type
+    let websiteDataStore: WKWebsiteDataStore
     var onLoginDetected: (() -> Void)?
 
     func makeCoordinator() -> Coordinator {
@@ -13,7 +14,9 @@ struct LoginWebView: NSViewRepresentable {
     }
 
     func makeNSView(context: Context) -> WKWebView {
-        let webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = websiteDataStore
+        let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.load(URLRequest(url: url))
         return webView
@@ -25,6 +28,7 @@ struct LoginWebView: NSViewRepresentable {
 struct LoginWebView: UIViewRepresentable {
     let url: URL
     let providerType: any PatronServiceProvider.Type
+    let websiteDataStore: WKWebsiteDataStore
     var onLoginDetected: (() -> Void)?
 
     func makeCoordinator() -> Coordinator {
@@ -32,7 +36,9 @@ struct LoginWebView: UIViewRepresentable {
     }
 
     func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView(frame: .zero, configuration: WKWebViewConfiguration())
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = websiteDataStore
+        let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.load(URLRequest(url: url))
         return webView

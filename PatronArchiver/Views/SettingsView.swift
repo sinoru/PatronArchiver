@@ -151,6 +151,7 @@ struct SettingsView: View {
                 LoginWebView(
                     url: entry.loginURL,
                     providerType: entry.providerType,
+                    websiteDataStore: patronArchiver.websiteDataStore,
                     onLoginDetected: {
                         loginEntry = nil
                     }
