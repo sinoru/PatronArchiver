@@ -8,7 +8,7 @@ final class PatronArchiverUITests: XCTestCase {
 
     func testURLInputFieldExists() throws {
         let app = XCUIApplication()
-        app.activate()
+        app.launch()
 
         let textField = app.textFields["Enter post URL..."]
         XCTAssertTrue(textField.waitForExistence(timeout: 5))
@@ -16,7 +16,7 @@ final class PatronArchiverUITests: XCTestCase {
 
     func testAddButtonExists() throws {
         let app = XCUIApplication()
-        app.activate()
+        app.launch()
 
         let button = app.buttons["Add"].firstMatch
         XCTAssertTrue(button.waitForExistence(timeout: 5))
@@ -24,7 +24,7 @@ final class PatronArchiverUITests: XCTestCase {
 
     func testEmptyStateShowsNoJobs() throws {
         let app = XCUIApplication()
-        app.activate()
+        app.launch()
 
         let noJobs = app.staticTexts["No Jobs"]
         XCTAssertTrue(noJobs.waitForExistence(timeout: 5))

@@ -32,6 +32,7 @@
 		196C1BD62F57F8310014D927 /* PatronArchiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PatronArchiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		196C1BE32F57F8320014D927 /* PatronArchiverTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PatronArchiverTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		196C1BED2F57F8320014D927 /* PatronArchiverUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PatronArchiverUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		19C172B32F5DA2BD001EA29A /* PatronArchiver.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = PatronArchiver.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -105,6 +106,7 @@
 				196C1BD82F57F8310014D927 /* PatronArchiver */,
 				196C1BE62F57F8320014D927 /* PatronArchiverTests */,
 				196C1BF02F57F8320014D927 /* PatronArchiverUITests */,
+				19C172B32F5DA2BD001EA29A /* PatronArchiver.xctestplan */,
 				196313ED2F5D59C800A8BCC7 /* Frameworks */,
 				196C1BD72F57F8310014D927 /* Products */,
 			);

@@ -1,0 +1,38 @@
+{
+  "configurations" : [
+    {
+      "id" : "865737EC-66AB-4148-B152-64291F39BAB8",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:PatronArchiver.xcodeproj",
+        "identifier" : "196C1BE22F57F8320014D927",
+        "name" : "PatronArchiverTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:PatronArchiverKit",
+        "identifier" : "PatronArchiverKitTests",
+        "name" : "PatronArchiverKitTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:PatronArchiver.xcodeproj",
+        "identifier" : "196C1BEC2F57F8320014D927",
+        "name" : "PatronArchiverUITests"
+      }
+    }
+  ],
+  "version" : 1
+}
