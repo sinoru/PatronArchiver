@@ -27,7 +27,10 @@ let package = Package(
         ),
         .testTarget(
             name: "PatronArchiverKitTests",
-            dependencies: ["PatronArchiverKit"]
+            dependencies: ["PatronArchiverKit"],
+            swiftSettings: [
+                .defaultIsolation(MainActor.self)
+            ]
         ),
     ]
 )
