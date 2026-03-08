@@ -3,15 +3,8 @@ import WebKit
 import PatronArchiverKit
 
 struct MainView: View {
-    private static var webViewConfiguration: WKWebViewConfiguration {
-        let config = WKWebViewConfiguration()
-        config.defaultWebpagePreferences.preferredContentMode = .desktop
+    @Bindable private var patronArchiver: PatronArchiver
 
-        return config
-    }
-
-    @State private var archiver: PatronArchiver
-    @State private var settings: AppSettings
     @State private var webView: WKWebView
     @State private var urlText = ""
     @State private var isResolving = false
@@ -19,14 +12,18 @@ struct MainView: View {
     @State private var showSettings = false
     #endif
 
-    init(settings: AppSettings) {
-        self._settings = State(initialValue: settings)
-        let archiver = PatronArchiver(settings: settings)
-        self._archiver = State(initialValue: archiver)
+    init(
+        patronArchiver: PatronArchiver
+    ) {
+        self.patronArchiver = patronArchiver
+
+        let webViewConfiguration = WKWebViewConfiguration()
+        webViewConfiguration.websiteDataStore = patronArchiver.websiteDataStore
+        webViewConfiguration.defaultWebpagePreferences.preferredContentMode = .desktop
 
         self._webView = State(initialValue: WKWebView(
-            frame: CGRect(origin: .zero, size: archiver.renderSize),
-            configuration: Self.webViewConfiguration
+            frame: CGRect(origin: .zero, size: patronArchiver.renderSize),
+            configuration: webViewConfiguration
         ))
     }
 
@@ -54,12 +51,12 @@ struct MainView: View {
 
     var body: some View {
         NavigationStack {
-            JobListView(archiver: archiver)
+            JobListView(archiver: patronArchiver)
                 .safeAreaInset(edge: .bottom) {
                     archiveWebViewArea
                 }
             .onAppear {
-                archiver.webView = webView
+                patronArchiver.webView = webView
                 webView.load(URLRequest(url: URL(string: "about:blank")!))
             }
             .navigationTitle("PatronArchiver")
@@ -97,7 +94,7 @@ struct MainView: View {
             #if os(iOS)
             .sheet(isPresented: $showSettings) {
                 NavigationStack {
-                    SettingsView(settings: settings)
+                    SettingsView(patronArchiver: patronArchiver)
                         .navigationTitle("Settings")
                         .navigationBarTitleDisplayMode(.inline)
                         .toolbar {
@@ -118,7 +115,7 @@ struct MainView: View {
 
     @ViewBuilder
     private var archiveWebViewArea: some View {
-        let renderSize = archiver.renderSize
+        let renderSize = patronArchiver.renderSize
         let previewHeight: CGFloat = 200
         let scale = previewHeight / renderSize.height
         let previewWidth = renderSize.width * scale
@@ -148,7 +145,7 @@ struct MainView: View {
         components.fragment = nil
         guard let url = components.url else { return }
 
-        archiver.enqueue(url: url)
+        patronArchiver.enqueue(url: url)
         urlText = ""
     }
 }

@@ -13,7 +13,7 @@ enum MediaDownloader {
     static func download(
         items: [MediaItem],
         to directory: URL,
-        websiteDataStore: WKWebsiteDataStore?,
+        websiteDataStore: WKWebsiteDataStore,
         userAgent: String? = nil,
         onFileDownloaded: (@Sendable () -> Void)? = nil
     ) async throws -> [DownloadedMedia] {
@@ -22,7 +22,7 @@ enum MediaDownloader {
         for item in items {
             var urlRequest = URLRequest(url: item.url)
 
-            await websiteDataStore?.addCookies(to: &urlRequest)
+            await websiteDataStore.addCookies(to: &urlRequest)
             if let userAgent {
                 urlRequest.setValue(userAgent, forHTTPHeaderField: "User-Agent")
             }

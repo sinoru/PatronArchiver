@@ -4,7 +4,8 @@ import WebKit
 import PatronArchiverKit
 
 struct SettingsView: View {
-    @Bindable var settings: AppSettings
+    @Bindable private var patronArchiver: PatronArchiver
+
     @State private var isPickingFolder = false
     @State private var loginEntry: SiteEntry?
     @State private var accountInfoByIdentifier: [String: AccountInfo] = [:]
@@ -26,6 +27,12 @@ struct SettingsView: View {
                 providerType: providerType
             )
         }
+    }
+
+    init(
+        patronArchiver: PatronArchiver
+    ) {
+        self.patronArchiver = patronArchiver
     }
 
     var body: some View {
@@ -64,8 +71,8 @@ struct SettingsView: View {
 
             Section("Rendering") {
                 Stepper(
-                    "Render Width: \(settings.renderWidth)px",
-                    value: $settings.renderWidth,
+                    "Render Width: \(patronArchiver.settings.renderWidth)px",
+                    value: $patronArchiver.settings.renderWidth,
                     in: 800...3840,
                     step: 160
                 )
@@ -73,7 +80,7 @@ struct SettingsView: View {
                 HStack {
                     Text("Scroll Delay")
                     Spacer()
-                    TextField("ms", value: $settings.scrollDelay, format: .number)
+                    TextField("ms", value: $patronArchiver.settings.scrollDelay, format: .number)
                         .frame(width: 80)
                         #if os(macOS)
                         .textFieldStyle(.roundedBorder)
@@ -83,15 +90,15 @@ struct SettingsView: View {
             }
 
             Section("Metadata") {
-                Toggle("Where Froms", isOn: $settings.includesWhereFroms)
-                Toggle("Finder Tags", isOn: $settings.includesFinderTags)
+                Toggle("Where Froms", isOn: $patronArchiver.settings.includesWhereFroms)
+                Toggle("Finder Tags", isOn: $patronArchiver.settings.includesFinderTags)
             }
 
             Section("Storage") {
                 HStack {
                     Text("Save Directory")
                     Spacer()
-                    if let bookmark = settings.savedDirectoryBookmark,
+                    if let bookmark = patronArchiver.settings.savedDirectoryBookmark,
                        let url = try? {
                         var isStale = false
                         return try URL(
@@ -116,7 +123,7 @@ struct SettingsView: View {
                     allowedContentTypes: [.folder]
                 ) { result in
                     if case .success(let url) = result {
-                        settings.savedDirectoryBookmark = try? url.bookmarkData(
+                        patronArchiver.settings.savedDirectoryBookmark = try? url.bookmarkData(
                             options: Self.bookmarkCreationOptions,
                             includingResourceValuesForKeys: nil,
                             relativeTo: nil
@@ -124,9 +131,9 @@ struct SettingsView: View {
                     }
                 }
 
-                if settings.savedDirectoryBookmark != nil {
+                if patronArchiver.settings.savedDirectoryBookmark != nil {
                     Button("Reset to Default") {
-                        settings.savedDirectoryBookmark = nil
+                        patronArchiver.settings.savedDirectoryBookmark = nil
                     }
                 }
             }
@@ -179,7 +186,7 @@ struct SettingsView: View {
         isCheckingLogin = true
         defer { isCheckingLogin = false }
 
-        let dataStore = WKWebsiteDataStore.default()
+        let dataStore = patronArchiver.websiteDataStore
         let providerTypes = PatronServiceManager.allProviderTypes
 
         await withTaskGroup(of: (String, AccountInfo?).self) { group in
@@ -201,7 +208,7 @@ struct SettingsView: View {
     }
 
     private func logout(for entry: SiteEntry) async {
-        let dataStore = WKWebsiteDataStore.default()
+        let dataStore = patronArchiver.websiteDataStore
         let cookieStore = dataStore.httpCookieStore
         let allCookies = await cookieStore.allCookies()
         guard let host = entry.loginURL.host() else { return }
@@ -223,7 +230,7 @@ struct SettingsView: View {
     }
 
     private func checkLoginStatus(for providerType: any PatronServiceProvider.Type) async {
-        let dataStore = WKWebsiteDataStore.default()
+        let dataStore = patronArchiver.websiteDataStore
         let info = await LoginChecker.check(for: providerType, dataStore: dataStore)
         if let info {
             accountInfoByIdentifier[providerType.siteIdentifier] = info

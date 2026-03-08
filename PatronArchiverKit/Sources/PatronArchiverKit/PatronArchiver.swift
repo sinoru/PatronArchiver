@@ -1,4 +1,3 @@
-import Combine
 import Foundation
 import OSLog
 import WebKit
@@ -14,29 +13,30 @@ public class PatronArchiver {
     public var webView: WKWebView? {
         didSet { processNextQueuedJob() }
     }
-    private let settings: AppSettings
+    public var settings = AppSettings()
+    public let websiteDataStore = WKWebsiteDataStore.default()
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
 
-    #if os(iOS)
+#if os(iOS)
     private static let bgTaskIdentifier = "dev.sinoru.PatronArchiver.archive"
     private var activeBGTask: BGContinuedProcessingTask?
     private var bgProgressObservation: NSKeyValueObservation?
-    #endif
+#endif
 
-    #if os(macOS)
+#if os(macOS)
     private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = .withSecurityScope
-    #else
+#else
     private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = []
-    #endif
+#endif
 
     public var renderSize: CGSize {
         CGSize(width: CGFloat(settings.renderWidth), height: 1080)
     }
 
-    public init(settings: AppSettings) {
-        self.settings = settings
-    }
+    public init() { }
+}
 
+extension PatronArchiver {
     public func enqueue(url: URL) {
         let provider = PatronServiceManager.shared.provider(for: url)
         let job = ArchiveJob(inputURL: url, provider: provider)
@@ -369,10 +369,6 @@ public class PatronArchiver {
             return url
         }
         return settings.defaultSaveDirectory
-    }
-
-    var websiteDataStore: WKWebsiteDataStore? {
-        webView?.configuration.websiteDataStore
     }
 }
 
