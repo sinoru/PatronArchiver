@@ -1,5 +1,5 @@
-import SwiftUI
 import PatronArchiverKit
+import SwiftUI
 
 struct JobListView: View {
     var archiver: PatronArchiver

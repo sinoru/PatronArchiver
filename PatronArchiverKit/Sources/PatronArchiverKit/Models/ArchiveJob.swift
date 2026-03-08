@@ -2,7 +2,7 @@ import Foundation
 
 @MainActor
 @Observable
-public class ArchiveJob: Identifiable {
+public final class ArchiveJob: Identifiable {
     public let id: UUID
     public let inputURL: URL
     public let provider: (any PatronServiceProvider)?

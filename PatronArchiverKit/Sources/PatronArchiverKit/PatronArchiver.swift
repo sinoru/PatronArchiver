@@ -7,7 +7,7 @@ import WebKit
 
 @MainActor
 @Observable
-public class PatronArchiver {
+public final class PatronArchiver {
     private static let logger = Logger(subsystem: Logger.moduleSubsystem, category: "PatronArchiver")
     public private(set) var jobs: [ArchiveJob] = []
     public var webView: WKWebView? {
@@ -111,7 +111,8 @@ extension PatronArchiver {
             Self.logger.debug("Loading page...")
             let redirectChain = try await tracker.load(job.inputURL, in: webView)
             let userAgent = try await webView.evaluateJavaScript("navigator.userAgent") as? String
-            Self.logger.debug("Page loaded, redirect chain: \(redirectChain.map(\.absoluteString), privacy: .private)")
+            let chain = redirectChain.map(\.absoluteString)
+            Self.logger.debug("Page loaded, redirect chain: \(chain, privacy: .private)")
 
             // 3. Check login
             let isLoggedIn = try await provider.checkLoginStatus(in: webView)
@@ -148,7 +149,8 @@ extension PatronArchiver {
             )
             job.metadata = metadata
             let pageTitle = webView.title ?? metadata.title
-            Self.logger.info("Metadata extracted — title: \(metadata.title, privacy: .private), author: \(metadata.authorName, privacy: .private), pageTitle: \(pageTitle, privacy: .private)")
+            Self.logger.info("Metadata extracted — \(metadata.title, privacy: .private)")
+            Self.logger.info("  author: \(metadata.authorName, privacy: .private)")
 
             // 6. Extract media URLs
             let mediaItems = try await provider.extractMediaURLs(in: webView)
@@ -186,12 +188,18 @@ extension PatronArchiver {
             // MHTML + PDF on WebView (sequential, needs WebView)
             Self.logger.debug("Generating MHTML...")
             let mhtmlData = try await MHTMLArchiver(webView).archive()
-            Self.logger.debug("MHTML generated (\(mhtmlData.count.formatted(.byteCount(style: .binary, spellsOutZero: false, includesActualByteCount: true))))")
+            let mhtmlSize = mhtmlData.count.formatted(
+                .byteCount(style: .binary, spellsOutZero: false, includesActualByteCount: true)
+            )
+            Self.logger.debug("MHTML generated (\(mhtmlSize))")
             job.progress.completedUnitCount = 50
 
             Self.logger.debug("Generating PDF...")
             let pdfData = try await webView.fullPagePDF()
-            Self.logger.debug("PDF generated (\(pdfData.count.formatted(.byteCount(style: .binary, spellsOutZero: false, includesActualByteCount: true))))")
+            let pdfSize = pdfData.count.formatted(
+                .byteCount(style: .binary, spellsOutZero: false, includesActualByteCount: true)
+            )
+            Self.logger.debug("PDF generated (\(pdfSize))")
             let alreadyCompleted = completedMediaCount.withLock { $0 }
             job.progress.completedUnitCount = 60 + Int64(alreadyCompleted * 20 / max(totalMedia, 1))
 
@@ -307,7 +315,10 @@ extension PatronArchiver {
 
     #if os(iOS)
     private func submitBackgroundTask(for job: ArchiveJob) {
-        BGTaskScheduler.shared.register(forTaskWithIdentifier: Self.bgTaskIdentifier, using: .main) { [weak self] bgTask in
+        BGTaskScheduler.shared.register(
+            forTaskWithIdentifier: Self.bgTaskIdentifier,
+            using: .main
+        ) { [weak self] bgTask in
             guard let bgTask = bgTask as? BGContinuedProcessingTask else { return }
             MainActor.assumeIsolated {
                 guard let self else { return }
@@ -339,13 +350,18 @@ extension PatronArchiver {
         do {
             try BGTaskScheduler.shared.submit(request)
         } catch {
-            Self.logger.error("Failed to submit continued processing task: \(error.localizedDescription, privacy: .public)")
+            Self.logger.error(
+                "Failed to submit BG task: \(error.localizedDescription, privacy: .public)"
+            )
         }
     }
 
     private func observeJobProgress(_ job: ArchiveJob, for bgTask: BGContinuedProcessingTask) {
         bgProgressObservation?.invalidate()
-        bgProgressObservation = job.progress.observe(\.completedUnitCount, options: [.new]) { [weak bgTask] progress, _ in
+        bgProgressObservation = job.progress.observe(
+            \.completedUnitCount,
+            options: [.new]
+        ) { [weak bgTask] progress, _ in
             bgTask?.progress.completedUnitCount = progress.completedUnitCount
         }
     }

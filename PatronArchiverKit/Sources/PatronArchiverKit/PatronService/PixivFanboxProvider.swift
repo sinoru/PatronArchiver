@@ -15,7 +15,8 @@ struct PixivFanboxProvider: PatronServiceProvider {
 
         // Parse user name from #metadata content attribute JSON
         // e.g. <meta id="metadata" name="metadata" content='{"context":{"user":{"name":"..."}}}'>
-        if let contentRange = html.range(of: #"<meta[^>]+id="metadata"[^>]+content='([^']+)'"#, options: .regularExpression),
+        let metadataPattern = #"<meta[^>]+id="metadata"[^>]+content='([^']+)'"#
+        if let contentRange = html.range(of: metadataPattern, options: .regularExpression),
            let jsonStart = html[contentRange].range(of: "content='") {
             let jsonFragment = html[contentRange][jsonStart.upperBound...]
                 .prefix(while: { $0 != "'" })

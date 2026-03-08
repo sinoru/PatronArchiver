@@ -2,9 +2,12 @@ import Foundation
 import OSLog
 
 enum StorageManager {
-    nonisolated private static let logger = Logger(subsystem: Logger.moduleSubsystem, category: "StorageManager")
+    private nonisolated static let logger = Logger(
+        subsystem: Logger.moduleSubsystem,
+        category: "StorageManager"
+    )
 
-    nonisolated private static let dateFormatter: DateFormatter = {
+    private nonisolated static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HHmmss'Z'"
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -84,7 +87,9 @@ enum StorageManager {
         let fm = FileManager.default
         let finalDirectory = preparedSave.finalDirectory
 
-        logger.info("Committing save to: \(finalDirectory.path(), privacy: .private), overwrite: \(overwrite)")
+        logger.info(
+            "Committing save to: \(finalDirectory.path(), privacy: .private), overwrite: \(overwrite)"
+        )
 
         if overwrite, fm.fileExists(atPath: finalDirectory.path(percentEncoded: false)) {
             try fm.removeItem(at: finalDirectory)
@@ -111,7 +116,9 @@ enum StorageManager {
     nonisolated static func discardPreparedSave(_ preparedSave: PreparedSave) {
         do {
             try FileManager.default.removeItem(at: preparedSave.stagingDirectory)
-            logger.debug("Discarded staging directory: \(preparedSave.stagingDirectory.path(), privacy: .private)")
+            logger.debug(
+                "Discarded staging: \(preparedSave.stagingDirectory.path(), privacy: .private)"
+            )
         } catch {
             logger.warning("Failed to discard staging directory: \(error.localizedDescription)")
         }

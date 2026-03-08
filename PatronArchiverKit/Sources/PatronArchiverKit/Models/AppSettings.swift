@@ -2,7 +2,7 @@ import Foundation
 
 @MainActor
 @Observable
-public class AppSettings {
+public final class AppSettings {
     public var renderWidth: Int {
         didSet { UserDefaults.standard.set(renderWidth, forKey: "renderWidth") }
     }

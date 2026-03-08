@@ -1,7 +1,7 @@
+import PatronArchiverKit
 import SwiftUI
 import UniformTypeIdentifiers
 import WebKit
-import PatronArchiverKit
 
 struct SettingsView: View {
     @Bindable private var patronArchiver: PatronArchiver

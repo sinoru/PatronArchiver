@@ -1,5 +1,5 @@
-import SwiftUI
 import PatronArchiverKit
+import SwiftUI
 
 @main
 struct PatronArchiverApp: App {

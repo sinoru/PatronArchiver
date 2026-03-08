@@ -1,7 +1,7 @@
 import WebKit
 
 @MainActor
-class RedirectTracker: NSObject, WKNavigationDelegate {
+final class RedirectTracker: NSObject, WKNavigationDelegate {
     private(set) var redirectChain: [URL] = []
     private var continuation: CheckedContinuation<[URL], any Error>?
 
@@ -43,7 +43,11 @@ class RedirectTracker: NSObject, WKNavigationDelegate {
         continuation = nil
     }
 
-    func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: any Error) {
+    func webView(
+        _ webView: WKWebView,
+        didFailProvisionalNavigation navigation: WKNavigation!,
+        withError error: any Error
+    ) {
         webView.navigationDelegate = nil
         continuation?.resume(throwing: error)
         continuation = nil

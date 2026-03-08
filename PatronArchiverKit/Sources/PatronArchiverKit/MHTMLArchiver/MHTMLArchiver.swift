@@ -135,8 +135,8 @@ private struct IframeInfo {
     let html: String? // nil for cross-origin iframes
 }
 
-private extension MHTMLArchiver {
-    func collectPageResources() async throws -> CollectResult {
+extension MHTMLArchiver {
+    fileprivate func collectPageResources() async throws -> CollectResult {
         let script = """
         (() => {
             const resources = new Set();
@@ -307,9 +307,9 @@ private extension MHTMLArchiver {
 
 // MARK: - WebArchive Parsing
 
-private extension MHTMLArchiver {
+extension MHTMLArchiver {
     /// Extracts sub-resources from a binary plist webarchive, deduplicating by URL.
-    nonisolated static func parseWebArchiveResources(_ data: Data) -> [Resource] {
+    private nonisolated static func parseWebArchiveResources(_ data: Data) -> [Resource] {
         guard let plist = try? PropertyListSerialization.propertyList(
             from: data, format: nil
         ) as? [String: Any] else {
@@ -322,7 +322,7 @@ private extension MHTMLArchiver {
         return resources
     }
 
-    nonisolated static func extractSubresources(
+    private nonisolated static func extractSubresources(
         from archive: [String: Any],
         into resources: inout [Resource],
         seen: inout Set<String>
@@ -356,9 +356,9 @@ private extension MHTMLArchiver {
 
 // MARK: - Resource Download
 
-private extension MHTMLArchiver {
+extension MHTMLArchiver {
     @concurrent
-    static func downloadResources(
+    private static func downloadResources(
         urls: [URL],
         dataStore: WKWebsiteDataStore,
         userAgent: String? = nil
@@ -396,9 +396,9 @@ private extension MHTMLArchiver {
 
 // MARK: - Iframe Sub-document Collection
 
-private extension MHTMLArchiver {
+extension MHTMLArchiver {
     @concurrent
-    static func collectIframeResources(
+    fileprivate static func collectIframeResources(
         iframes: [IframeInfo],
         dataStore: WKWebsiteDataStore,
         userAgent: String? = nil
@@ -454,8 +454,8 @@ private extension MHTMLArchiver {
 
 // MARK: - CSS Subresource Extraction (2nd Pass)
 
-private extension MHTMLArchiver {
-    nonisolated static func extractCSSSubresourceURLs(from resources: [Resource]) -> [URL] {
+extension MHTMLArchiver {
+    private nonisolated static func extractCSSSubresourceURLs(from resources: [Resource]) -> [URL] {
         let cssURLPattern = /url\(["']?([^"')]+)["']?\)/
 
         var discovered: [URL] = []
@@ -480,9 +480,9 @@ private extension MHTMLArchiver {
 
 // MARK: - MHTML Assembly
 
-private extension MHTMLArchiver {
+extension MHTMLArchiver {
     @concurrent
-    static func assembleMHTML(
+    private static func assembleMHTML(
         pageURL: URL,
         title: String,
         html: String,
@@ -545,7 +545,7 @@ private extension MHTMLArchiver {
 // MARK: - Content-Type Classification
 
 /// Determines whether the given Content-Type should use quoted-printable encoding.
-nonisolated private func isTextBasedContentType(_ contentType: String) -> Bool {
+private nonisolated func isTextBasedContentType(_ contentType: String) -> Bool {
     let mimeType = contentType
         .split(separator: ";").first?
         .trimmingCharacters(in: .whitespaces)
@@ -566,7 +566,7 @@ private nonisolated let crlf: [UInt8] = [0x0D, 0x0A]
 private nonisolated let softLineBreak: [UInt8] = [0x3D, 0x0D, 0x0A] // "=\r\n"
 private nonisolated let hexDigits: [UInt8] = Array("0123456789ABCDEF".utf8)
 
-nonisolated private func quotedPrintableEncode(_ string: String) -> Data {
+private nonisolated func quotedPrintableEncode(_ string: String) -> Data {
     let bytes = Array(string.utf8)
     var result = Data()
     result.reserveCapacity(bytes.count + bytes.count / 10)
@@ -634,7 +634,7 @@ nonisolated private func quotedPrintableEncode(_ string: String) -> Data {
 }
 
 /// Check if the whitespace byte at `from` is trailing (followed only by whitespace until line end or EOF).
-nonisolated private func isTrailingWhitespace(bytes: [UInt8], from index: Int) -> Bool {
+private nonisolated func isTrailingWhitespace(bytes: [UInt8], from index: Int) -> Bool {
     var j = index + 1
     while j < bytes.count {
         let b = bytes[j]
@@ -658,7 +658,7 @@ nonisolated private func isTrailingWhitespace(bytes: [UInt8], from index: Int) -
 /// one or more `=?UTF-8?B?…?=` encoded-words separated by `CRLF SPACE`,
 /// splitting at UTF-8 character boundaries so that each encoded-word
 /// does not exceed 75 characters (RFC 2047 §2).
-nonisolated private func rfc2047Encode(_ text: String) -> String {
+private nonisolated func rfc2047Encode(_ text: String) -> String {
     // If all ASCII, no encoding needed
     if text.utf8.allSatisfy({ $0 < 0x80 }) {
         return text
@@ -698,7 +698,7 @@ nonisolated private func rfc2047Encode(_ text: String) -> String {
 }
 
 /// Returns `true` if the byte is a UTF-8 continuation byte (10xxxxxx).
-nonisolated private func isContinuationByte(_ byte: UInt8) -> Bool {
+private nonisolated func isContinuationByte(_ byte: UInt8) -> Bool {
     byte & 0xC0 == 0x80
 }
 

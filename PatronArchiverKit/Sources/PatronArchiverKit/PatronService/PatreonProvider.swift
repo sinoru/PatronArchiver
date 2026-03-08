@@ -12,13 +12,17 @@ struct PatreonProvider: PatronServiceProvider {
     static func parseAccountInfo(from data: Data) -> AccountInfo? {
         guard let html = String(data: data, encoding: .utf8) else { return nil }
         // Try __NEXT_DATA__ JSON for user info
-        if let startRange = html.range(of: "<script id=\"__NEXT_DATA__\" type=\"application/json\">"),
+        let nextDataTag = #"<script id="__NEXT_DATA__" type="application/json">"#
+        if let startRange = html.range(of: nextDataTag),
            let endRange = html.range(of: "</script>", range: startRange.upperBound..<html.endIndex),
-           let jsonData = String(html[startRange.upperBound..<endRange.lowerBound]).data(using: .utf8),
+           let jsonData = String(
+               html[startRange.upperBound..<endRange.lowerBound]
+           ).data(using: .utf8),
            let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
            let props = json["props"] as? [String: Any],
            let pageProps = props["pageProps"] as? [String: Any],
-           let bootstrap = (pageProps["bootstrapEnvelope"] as? [String: Any])?["commonBootstrap"] as? [String: Any],
+           let envelope = pageProps["bootstrapEnvelope"] as? [String: Any],
+           let bootstrap = envelope["commonBootstrap"] as? [String: Any],
            let userData = bootstrap["currentUser"] as? [String: Any],
            let attributes = userData["data"] as? [String: Any],
            let email = (attributes["attributes"] as? [String: Any])?["email"] as? String {
@@ -28,7 +32,8 @@ struct PatreonProvider: PatronServiceProvider {
         if let titleStart = html.range(of: "<title>"),
            let titleEnd = html.range(of: "</title>", range: titleStart.upperBound..<html.endIndex) {
             let title = String(html[titleStart.upperBound..<titleEnd.lowerBound])
-            let parts = title.components(separatedBy: "|").map { $0.trimmingCharacters(in: .whitespaces) }
+            let parts = title.components(separatedBy: "|")
+                .map { $0.trimmingCharacters(in: .whitespaces) }
             if parts.count >= 2, !parts[1].isEmpty, parts[1] != "Patreon" {
                 return AccountInfo(displayName: parts[1])
             }

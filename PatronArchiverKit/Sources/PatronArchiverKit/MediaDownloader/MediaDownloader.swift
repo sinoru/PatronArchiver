@@ -69,7 +69,7 @@ enum MediaDownloader {
         }
     }
 
-    nonisolated private static func resolveDestinationURL(
+    private nonisolated static func resolveDestinationURL(
         for item: MediaItem,
         in directory: URL,
         response: HTTPURLResponse?,
@@ -77,7 +77,8 @@ enum MediaDownloader {
     ) throws -> URL {
         let prefix = String(format: "%02d", index + 1)
         let baseURL = resolveBaseURL(for: item, in: directory, response: response, index: index)
-        guard let stem = FileNameSanitizer.sanitize(baseURL.deletingPathExtension().lastPathComponent) else {
+        let lastComponent = baseURL.deletingPathExtension().lastPathComponent
+        guard let stem = FileNameSanitizer.sanitize(lastComponent) else {
             throw FileNameSanitizer.FileNameSanitizerError.emptyFileName
         }
         var destinationURL = directory.appending(component: "\(prefix) - \(stem)")
@@ -88,7 +89,7 @@ enum MediaDownloader {
         return destinationURL
     }
 
-    nonisolated private static func resolveBaseURL(
+    private nonisolated static func resolveBaseURL(
         for item: MediaItem,
         in directory: URL,
         response: HTTPURLResponse?,

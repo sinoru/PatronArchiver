@@ -1,7 +1,7 @@
 import Foundation
 
 enum FileNameSanitizer {
-    nonisolated private static let maxBytes = 255
+    private nonisolated static let maxBytes = 255
 
     nonisolated static func sanitize(_ name: String) -> String? {
         var sanitized = name

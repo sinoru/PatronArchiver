@@ -1,6 +1,6 @@
+import PatronArchiverKit
 import SwiftUI
 import WebKit
-import PatronArchiverKit
 
 #if os(macOS)
 struct LoginWebView: NSViewRepresentable {
