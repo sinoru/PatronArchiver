@@ -1,5 +1,6 @@
 import Foundation
 import WebKit
+import PatronArchiverKit
 
 enum LoginChecker {
     /// Checks login status by making an HTTP request to the plugin's accountCheckURL

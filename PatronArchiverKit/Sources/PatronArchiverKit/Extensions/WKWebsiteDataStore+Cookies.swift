@@ -15,7 +15,7 @@ extension WKWebsiteDataStore {
         }
     }
 
-    func urlRequest(for url: URL, userAgent: String? = nil) async -> URLRequest {
+    public func urlRequest(for url: URL, userAgent: String? = nil) async -> URLRequest {
         var request = URLRequest(url: url)
         let cookies = await cookies(for: url)
         let headers = HTTPCookie.requestHeaderFields(with: cookies)

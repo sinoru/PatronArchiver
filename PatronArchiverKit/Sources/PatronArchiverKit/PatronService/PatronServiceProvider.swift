@@ -1,11 +1,11 @@
 import Foundation
 import WebKit
 
-struct AccountInfo: Sendable {
-    let displayName: String
+public struct AccountInfo: Sendable {
+    public let displayName: String
 }
 
-protocol PatronServiceProvider: Sendable {
+public protocol PatronServiceProvider: Sendable {
     static var matchPatterns: [any RegexComponent] { get }
     static var loginURL: URL { get }
     static var accountCheckURL: URL { get }

@@ -8,13 +8,13 @@ import WebKit
 
 @MainActor
 @Observable
-class PatronArchiver {
+public class PatronArchiver {
     private static let logger = Logger(subsystem: "com.sinoru.PatronArchiver", category: "PatronArchiver")
-    private(set) var jobs: [ArchiveJob] = []
-    var webView: WKWebView? {
+    public private(set) var jobs: [ArchiveJob] = []
+    public var webView: WKWebView? {
         didSet { processNextQueuedJob() }
     }
-    let webViewConfiguration: WKWebViewConfiguration
+    public let webViewConfiguration: WKWebViewConfiguration
     private let settings: AppSettings
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
 
@@ -30,11 +30,11 @@ class PatronArchiver {
     private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = []
     #endif
 
-    var renderSize: CGSize {
+    public var renderSize: CGSize {
         CGSize(width: CGFloat(settings.renderWidth), height: 1080)
     }
 
-    init(settings: AppSettings) {
+    public init(settings: AppSettings) {
         self.settings = settings
         let config = WKWebViewConfiguration()
         config.websiteDataStore = .default()
@@ -42,14 +42,14 @@ class PatronArchiver {
         self.webViewConfiguration = config
     }
 
-    func enqueue(url: URL) {
+    public func enqueue(url: URL) {
         let provider = PatronServiceManager.shared.provider(for: url)
         let job = ArchiveJob(inputURL: url, provider: provider)
         jobs.append(job)
         startJobIfPossible(job)
     }
 
-    func cancelJob(_ job: ArchiveJob) {
+    public func cancelJob(_ job: ArchiveJob) {
         activeTasks[job.id]?.cancel()
         activeTasks[job.id] = nil
         discardPendingSaveIfNeeded(job)
@@ -59,12 +59,12 @@ class PatronArchiver {
         processNextQueuedJob()
     }
 
-    func removeJob(_ job: ArchiveJob) {
+    public func removeJob(_ job: ArchiveJob) {
         cancelJob(job)
         jobs.removeAll { $0.id == job.id }
     }
 
-    func retryJob(_ job: ArchiveJob) {
+    public func retryJob(_ job: ArchiveJob) {
         discardPendingSaveIfNeeded(job)
         job.status = .queued
         job.progress = Progress(totalUnitCount: 100)
@@ -267,7 +267,7 @@ class PatronArchiver {
         }
     }
 
-    func confirmOverwrite(_ job: ArchiveJob) {
+    public func confirmOverwrite(_ job: ArchiveJob) {
         guard let preparedSave = job.pendingSave else { return }
         job.status = .saving
 
@@ -287,7 +287,7 @@ class PatronArchiver {
         }
     }
 
-    func skipOverwrite(_ job: ArchiveJob) {
+    public func skipOverwrite(_ job: ArchiveJob) {
         if let preparedSave = job.pendingSave {
             StorageManager.discardPreparedSave(preparedSave)
         }

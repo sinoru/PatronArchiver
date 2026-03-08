@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+import PatronArchiverKit
 
 struct MainView: View {
     @State private var archiver: PatronArchiver

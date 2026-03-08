@@ -1,7 +1,7 @@
 import Foundation
 
-struct PatronServiceManager: Sendable {
-    static let allProviderTypes: [any PatronServiceProvider.Type] = [
+public struct PatronServiceManager: Sendable {
+    public static let allProviderTypes: [any PatronServiceProvider.Type] = [
         PatreonProvider.self,
         PixivFanboxProvider.self,
     ]

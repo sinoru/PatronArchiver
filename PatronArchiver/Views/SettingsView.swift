@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import WebKit
+import PatronArchiverKit
 
 struct SettingsView: View {
     @Bindable var settings: AppSettings

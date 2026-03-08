@@ -2,14 +2,14 @@ import Foundation
 
 @MainActor
 @Observable
-class ArchiveJob: Identifiable {
-    let id: UUID
-    let inputURL: URL
-    let provider: (any PatronServiceProvider)?
-    var status: JobStatus
-    var metadata: PostMetadata?
+public class ArchiveJob: Identifiable {
+    public let id: UUID
+    public let inputURL: URL
+    public let provider: (any PatronServiceProvider)?
+    public internal(set) var status: JobStatus
+    public internal(set) var metadata: PostMetadata?
     var mediaItems: [MediaItem]
-    var progress: Progress
+    public internal(set) var progress: Progress
     var pendingSave: StorageManager.PreparedSave?
 
     init(id: UUID = UUID(), inputURL: URL, provider: (any PatronServiceProvider)? = nil) {
@@ -24,7 +24,7 @@ class ArchiveJob: Identifiable {
     }
 }
 
-enum JobStatus {
+public enum JobStatus {
     case queued
     case loading
     case preloading
@@ -35,21 +35,21 @@ enum JobStatus {
     case completed
     case failed(Error)
 
-    var isTerminal: Bool {
+    public var isTerminal: Bool {
         switch self {
         case .completed, .failed: true
         default: false
         }
     }
 
-    var isInProgress: Bool {
+    public var isInProgress: Bool {
         switch self {
         case .loading, .preloading, .dumping, .downloading, .saving: true
         default: false
         }
     }
 
-    var displayName: String {
+    public var displayName: String {
         switch self {
         case .queued: "Queued"
         case .loading: "Loading"

@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		196313EF2F5D59C800A8BCC7 /* PatronArchiverKit in Frameworks */ = {isa = PBXBuildFile; productRef = 196313EE2F5D59C800A8BCC7 /* PatronArchiverKit */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		196C1BE42F57F8320014D927 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -24,6 +28,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		196313EC2F5D596E00A8BCC7 /* PatronArchiverKit */ = {isa = PBXFileReference; lastKnownFileType = wrapper; path = PatronArchiverKit; sourceTree = "<group>"; };
 		196C1BD62F57F8310014D927 /* PatronArchiver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PatronArchiver.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		196C1BE32F57F8320014D927 /* PatronArchiverTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PatronArchiverTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		196C1BED2F57F8320014D927 /* PatronArchiverUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PatronArchiverUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -65,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				196313EF2F5D59C800A8BCC7 /* PatronArchiverKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -85,12 +91,21 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		196313ED2F5D59C800A8BCC7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		196C1BCD2F57F8310014D927 = {
 			isa = PBXGroup;
 			children = (
+				196313EC2F5D596E00A8BCC7 /* PatronArchiverKit */,
 				196C1BD82F57F8310014D927 /* PatronArchiver */,
 				196C1BE62F57F8320014D927 /* PatronArchiverTests */,
 				196C1BF02F57F8320014D927 /* PatronArchiverUITests */,
+				196313ED2F5D59C800A8BCC7 /* Frameworks */,
 				196C1BD72F57F8310014D927 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -125,6 +140,7 @@
 			);
 			name = PatronArchiver;
 			packageProductDependencies = (
+				196313EE2F5D59C800A8BCC7 /* PatronArchiverKit */,
 			);
 			productName = PatronArchiver;
 			productReference = 196C1BD62F57F8310014D927 /* PatronArchiver.app */;
@@ -631,6 +647,13 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		196313EE2F5D59C800A8BCC7 /* PatronArchiverKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = PatronArchiverKit;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 196C1BCE2F57F8310014D927 /* Project object */;
 }
