@@ -3,7 +3,7 @@ import WebKit
 import PatronArchiverKit
 
 struct MainView: View {
-    @Bindable private var patronArchiver: PatronArchiver
+    private let patronArchiver: PatronArchiver
 
     @State private var webView: WKWebView
     @State private var urlText = ""
