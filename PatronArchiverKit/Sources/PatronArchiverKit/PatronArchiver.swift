@@ -17,17 +17,17 @@ public class PatronArchiver {
     public let websiteDataStore = WKWebsiteDataStore.default()
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
 
-#if os(iOS)
+    #if os(iOS)
     private static let bgTaskIdentifier = "dev.sinoru.PatronArchiver.archive"
     private var activeBGTask: BGContinuedProcessingTask?
     private var bgProgressObservation: NSKeyValueObservation?
-#endif
+    #endif
 
-#if os(macOS)
+    #if os(macOS)
     private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = .withSecurityScope
-#else
+    #else
     private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = []
-#endif
+    #endif
 
     public var renderSize: CGSize {
         CGSize(width: CGFloat(settings.renderWidth), height: 1080)
