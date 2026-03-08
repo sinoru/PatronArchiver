@@ -1,6 +1,6 @@
 import Combine
 import Foundation
-import os
+import OSLog
 import WebKit
 #if os(iOS)
 @preconcurrency import BackgroundTasks
@@ -9,7 +9,7 @@ import WebKit
 @MainActor
 @Observable
 public class PatronArchiver {
-    private static let logger = Logger(subsystem: "com.sinoru.PatronArchiver", category: "PatronArchiver")
+    private static let logger = Logger(subsystem: Logger.moduleSubsystem, category: "PatronArchiver")
     public private(set) var jobs: [ArchiveJob] = []
     public var webView: WKWebView? {
         didSet { processNextQueuedJob() }

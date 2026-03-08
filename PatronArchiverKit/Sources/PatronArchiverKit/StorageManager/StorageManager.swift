@@ -2,7 +2,7 @@ import Foundation
 import OSLog
 
 enum StorageManager {
-    nonisolated private static let logger = Logger(subsystem: "com.sinoru.PatronArchiver", category: "StorageManager")
+    nonisolated private static let logger = Logger(subsystem: Logger.moduleSubsystem, category: "StorageManager")
 
     nonisolated private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()

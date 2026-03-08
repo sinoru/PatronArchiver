@@ -1,11 +1,8 @@
 import Foundation
-import os
+import OSLog
 
 public struct URLResolver: Sendable {
-    private static let logger = Logger(
-        subsystem: "com.sinoru.PatronArchiver",
-        category: "URLResolver"
-    )
+    private static let logger = Logger(subsystem: Logger.moduleSubsystem, category: "URLResolver")
 
     /// Resolves a URL by following redirects with a HEAD request.
     ///
