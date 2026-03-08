@@ -3,16 +3,16 @@ import PatronArchiverKit
 
 @main
 struct PatronArchiverApp: App {
-    @State private var settings = AppSettings()
+    @State private var patronArchiver = PatronArchiver()
 
     var body: some Scene {
         WindowGroup {
-            MainView(settings: settings)
+            MainView(patronArchiver: patronArchiver)
         }
 
         #if os(macOS)
         Settings {
-            SettingsView(settings: settings)
+            SettingsView(patronArchiver: patronArchiver)
         }
         #endif
     }
