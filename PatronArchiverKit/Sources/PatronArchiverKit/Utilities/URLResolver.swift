@@ -1,13 +1,16 @@
 import Foundation
 import os
 
-struct URLResolver: Sendable {
+public struct URLResolver: Sendable {
     private static let logger = Logger(
         subsystem: "com.sinoru.PatronArchiver",
         category: "URLResolver"
     )
 
-    static func resolve(_ url: URL, timeout: TimeInterval = 10) async -> URL {
+    /// Resolves a URL by following redirects with a HEAD request.
+    ///
+    /// - Returns: The final resolved URL, or the original URL if resolution fails.
+    public static func resolve(_ url: URL, timeout: TimeInterval = 10) async -> URL {
         var request = URLRequest(url: url)
         request.httpMethod = "HEAD"
         request.timeoutInterval = timeout

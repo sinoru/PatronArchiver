@@ -1,12 +1,12 @@
 import Foundation
 import WebKit
-import PatronArchiverKit
 
-enum LoginChecker {
-    /// Checks login status by making an HTTP request to the plugin's accountCheckURL
+public enum LoginChecker {
+    /// Checks login status by making an HTTP request to the provider's accountCheckURL
     /// using cookies from the WKWebsiteDataStore.
-    /// Returns AccountInfo if logged in, nil otherwise.
-    static func check(
+    ///
+    /// - Returns: The account info if logged in, nil otherwise.
+    public static func check(
         for providerType: any PatronServiceProvider.Type,
         dataStore: WKWebsiteDataStore
     ) async -> AccountInfo? {
