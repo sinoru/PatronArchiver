@@ -1,6 +1,6 @@
 import Testing
 import Foundation
-@testable import PatronArchiver
+@testable import PatronArchiverKit
 
 struct StorageManagerTests {
     @Test func makePostFolderURLFormatsCorrectly() throws {

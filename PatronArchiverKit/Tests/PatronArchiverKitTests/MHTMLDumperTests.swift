@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import PatronArchiver
+@testable import PatronArchiverKit
 
 struct MHTMLDumperTests {
     // Note: Full MHTML creation requires WKWebView (MainActor + UI),

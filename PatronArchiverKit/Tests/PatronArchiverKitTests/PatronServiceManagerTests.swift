@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import PatronArchiver
+@testable import PatronArchiverKit
 
 struct PatronServiceManagerTests {
     @Test func matchesPatreonURL() throws {

@@ -1,5 +1,5 @@
 import Testing
-@testable import PatronArchiver
+@testable import PatronArchiverKit
 
 struct FileNameSanitizerTests {
     @Test func sanitizeReplacesSlash() {
