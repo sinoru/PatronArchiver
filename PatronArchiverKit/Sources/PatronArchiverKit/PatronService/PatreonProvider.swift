@@ -41,12 +41,8 @@ struct PatreonProvider: PatronServiceProvider {
         return nil
     }
 
-    func checkLoginStatus(in webView: WKWebView) async throws -> Bool {
-        let result = try await evaluateJavaScript(
-            "document.querySelector('[data-tag=\"account-menu-toggle-combined\"]') !== null || document.cookie.includes('session_id')",
-            in: webView
-        )
-        return result as? Bool ?? false
+    static func isLoggedIn(cookies: [HTTPCookie]) -> Bool {
+        cookies.contains { $0.name == "session_id" }
     }
 
     func preloadContent(in webView: WKWebView) async throws {

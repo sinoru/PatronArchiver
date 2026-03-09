@@ -11,13 +11,25 @@ struct SubscribeStarAdultProvider: PatronServiceProvider {
 
     static func parseAccountInfo(from data: Data) -> AccountInfo? {
         guard let html = String(data: data, encoding: .utf8) else { return nil }
-        // Extract email from login credentials section:
-        // <div class="settings_login-label">Email</div>
-        // <div class="settings_login-value">user@example.com</div>
-        let pattern = #"settings_login-label">Email</div>\s*<div class="settings_login-value">([^<]+)</div>"#
-        if let range = html.range(of: pattern, options: .regularExpression) {
+
+        // Cloudflare email protection: the email is XOR-obfuscated in a data-cfemail attribute
+        // e.g. <a href="/cdn-cgi/l/email-protection" data-cfemail="hex_encoded">
+        let cfPattern = #"settings_login-label">Email</div>\s*<div class="settings_login-value">.*?data-cfemail="([0-9a-fA-F]+)""#
+        if let cfRange = html.range(of: cfPattern, options: .regularExpression) {
+            let match = html[cfRange]
+            if let attrStart = match.range(of: "data-cfemail=\""),
+               let attrEnd = match.range(of: "\"", range: attrStart.upperBound..<match.endIndex) {
+                let encoded = String(match[attrStart.upperBound..<attrEnd.lowerBound])
+                if let email = decodeCFEmail(encoded), !email.isEmpty {
+                    return AccountInfo(displayName: email)
+                }
+            }
+        }
+
+        // Fallback: plain text email (no Cloudflare obfuscation)
+        let plainPattern = #"settings_login-label">Email</div>\s*<div class="settings_login-value">([^<]+)</div>"#
+        if let range = html.range(of: plainPattern, options: .regularExpression) {
             let match = html[range]
-            // Extract the email between the last > and </div>
             if let valueStart = match.range(of: "settings_login-value\">"),
                let valueEnd = match.range(of: "</div>", range: valueStart.upperBound..<match.endIndex) {
                 let email = String(match[valueStart.upperBound..<valueEnd.lowerBound])
@@ -27,15 +39,28 @@ struct SubscribeStarAdultProvider: PatronServiceProvider {
                 }
             }
         }
+
         return nil
     }
 
-    func checkLoginStatus(in webView: WKWebView) async throws -> Bool {
-        let result = try await evaluateJavaScript(
-            "document.querySelector('.top_bar-user_name') !== null",
-            in: webView
-        )
-        return result as? Bool ?? false
+    /// Decodes a Cloudflare email-protected hex string.
+    ///
+    /// The first byte is the XOR key; each subsequent byte is XOR'd with the key
+    /// to recover the original character.
+    private static func decodeCFEmail(_ encoded: String) -> String? {
+        let chars = Array(encoded)
+        guard chars.count >= 4, chars.count.isMultiple(of: 2) else { return nil }
+        guard let key = UInt8(String(chars[0...1]), radix: 16) else { return nil }
+        var result = ""
+        for i in stride(from: 2, to: chars.count, by: 2) {
+            guard let byte = UInt8(String(chars[i...i + 1]), radix: 16) else { return nil }
+            result.append(Character(UnicodeScalar(byte ^ key)))
+        }
+        return result
+    }
+
+    static func isLoggedIn(cookies: [HTTPCookie]) -> Bool {
+        cookies.contains { $0.name == "auth_tracker_code" }
     }
 
     func preloadContent(in webView: WKWebView) async throws {

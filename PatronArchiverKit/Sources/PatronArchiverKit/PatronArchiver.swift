@@ -110,12 +110,15 @@ extension PatronArchiver {
             let tracker = RedirectTracker()
             Self.logger.debug("Loading page...")
             let redirectChain = try await tracker.load(job.inputURL, in: webView)
-            let userAgent = try await webView.evaluateJavaScript("navigator.userAgent") as? String
+            let userAgent = webView.value(forKey: "userAgent") as? String
             let chain = redirectChain.map(\.absoluteString)
             Self.logger.debug("Page loaded, redirect chain: \(chain, privacy: .private)")
 
             // 3. Check login
-            let isLoggedIn = try await provider.checkLoginStatus(in: webView)
+            let isLoggedIn = await LoginChecker.isLoggedIn(
+                for: type(of: provider),
+                dataStore: websiteDataStore
+            )
             Self.logger.info("Login status: \(isLoggedIn)")
             if !isLoggedIn {
                 throw JobError.loginRequired(type(of: provider).siteIdentifier)

@@ -8,7 +8,9 @@ struct SettingsView: View {
 
     @State private var isPickingFolder = false
     @State private var loginEntry: SiteEntry?
+    @State private var loggedInIdentifiers: Set<String> = []
     @State private var accountInfoByIdentifier: [String: AccountInfo] = [:]
+    @State private var accountInfoFetchFailed: Set<String> = []
     @State private var isCheckingLogin = false
 
     #if os(macOS)
@@ -47,14 +49,19 @@ struct SettingsView: View {
                                 #if os(macOS)
                                 .controlSize(.small)
                                 #endif
-                        } else if let info = accountInfoByIdentifier[entry.identifier] {
-                            Text(info.displayName)
-                                .foregroundStyle(.secondary)
+                        } else if loggedInIdentifiers.contains(entry.identifier) {
+                            if let info = accountInfoByIdentifier[entry.identifier] {
+                                Text(info.displayName)
+                                    .foregroundStyle(.secondary)
+                            } else if accountInfoFetchFailed.contains(entry.identifier) {
+                                Text("Verification failed")
+                                    .foregroundStyle(.red)
+                            }
                         } else {
                             Text("Not logged in")
                                 .foregroundStyle(.tertiary)
                         }
-                        if accountInfoByIdentifier[entry.identifier] != nil {
+                        if loggedInIdentifiers.contains(entry.identifier) {
                             Button("Logout") {
                                 Task {
                                     await logout(for: entry)
@@ -191,19 +198,47 @@ struct SettingsView: View {
         let dataStore = patronArchiver.websiteDataStore
         let providerTypes = PatronServiceManager.allProviderTypes
 
-        await withTaskGroup(of: (String, AccountInfo?).self) { group in
+        // 1. Fast cookie-based login check
+        await withTaskGroup(of: (String, Bool).self) { group in
             for providerType in providerTypes {
                 let identifier = providerType.siteIdentifier
                 group.addTask {
-                    let info = await LoginChecker.check(for: providerType, dataStore: dataStore)
+                    let loggedIn = await LoginChecker.isLoggedIn(
+                        for: providerType,
+                        dataStore: dataStore
+                    )
+                    return (identifier, loggedIn)
+                }
+            }
+            for await (identifier, loggedIn) in group {
+                if loggedIn {
+                    loggedInIdentifiers.insert(identifier)
+                } else {
+                    loggedInIdentifiers.remove(identifier)
+                }
+            }
+        }
+
+        // 2. Fetch account info for logged-in providers
+        await withTaskGroup(of: (String, AccountInfo?).self) { group in
+            for providerType in providerTypes {
+                let identifier = providerType.siteIdentifier
+                guard loggedInIdentifiers.contains(identifier) else { continue }
+                group.addTask {
+                    let info = await LoginChecker.fetchAccountInfo(
+                        for: providerType,
+                        dataStore: dataStore
+                    )
                     return (identifier, info)
                 }
             }
             for await (identifier, info) in group {
                 if let info {
                     accountInfoByIdentifier[identifier] = info
+                    accountInfoFetchFailed.remove(identifier)
                 } else {
                     accountInfoByIdentifier.removeValue(forKey: identifier)
+                    accountInfoFetchFailed.insert(identifier)
                 }
             }
         }
@@ -228,16 +263,37 @@ struct SettingsView: View {
             }
         }
 
+        loggedInIdentifiers.remove(entry.identifier)
         accountInfoByIdentifier.removeValue(forKey: entry.identifier)
+        accountInfoFetchFailed.remove(entry.identifier)
     }
 
     private func checkLoginStatus(for providerType: any PatronServiceProvider.Type) async {
         let dataStore = patronArchiver.websiteDataStore
-        let info = await LoginChecker.check(for: providerType, dataStore: dataStore)
-        if let info {
-            accountInfoByIdentifier[providerType.siteIdentifier] = info
+        let identifier = providerType.siteIdentifier
+
+        let loggedIn = await LoginChecker.isLoggedIn(
+            for: providerType,
+            dataStore: dataStore
+        )
+
+        if loggedIn {
+            loggedInIdentifiers.insert(identifier)
+            let info = await LoginChecker.fetchAccountInfo(
+                for: providerType,
+                dataStore: dataStore
+            )
+            if let info {
+                accountInfoByIdentifier[identifier] = info
+                accountInfoFetchFailed.remove(identifier)
+            } else {
+                accountInfoByIdentifier.removeValue(forKey: identifier)
+                accountInfoFetchFailed.insert(identifier)
+            }
         } else {
-            accountInfoByIdentifier.removeValue(forKey: providerType.siteIdentifier)
+            loggedInIdentifiers.remove(identifier)
+            accountInfoByIdentifier.removeValue(forKey: identifier)
+            accountInfoFetchFailed.remove(identifier)
         }
     }
 }

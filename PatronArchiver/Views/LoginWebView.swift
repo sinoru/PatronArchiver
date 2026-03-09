@@ -10,15 +10,19 @@ struct LoginWebView: NSViewRepresentable {
     var onLoginDetected: (() -> Void)?
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(providerType: providerType, onLoginDetected: onLoginDetected)
+        Coordinator(
+            providerType: providerType,
+            websiteDataStore: websiteDataStore,
+            onLoginDetected: onLoginDetected
+        )
     }
 
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = websiteDataStore
         let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.navigationDelegate = context.coordinator
         webView.load(URLRequest(url: url))
+        context.coordinator.startObserving()
         return webView
     }
 
@@ -32,15 +36,19 @@ struct LoginWebView: UIViewRepresentable {
     var onLoginDetected: (() -> Void)?
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(providerType: providerType, onLoginDetected: onLoginDetected)
+        Coordinator(
+            providerType: providerType,
+            websiteDataStore: websiteDataStore,
+            onLoginDetected: onLoginDetected
+        )
     }
 
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = websiteDataStore
         let webView = WKWebView(frame: .zero, configuration: configuration)
-        webView.navigationDelegate = context.coordinator
         webView.load(URLRequest(url: url))
+        context.coordinator.startObserving()
         return webView
     }
 
@@ -49,25 +57,35 @@ struct LoginWebView: UIViewRepresentable {
 #endif
 
 extension LoginWebView {
-    final class Coordinator: NSObject, WKNavigationDelegate {
+    final class Coordinator: NSObject, WKHTTPCookieStoreObserver {
         let providerType: any PatronServiceProvider.Type
+        let websiteDataStore: WKWebsiteDataStore
         let onLoginDetected: (() -> Void)?
         private var hasDetectedLogin = false
 
-        init(providerType: any PatronServiceProvider.Type, onLoginDetected: (() -> Void)?) {
+        init(
+            providerType: any PatronServiceProvider.Type,
+            websiteDataStore: WKWebsiteDataStore,
+            onLoginDetected: (() -> Void)?
+        ) {
             self.providerType = providerType
+            self.websiteDataStore = websiteDataStore
             self.onLoginDetected = onLoginDetected
         }
 
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            guard !hasDetectedLogin,
-                  let currentURL = webView.url,
-                  currentURL != providerType.loginURL
-            else { return }
-            let provider = providerType.init()
+        func startObserving() {
+            websiteDataStore.httpCookieStore.add(self)
+        }
+
+        deinit {
+            websiteDataStore.httpCookieStore.remove(self)
+        }
+
+        func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
+            guard !hasDetectedLogin else { return }
             Task { @MainActor in
-                guard let isLoggedIn = try? await provider.checkLoginStatus(in: webView),
-                      isLoggedIn else { return }
+                let cookies = await cookieStore.allCookies()
+                guard providerType.isLoggedIn(cookies: cookies) else { return }
                 hasDetectedLogin = true
                 onLoginDetected?()
             }

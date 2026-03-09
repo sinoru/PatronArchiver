@@ -33,12 +33,8 @@ struct PixivFanboxProvider: PatronServiceProvider {
         return nil
     }
 
-    func checkLoginStatus(in webView: WKWebView) async throws -> Bool {
-        let result = try await evaluateJavaScript(
-            "document.cookie.includes('FANBOXSESSID') || document.querySelector('[href*=\"/creators/find\"]') !== null",
-            in: webView
-        )
-        return result as? Bool ?? false
+    static func isLoggedIn(cookies: [HTTPCookie]) -> Bool {
+        cookies.contains { $0.name == "FANBOXSESSID" && $0.value.contains("_") }
     }
 
     func preloadContent(in webView: WKWebView) async throws {

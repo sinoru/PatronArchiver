@@ -13,7 +13,7 @@ public protocol PatronServiceProvider: Sendable {
 
     init()
 
-    func checkLoginStatus(in webView: WKWebView) async throws -> Bool
+    static func isLoggedIn(cookies: [HTTPCookie]) -> Bool
     func preloadContent(in webView: WKWebView) async throws
     func extractMediaURLs(in webView: WKWebView) async throws -> [MediaItem]
     func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone?
