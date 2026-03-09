@@ -64,52 +64,7 @@ struct SubscribeStarAdultProvider: PatronServiceProvider {
     }
 
     func preloadContent(in webView: WKWebView) async throws {
-        // Load uploads if they are lazily loaded
-        _ = try? await evaluateJavaScript("""
-            (() => {
-                document.querySelectorAll('[data-autoload="false"][data-identifier*="uploads"]').forEach(el => {
-                    const url = el.getAttribute('data-url');
-                    if (url) {
-                        fetch(url, { credentials: 'same-origin' })
-                            .then(r => r.text())
-                            .then(html => { el.innerHTML = html; el.setAttribute('data-autoload', 'true'); });
-                    }
-                });
-            })()
-        """, in: webView)
-        try? await Task.sleep(for: .seconds(1))
-
-        // Load all comments
-        for _ in 0..<UInt16.max {
-            let result = try await evaluateJavaScript("""
-                (() => {
-                    const before = document.querySelectorAll('.comments-row[data-id]').length;
-                    let clicked = 0;
-                    document.querySelectorAll('[data-role="ajax_container-ajax_button"]').forEach(btn => {
-                        if (btn.textContent.includes('Load more') || btn.textContent.includes('Show more')) {
-                            btn.click();
-                            clicked++;
-                        }
-                    });
-                    return JSON.stringify({ clicked, before });
-                })()
-            """, in: webView) as? String
-
-            guard let result,
-                  let json = try? JSONSerialization.jsonObject(with: Data(result.utf8)) as? [String: Int],
-                  let clicked = json["clicked"], clicked > 0,
-                  let before = json["before"]
-            else { break }
-
-            for _ in 0..<20 {
-                try? await Task.sleep(for: .milliseconds(500))
-                let current = try await evaluateJavaScript(
-                    "document.querySelectorAll('.comments-row[data-id]').length",
-                    in: webView
-                ) as? Int ?? 0
-                if current > before { break }
-            }
-        }
+        // Do nothing
     }
 
     func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone? {
