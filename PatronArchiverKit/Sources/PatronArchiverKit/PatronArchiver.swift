@@ -134,8 +134,10 @@ extension PatronArchiver {
 
             // 5. Extract metadata
             try Task.checkCancellation()
+            Self.logger.debug("Resolving time zone...")
+            let timeZone = try await provider.resolveTimeZone(in: webView)
             Self.logger.debug("Extracting metadata...")
-            var metadata = try await provider.extractMetadata(in: webView)
+            var metadata = try await provider.extractMetadata(in: webView, timeZone: timeZone)
             metadata = PostMetadata(
                 siteIdentifier: metadata.siteIdentifier,
                 postID: metadata.postID,

@@ -6,6 +6,7 @@ A macOS/iOS app that archives posts from patron platforms into MHTML + PDF + med
 
 - [pixivFANBOX](https://www.fanbox.cc/)
 - [Patreon](https://www.patreon.com/)
+- [SubscribeStar.adult](https://subscribestar.adult/)
 
 ## Screenshots
 

@@ -27,14 +27,20 @@ struct PatronServiceManagerTests {
         #expect(type(of: provider) == PixivFanboxProvider.self)
     }
 
+    @Test func matchesSubscribeStarAdultURL() throws {
+        let url = URL(string: "https://subscribestar.adult/posts/2332276")!
+        let provider = try #require(PatronServiceManager.shared.provider(for: url))
+        #expect(type(of: provider) == SubscribeStarAdultProvider.self)
+    }
+
     @Test func returnsNilForUnknownSite() {
         let url = URL(string: "https://example.com/page")!
         let provider = PatronServiceManager.shared.provider(for: url)
         #expect(provider == nil)
     }
 
-    @Test func allProviderTypesReturnsAllTwo() {
+    @Test func allProviderTypesReturnsAllThree() {
         let types = PatronServiceManager.allProviderTypes
-        #expect(types.count == 2)
+        #expect(types.count == 3)
     }
 }

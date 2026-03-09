@@ -97,7 +97,7 @@ struct PixivFanboxProvider: PatronServiceProvider {
         return parseMediaJSON(jsonString, referrerURL: webView.url)
     }
 
-    func extractMetadata(in webView: WKWebView) async throws -> PostMetadata {
+    func extractMetadata(in webView: WKWebView, timeZone: TimeZone?) async throws -> PostMetadata {
         let script = """
         (() => {
             const meta = {};

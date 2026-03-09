@@ -16,12 +16,15 @@ public protocol PatronServiceProvider: Sendable {
     func checkLoginStatus(in webView: WKWebView) async throws -> Bool
     func preloadContent(in webView: WKWebView) async throws
     func extractMediaURLs(in webView: WKWebView) async throws -> [MediaItem]
-    func extractMetadata(in webView: WKWebView) async throws -> PostMetadata
+    func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone?
+    func extractMetadata(in webView: WKWebView, timeZone: TimeZone?) async throws -> PostMetadata
 
     static func parseAccountInfo(from data: Data) -> AccountInfo?
 }
 
 extension PatronServiceProvider {
+    func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone? { nil }
+
     func evaluateJavaScript(_ script: String, in webView: WKWebView) async throws -> Any? {
         try await webView.evaluateJavaScript(script)
     }
@@ -67,7 +70,8 @@ extension PatronServiceProvider {
         _ jsonString: String,
         siteIdentifier: String,
         originalURL: URL,
-        redirectChain: [URL]
+        redirectChain: [URL],
+        timeZone: TimeZone? = nil
     ) -> PostMetadata? {
         guard let data = jsonString.data(using: .utf8),
               let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
@@ -91,6 +95,7 @@ extension PatronServiceProvider {
         } else if let dateString = dict["createdAt"] as? String {
             createdAt = isoFormatter.date(from: dateString)
                 ?? isoFormatterNoFraction.date(from: dateString)
+                ?? Self.parseLocalizedDate(dateString, timeZone: timeZone)
                 ?? Date()
         } else {
             createdAt = Date()
@@ -102,6 +107,7 @@ extension PatronServiceProvider {
         } else if let dateString = dict["modifiedAt"] as? String {
             modifiedAt = isoFormatter.date(from: dateString)
                 ?? isoFormatterNoFraction.date(from: dateString)
+                ?? Self.parseLocalizedDate(dateString, timeZone: timeZone)
         } else {
             modifiedAt = nil
         }
@@ -117,5 +123,17 @@ extension PatronServiceProvider {
             originalURL: originalURL,
             redirectChain: redirectChain
         )
+    }
+
+    /// Parses a localized date string like `"Mar 03, 2026 08:10 am"` in the given time zone.
+    private static func parseLocalizedDate(
+        _ string: String,
+        timeZone: TimeZone?
+    ) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMM dd, yyyy hh:mm a"
+        formatter.timeZone = timeZone ?? .gmt
+        return formatter.date(from: string)
     }
 }
