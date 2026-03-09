@@ -92,6 +92,7 @@ struct SettingsView: View {
             Section("Metadata") {
                 Toggle("Where Froms", isOn: $patronArchiver.settings.includesWhereFroms)
                 Toggle("Finder Tags", isOn: $patronArchiver.settings.includesFinderTags)
+                Toggle("Content Dates", isOn: $patronArchiver.settings.includesContentDates)
             }
 
             Section("Storage") {

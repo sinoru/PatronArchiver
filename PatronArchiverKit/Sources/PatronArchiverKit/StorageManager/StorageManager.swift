@@ -31,7 +31,8 @@ enum StorageManager {
         stagingDirectory: URL,
         baseDirectory: URL,
         includesWhereFroms: Bool = true,
-        includesFinderTags: Bool = true
+        includesFinderTags: Bool = true,
+        includesContentDates: Bool = true
     ) throws -> PreparedSave {
         let finalDirectory = try makePostFolderURL(metadata: metadata, baseDirectory: baseDirectory)
         guard let sanitizedPageTitle = FileNameSanitizer.sanitize(pageTitle) else {
@@ -76,6 +77,13 @@ enum StorageManager {
         }
         if includesFinderTags, !metadata.tags.isEmpty {
             try? XattrHelper.setUserTags(metadata.tags, on: stagingDirectory.path)
+        }
+        if includesContentDates {
+            try? XattrHelper.setContentDates(
+                createdAt: metadata.createdAt,
+                modifiedAt: metadata.modifiedAt,
+                on: stagingDirectory.path
+            )
         }
 
         return PreparedSave(stagingDirectory: stagingDirectory, finalDirectory: finalDirectory)

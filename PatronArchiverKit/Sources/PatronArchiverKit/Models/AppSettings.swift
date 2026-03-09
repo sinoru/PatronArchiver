@@ -23,6 +23,10 @@ public final class AppSettings {
         didSet { UserDefaults.standard.set(includesFinderTags, forKey: "includesFinderTags") }
     }
 
+    public var includesContentDates: Bool {
+        didSet { UserDefaults.standard.set(includesContentDates, forKey: "includesContentDates") }
+    }
+
     public init() {
         let defaults = UserDefaults.standard
         self.renderWidth = defaults.object(forKey: "renderWidth") as? Int ?? 1920
@@ -30,6 +34,7 @@ public final class AppSettings {
         self.savedDirectoryBookmark = defaults.data(forKey: "savedDirectoryBookmark")
         self.includesWhereFroms = defaults.object(forKey: "includesWhereFroms") as? Bool ?? true
         self.includesFinderTags = defaults.object(forKey: "includesFinderTags") as? Bool ?? true
+        self.includesContentDates = defaults.object(forKey: "includesContentDates") as? Bool ?? true
     }
 
     public var defaultSaveDirectory: URL {

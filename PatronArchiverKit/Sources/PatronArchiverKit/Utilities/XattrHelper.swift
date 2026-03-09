@@ -16,6 +16,52 @@ enum XattrHelper {
         }
     }
 
+    nonisolated static func setContentDates(
+        createdAt: Date,
+        modifiedAt: Date?,
+        on path: String
+    ) throws {
+        let creationData = try PropertyListSerialization.data(
+            fromPropertyList: createdAt,
+            format: .binary,
+            options: 0
+        )
+        let creationResult = creationData.withUnsafeBytes { buffer in
+            setxattr(
+                path,
+                "com.apple.metadata:kMDItemContentCreationDate",
+                buffer.baseAddress,
+                buffer.count,
+                0,
+                0
+            )
+        }
+        if creationResult != 0 {
+            throw CocoaError(.fileWriteUnknown)
+        }
+
+        if let modifiedAt {
+            let modificationData = try PropertyListSerialization.data(
+                fromPropertyList: modifiedAt,
+                format: .binary,
+                options: 0
+            )
+            let modificationResult = modificationData.withUnsafeBytes { buffer in
+                setxattr(
+                    path,
+                    "com.apple.metadata:kMDItemContentModificationDate",
+                    buffer.baseAddress,
+                    buffer.count,
+                    0,
+                    0
+                )
+            }
+            if modificationResult != 0 {
+                throw CocoaError(.fileWriteUnknown)
+            }
+        }
+    }
+
     nonisolated static func setUserTags(_ tags: [String], on path: String) throws {
         guard !tags.isEmpty else { return }
         let plistData = try PropertyListSerialization.data(

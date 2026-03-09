@@ -222,7 +222,8 @@ extension PatronArchiver {
                 stagingDirectory: tempDir,
                 baseDirectory: baseDir,
                 includesWhereFroms: settings.includesWhereFroms,
-                includesFinderTags: settings.includesFinderTags
+                includesFinderTags: settings.includesFinderTags,
+                includesContentDates: settings.includesContentDates
             )
             job.progress.completedUnitCount = 90
 
