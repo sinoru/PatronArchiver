@@ -38,18 +38,35 @@ struct PixivFanboxProvider: PatronServiceProvider {
     }
 
     func preloadContent(in webView: WKWebView) async throws {
-        // pixivFANBOX article type posts may have expandable sections
-        _ = try? await evaluateJavaScript("""
-            (() => {
-                // Click any "read more" buttons
-                document.querySelectorAll('button').forEach(btn => {
-                    if (btn.textContent.includes('もっと見る') || btn.textContent.includes('Read more')) {
+        // Load all comments by clicking the "See more" / "더 보기" / "もっと見る" button
+        for _ in 0..<UInt16.max {
+            let result = try await evaluateJavaScript("""
+                (() => {
+                    const before = document.querySelectorAll('[class*="RootCommentWrapper"]').length;
+                    const btn = document.querySelector('[class*="ReadMoreWrapper"] button');
+                    if (btn) {
                         btn.click();
+                        return { clicked: 1, before };
                     }
-                });
-            })()
-        """, in: webView)
-        try? await Task.sleep(for: .milliseconds(500))
+                    return { clicked: 0, before };
+                })()
+            """, in: webView) as? [String: Int]
+
+            guard let result,
+                  let clicked = result["clicked"], clicked > 0,
+                  let before = result["before"]
+            else { break }
+
+            // Wait until new comments appear or timeout
+            for _ in 0..<20 {
+                try? await Task.sleep(for: .milliseconds(500))
+                let current = try await evaluateJavaScript(
+                    "document.querySelectorAll('[class*=\"RootCommentWrapper\"]').length",
+                    in: webView
+                ) as? Int ?? 0
+                if current > before { break }
+            }
+        }
     }
 
     func extractMediaURLs(in webView: WKWebView) async throws -> [MediaItem] {
