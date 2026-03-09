@@ -111,7 +111,7 @@ struct JobRowView: View {
                 .foregroundStyle(.tertiary)
             let status = Text(job.status.displayName)
                 .foregroundStyle(.secondary)
-            return Text(verbatim: "\(site)\(separator)\(status)")
+            return Text("\(site)\(separator)\(status)")
         }
         return Text(job.status.displayName)
             .foregroundStyle(.secondary)
