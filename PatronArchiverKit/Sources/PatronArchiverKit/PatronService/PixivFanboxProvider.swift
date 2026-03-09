@@ -84,13 +84,14 @@ struct PixivFanboxProvider: PatronServiceProvider {
                 }
             });
 
-            return JSON.stringify(media);
+            return media;
         })()
         """
-        guard let jsonString = try await evaluateJavaScript(script, in: webView) as? String else {
+        guard let array = try await evaluateJavaScript(script, in: webView) as? [[String: Any]] else {
             return []
         }
-        return parseMediaJSON(jsonString, referrerURL: webView.url)
+        let referrerURL = webView.url
+        return array.compactMap { MediaItem(from: $0, referrerURL: referrerURL) }
     }
 
     func extractMetadata(in webView: WKWebView, timeZone: TimeZone?) async throws -> PostMetadata {
@@ -143,19 +144,27 @@ struct PixivFanboxProvider: PatronServiceProvider {
                 .map(el => el.textContent.trim())
                 .filter(t => t.length > 0);
 
-            return JSON.stringify(meta);
+            return meta;
         })()
         """
-        guard let jsonString = try await evaluateJavaScript(script, in: webView) as? String,
-              let metadata = parseMetadataJSON(
-                  jsonString,
-                  siteIdentifier: Self.siteIdentifier,
-                  originalURL: webView.url ?? Self.loginURL,
-                  redirectChain: []
-              )
-        else {
+        guard let dict = try await evaluateJavaScript(script, in: webView) as? [String: Any] else {
             throw ProviderError.metadataExtractionFailed
         }
-        return metadata
+
+        let createdAt = Self.parseISO8601Date(dict["createdAt"] as? String) ?? Date()
+        let modifiedAt = Self.parseISO8601Date(dict["modifiedAt"] as? String)
+
+        return PostMetadata(
+            siteIdentifier: Self.siteIdentifier,
+            postID: dict["postID"] as? String ?? "",
+            title: dict["title"] as? String ?? "",
+            authorName: dict["authorName"] as? String ?? "",
+            createdAt: createdAt,
+            modifiedAt: modifiedAt,
+            tags: dict["tags"] as? [String] ?? [],
+            originalURL: webView.url ?? Self.loginURL,
+            redirectChain: []
+        )
     }
+
 }

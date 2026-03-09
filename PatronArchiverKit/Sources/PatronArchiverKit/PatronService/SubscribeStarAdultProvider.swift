@@ -116,13 +116,14 @@ struct SubscribeStarAdultProvider: PatronServiceProvider {
                 }
             });
 
-            return JSON.stringify(media);
+            return media;
         })()
         """
-        guard let jsonString = try await evaluateJavaScript(script, in: webView) as? String else {
+        guard let array = try await evaluateJavaScript(script, in: webView) as? [[String: Any]] else {
             return []
         }
-        return parseMediaJSON(jsonString, referrerURL: webView.url)
+        let referrerURL = webView.url
+        return array.compactMap { MediaItem(from: $0, referrerURL: referrerURL) }
     }
 
     func extractMetadata(
@@ -154,20 +155,40 @@ struct SubscribeStarAdultProvider: PatronServiceProvider {
                 .map(a => a.textContent.trim())
                 .filter(t => t.length > 0);
 
-            return JSON.stringify(meta);
+            return meta;
         })()
         """
-        guard let jsonString = try await evaluateJavaScript(script, in: webView) as? String,
-              let metadata = parseMetadataJSON(
-                  jsonString,
-                  siteIdentifier: Self.siteIdentifier,
-                  originalURL: webView.url ?? Self.loginURL,
-                  redirectChain: [],
-                  timeZone: timeZone
-              )
-        else {
+        guard let dict = try await evaluateJavaScript(script, in: webView) as? [String: Any] else {
             throw ProviderError.metadataExtractionFailed
         }
-        return metadata
+
+        let createdAt = Self.parseLocalizedDate(
+            dict["createdAt"] as? String,
+            timeZone: timeZone
+        ) ?? Date()
+
+        return PostMetadata(
+            siteIdentifier: Self.siteIdentifier,
+            postID: dict["postID"] as? String ?? "",
+            title: dict["title"] as? String ?? "",
+            authorName: dict["authorName"] as? String ?? "",
+            createdAt: createdAt,
+            modifiedAt: nil,
+            tags: dict["tags"] as? [String] ?? [],
+            originalURL: webView.url ?? Self.loginURL,
+            redirectChain: []
+        )
+    }
+
+    private static func parseLocalizedDate(
+        _ string: String?,
+        timeZone: TimeZone?
+    ) -> Date? {
+        guard let string, !string.isEmpty else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "MMM dd, yyyy hh:mm a"
+        formatter.timeZone = timeZone ?? .gmt
+        return formatter.date(from: string)
     }
 }

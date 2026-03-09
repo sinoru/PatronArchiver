@@ -62,14 +62,13 @@ struct PatreonProvider: PatronServiceProvider {
                             clicked++;
                         }
                     });
-                    return JSON.stringify({ clicked, before });
+                    return { clicked, before };
                 })()
-            """, in: webView) as? String
+            """, in: webView) as? [String: Int]
 
             guard let result,
-                  let json = try? JSONSerialization.jsonObject(with: Data(result.utf8)) as? [String: Int],
-                  let clicked = json["clicked"], clicked > 0,
-                  let before = json["before"]
+                  let clicked = result["clicked"], clicked > 0,
+                  let before = result["before"]
             else { break }
 
             // Wait until new comment-rows appear or timeout
@@ -164,14 +163,14 @@ struct PatreonProvider: PatronServiceProvider {
                 });
             }
 
-            return JSON.stringify(media);
+            return media;
         })()
         """
-        guard let jsonString = try await evaluateJavaScript(script, in: webView) as? String else {
+        guard let array = try await evaluateJavaScript(script, in: webView) as? [[String: Any]] else {
             return []
         }
-        let referrer = webView.url
-        return parseMediaJSON(jsonString, referrerURL: referrer)
+        let referrerURL = webView.url
+        return array.compactMap { MediaItem(from: $0, referrerURL: referrerURL) }
     }
 
     func extractMetadata(in webView: WKWebView, timeZone: TimeZone?) async throws -> PostMetadata {
@@ -229,31 +228,27 @@ struct PatreonProvider: PatronServiceProvider {
             }
             if (!meta.createdAt) meta.createdAt = new Date().toISOString();
 
-            return JSON.stringify(meta);
+            return meta;
         })()
         """
-        guard let jsonString = try await evaluateJavaScript(script, in: webView) as? String,
-              let metadata = parseMetadataJSON(
-                  jsonString,
-                  siteIdentifier: Self.siteIdentifier,
-                  originalURL: webView.url ?? Self.loginURL,
-                  redirectChain: []
-              )
-        else {
+        guard let dict = try await evaluateJavaScript(script, in: webView) as? [String: Any] else {
             throw ProviderError.metadataExtractionFailed
         }
-        return metadata
-    }
-}
 
-enum ProviderError: LocalizedError {
-    case metadataExtractionFailed
-    case mediaExtractionFailed
+        let createdAt = Self.parseISO8601Date(dict["createdAt"] as? String) ?? Date()
+        let modifiedAt = Self.parseISO8601Date(dict["modifiedAt"] as? String)
 
-    var errorDescription: String? {
-        switch self {
-        case .metadataExtractionFailed: "Failed to extract metadata."
-        case .mediaExtractionFailed: "Failed to extract media."
-        }
+        return PostMetadata(
+            siteIdentifier: Self.siteIdentifier,
+            postID: dict["postID"] as? String ?? "",
+            title: dict["title"] as? String ?? "",
+            authorName: dict["authorName"] as? String ?? "",
+            createdAt: createdAt,
+            modifiedAt: modifiedAt,
+            tags: dict["tags"] as? [String] ?? [],
+            originalURL: webView.url ?? Self.loginURL,
+            redirectChain: []
+        )
     }
+
 }
