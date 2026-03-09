@@ -23,7 +23,7 @@ let package = Package(
             name: "PatronArchiverKit",
             resources: [
                 .process("Localizable.xcstrings"),
-                .embedInCode("LazyContentLoader/LazyContentLoader.js"),
+                .copy("LazyContentLoader/LazyContentLoader.js"),
             ],
             swiftSettings: [
                 .defaultIsolation(MainActor.self),
