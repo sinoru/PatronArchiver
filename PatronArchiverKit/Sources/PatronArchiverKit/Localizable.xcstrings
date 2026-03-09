@@ -1,0 +1,33 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Completed" : {
+      "extractionState" : "manual"
+    },
+    "Downloading" : {
+      "extractionState" : "manual"
+    },
+    "Dumping" : {
+      "extractionState" : "manual"
+    },
+    "Failed" : {
+      "extractionState" : "manual"
+    },
+    "Folder Exists" : {
+      "extractionState" : "manual"
+    },
+    "Loading" : {
+      "extractionState" : "manual"
+    },
+    "Preloading" : {
+      "extractionState" : "manual"
+    },
+    "Queued" : {
+      "extractionState" : "manual"
+    },
+    "Saving" : {
+      "extractionState" : "manual"
+    }
+  },
+  "version" : "1.1"
+}

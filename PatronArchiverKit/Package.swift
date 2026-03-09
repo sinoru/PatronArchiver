@@ -22,17 +22,18 @@ let package = Package(
         .target(
             name: "PatronArchiverKit",
             resources: [
-                .embedInCode("LazyContentLoader/LazyContentLoader.js")
+                .process("Localizable.xcstrings"),
+                .embedInCode("LazyContentLoader/LazyContentLoader.js"),
             ],
             swiftSettings: [
-                .defaultIsolation(MainActor.self)
+                .defaultIsolation(MainActor.self),
             ]
         ),
         .testTarget(
             name: "PatronArchiverKitTests",
             dependencies: ["PatronArchiverKit"],
             swiftSettings: [
-                .defaultIsolation(MainActor.self)
+                .defaultIsolation(MainActor.self),
             ]
         ),
     ]

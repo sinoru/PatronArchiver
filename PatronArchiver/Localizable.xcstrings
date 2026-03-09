@@ -1,0 +1,93 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Accounts" : {
+
+    },
+    "Add" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Choose Folder..." : {
+
+    },
+    "Content Dates" : {
+
+    },
+    "Default" : {
+
+    },
+    "Done" : {
+
+    },
+    "Enter a URL to start archiving." : {
+
+    },
+    "Enter post URL..." : {
+
+    },
+    "Finder Tags" : {
+
+    },
+    "Login" : {
+
+    },
+    "Logout" : {
+
+    },
+    "Metadata" : {
+
+    },
+    "ms" : {
+
+    },
+    "No Jobs" : {
+
+    },
+    "Not logged in" : {
+
+    },
+    "Overwrite" : {
+
+    },
+    "PatronArchiver" : {
+
+    },
+    "Remove" : {
+
+    },
+    "Render Width: %lldpx" : {
+
+    },
+    "Rendering" : {
+
+    },
+    "Reset to Default" : {
+
+    },
+    "Retry" : {
+
+    },
+    "Save Directory" : {
+
+    },
+    "Scroll Delay" : {
+
+    },
+    "Skip" : {
+
+    },
+    "Storage" : {
+
+    },
+    "Verification failed" : {
+
+    },
+    "Where Froms" : {
+
+    }
+  },
+  "version" : "1.1"
+}

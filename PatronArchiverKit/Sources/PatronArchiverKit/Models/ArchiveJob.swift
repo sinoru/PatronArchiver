@@ -49,17 +49,17 @@ public enum JobStatus {
         }
     }
 
-    public var displayName: String {
+    public var displayName: LocalizedStringResource {
         switch self {
-        case .queued: "Queued"
-        case .loading: "Loading"
-        case .preloading: "Preloading"
-        case .dumping: "Dumping"
-        case .downloading: "Downloading"
-        case .saving: "Saving"
-        case .awaitingOverwriteConfirmation: "Folder Exists"
-        case .completed: "Completed"
-        case .failed: "Failed"
+        case .queued: .init("Queued", bundle: .forClass(PatronArchiver.self))
+        case .loading: .init("Loading", bundle: .forClass(PatronArchiver.self))
+        case .preloading: .init("Preloading", bundle: .forClass(PatronArchiver.self))
+        case .dumping: .init("Dumping", bundle: .forClass(PatronArchiver.self))
+        case .downloading: .init("Downloading", bundle: .forClass(PatronArchiver.self))
+        case .saving: .init("Saving", bundle: .forClass(PatronArchiver.self))
+        case .awaitingOverwriteConfirmation: .init("Folder Exists", bundle: .forClass(PatronArchiver.self))
+        case .completed: .init("Completed", bundle: .forClass(PatronArchiver.self))
+        case .failed: .init("Failed", bundle: .forClass(PatronArchiver.self))
         }
     }
 }
