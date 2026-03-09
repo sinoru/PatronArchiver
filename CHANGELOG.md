@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0+alpha.3] - 2026-03-10
+
+### Changed
+
+- Moved platform build settings (deployment targets, SDKROOT, supported platforms) to project level
+- Added app category (Utilities) and explicit code sign identity
+
 ## [1.0.0+alpha.2] - 2026-03-10
 
 ### Changed
@@ -61,6 +68,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopted Swift 6.0 strict concurrency with MainActor isolation
 - Replaced glob-based URL matching with Swift Regex
 
-[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.2...HEAD
+[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.3...HEAD
+[1.0.0+alpha.3]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.2...v1.0.0+alpha.3
 [1.0.0+alpha.2]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.1...v1.0.0+alpha.2
 [1.0.0+alpha.1]: https://github.com/sinoru/PatronArchiver/releases/tag/v1.0.0+alpha.1
