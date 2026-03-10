@@ -19,9 +19,6 @@
     "Loading" : {
       "extractionState" : "manual"
     },
-    "Preloading" : {
-      "extractionState" : "manual"
-    },
     "Queued" : {
       "extractionState" : "manual"
     },

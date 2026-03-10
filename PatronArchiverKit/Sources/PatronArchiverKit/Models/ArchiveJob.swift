@@ -27,7 +27,6 @@ public final class ArchiveJob: Identifiable {
 public enum JobStatus {
     case queued
     case loading
-    case preloading
     case dumping
     case downloading
     case saving
@@ -44,7 +43,7 @@ public enum JobStatus {
 
     public var isInProgress: Bool {
         switch self {
-        case .loading, .preloading, .dumping, .downloading, .saving: true
+        case .loading, .dumping, .downloading, .saving: true
         default: false
         }
     }
@@ -53,7 +52,6 @@ public enum JobStatus {
         switch self {
         case .queued: .init("Queued", bundle: .forClass(PatronArchiver.self))
         case .loading: .init("Loading", bundle: .forClass(PatronArchiver.self))
-        case .preloading: .init("Preloading", bundle: .forClass(PatronArchiver.self))
         case .dumping: .init("Dumping", bundle: .forClass(PatronArchiver.self))
         case .downloading: .init("Downloading", bundle: .forClass(PatronArchiver.self))
         case .saving: .init("Saving", bundle: .forClass(PatronArchiver.self))

@@ -126,11 +126,12 @@ extension PatronArchiver {
 
             // 4. Load lazy content
             try Task.checkCancellation()
-            job.status = .preloading
-            job.progress.completedUnitCount = 20
+            job.progress.completedUnitCount = 15
             Self.logger.debug("Loading lazy content...")
             try await webView.loadLazyContent(scrollDelay: settings.scrollDelay)
+            job.progress.completedUnitCount = 20
             try await provider.preloadContent(in: webView)
+            job.progress.completedUnitCount = 25
             try await webView.loadLazyContent(scrollDelay: settings.scrollDelay)
             Self.logger.debug("Lazy content loaded")
             job.progress.completedUnitCount = 30
