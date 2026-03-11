@@ -18,12 +18,16 @@ enum MHTMLError: Error {
 @MainActor
 struct MHTMLArchiver {
     private let webView: WKWebView
+    private let urlSession: URLSession
 
     /// Creates an archiver for the given web view.
     ///
-    /// - Parameter webView: The web view whose current page will be archived.
-    init(_ webView: WKWebView) {
+    /// - Parameters:
+    ///   - webView: The web view whose current page will be archived.
+    ///   - urlSession: The URL session to use for downloading missing resources.
+    init(_ webView: WKWebView, urlSession: URLSession) {
         self.webView = webView
+        self.urlSession = urlSession
     }
 
     /// Generates an MHTML archive of the web view's current page.
@@ -55,7 +59,6 @@ struct MHTMLArchiver {
         let collectResult = try await collectPageResources()
 
         // 3. Resolve resources: webarchive cache first, URLSession fallback
-        let userAgent = try await webView.evaluateJavaScript("navigator.userAgent") as? String
         let dataStore = webView.configuration.websiteDataStore
 
         let requestedURLs = collectResult.resourceURLs.compactMap { URL(string: $0) }
@@ -71,7 +74,7 @@ struct MHTMLArchiver {
         }
 
         let downloaded = await Self.downloadResources(
-            urls: missingURLs, dataStore: dataStore, userAgent: userAgent
+            urls: missingURLs, dataStore: dataStore, urlSession: urlSession
         )
         resources.append(contentsOf: downloaded)
 
@@ -90,12 +93,12 @@ struct MHTMLArchiver {
             }
         }
         cssResources.append(contentsOf: await Self.downloadResources(
-            urls: missingCSSURLs, dataStore: dataStore, userAgent: userAgent
+            urls: missingCSSURLs, dataStore: dataStore, urlSession: urlSession
         ))
 
         // 5. Iframe sub-documents
         let iframeResources = await Self.collectIframeResources(
-            iframes: collectResult.iframes, dataStore: dataStore, userAgent: userAgent
+            iframes: collectResult.iframes, dataStore: dataStore, urlSession: urlSession
         )
 
         let allResources = resources + cssResources + iframeResources
@@ -361,7 +364,7 @@ extension MHTMLArchiver {
     private static func downloadResources(
         urls: [URL],
         dataStore: WKWebsiteDataStore,
-        userAgent: String? = nil
+        urlSession: URLSession
     ) async -> [Resource] {
         // Batch urlRequest creation to minimize main actor hops
         var requests: [URL: URLRequest] = [:]
@@ -376,7 +379,7 @@ extension MHTMLArchiver {
                 let request = requests[url]!
                 group.addTask {
                     do {
-                        let (data, response) = try await URLSession.shared.data(for: request)
+                        let (data, response) = try await urlSession.data(for: request)
                         let contentType = (response as? HTTPURLResponse)?
                             .value(forHTTPHeaderField: "Content-Type") ?? "application/octet-stream"
                         return Resource(url: url, contentType: contentType, data: data)
@@ -401,7 +404,7 @@ extension MHTMLArchiver {
     fileprivate static func collectIframeResources(
         iframes: [IframeInfo],
         dataStore: WKWebsiteDataStore,
-        userAgent: String? = nil
+        urlSession: URLSession
     ) async -> [Resource] {
         // Batch urlRequest creation for cross-origin iframes
         var requestsBuilder: [String: URLRequest] = [:]
@@ -431,7 +434,7 @@ extension MHTMLArchiver {
                         // Cross-origin: download via URLSession
                         guard let request = requests[iframeURL] else { return nil }
                         do {
-                            let (data, response) = try await URLSession.shared.data(for: request)
+                            let (data, response) = try await urlSession.data(for: request)
                             let contentType = (response as? HTTPURLResponse)?
                                 .value(forHTTPHeaderField: "Content-Type") ?? "text/html"
                             return Resource(

@@ -12,6 +12,7 @@ public final class PatronArchiver {
     }
     public var settings = AppSettings()
     public let websiteDataStore = WKWebsiteDataStore.default()
+    public let urlSession: URLSession
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
 
     #if os(macOS)
@@ -24,8 +25,46 @@ public final class PatronArchiver {
         CGSize(width: CGFloat(settings.renderWidth), height: 1080)
     }
 
-    public init() { }
+    public init() {
+        let userAgent = WKWebView().value(forKey: "userAgent") as? String
+        let configuration = URLSessionConfiguration.default
+        if let userAgent {
+            configuration.httpAdditionalHeaders = ["User-Agent": userAgent]
+        }
+        self.urlSession = URLSession(configuration: configuration)
+    }
 }
+
+// MARK: - Login Check
+
+extension PatronArchiver {
+    /// Checks login status by examining cookies only — fast, no network request.
+    public func isLoggedIn(for providerType: any PatronServiceProvider.Type) async -> Bool {
+        let cookies = await websiteDataStore.httpCookieStore.allCookies()
+        return providerType.isLoggedIn(cookies: cookies)
+    }
+
+    /// Fetches account info by making an HTTP request to the provider's accountCheckURL.
+    ///
+    /// - Returns: The account info if successfully fetched, nil otherwise.
+    public func fetchAccountInfo(for providerType: any PatronServiceProvider.Type) async -> AccountInfo? {
+        let url = providerType.accountCheckURL
+        var urlRequest = URLRequest(url: url)
+        await websiteDataStore.addCookies(to: &urlRequest)
+
+        let delegate = NoRedirectDelegate()
+        guard let (data, response) = try? await urlSession.data(for: urlRequest, delegate: delegate),
+              let httpResponse = response as? HTTPURLResponse,
+              httpResponse.statusCode == 200
+        else {
+            return nil
+        }
+
+        return providerType.parseAccountInfo(from: data)
+    }
+}
+
+// MARK: - Job Queue
 
 extension PatronArchiver {
     public func enqueue(url: URL) {
@@ -93,15 +132,11 @@ extension PatronArchiver {
             let tracker = RedirectTracker()
             Self.logger.debug("Loading page...")
             let redirectChain = try await tracker.load(job.inputURL, in: webView)
-            let userAgent = webView.value(forKey: "userAgent") as? String
             let chain = redirectChain.map(\.absoluteString)
             Self.logger.debug("Page loaded, redirect chain: \(chain, privacy: .private)")
 
             // 3. Check login
-            let isLoggedIn = await LoginChecker.isLoggedIn(
-                for: type(of: provider),
-                dataStore: websiteDataStore
-            )
+            let isLoggedIn = await self.isLoggedIn(for: type(of: provider))
             Self.logger.info("Login status: \(isLoggedIn)")
             if !isLoggedIn {
                 throw JobError.loginRequired(type(of: provider).siteIdentifier)
@@ -161,7 +196,7 @@ extension PatronArchiver {
                 items: mediaItems,
                 to: tempDir,
                 websiteDataStore: websiteDataStore,
-                userAgent: userAgent,
+                urlSession: urlSession,
                 onFileDownloaded: { @Sendable in
                     let count = completedMediaCount.withLock { value in
                         value += 1
@@ -176,7 +211,7 @@ extension PatronArchiver {
 
             // MHTML + PDF on WebView (sequential, needs WebView)
             Self.logger.debug("Generating MHTML...")
-            let mhtmlData = try await MHTMLArchiver(webView).archive()
+            let mhtmlData = try await MHTMLArchiver(webView, urlSession: urlSession).archive()
             let mhtmlSize = mhtmlData.count.formatted(
                 .byteCount(style: .binary, spellsOutZero: false, includesActualByteCount: true)
             )
@@ -307,6 +342,17 @@ extension PatronArchiver {
             return url
         }
         return settings.defaultSaveDirectory
+    }
+}
+
+private final class NoRedirectDelegate: NSObject, URLSessionTaskDelegate, Sendable {
+    func urlSession(
+        _ session: URLSession,
+        task: URLSessionTask,
+        willPerformHTTPRedirection response: HTTPURLResponse,
+        newRequest request: URLRequest
+    ) async -> URLRequest? {
+        nil
     }
 }
 

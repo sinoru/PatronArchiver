@@ -195,7 +195,6 @@ struct SettingsView: View {
         isCheckingLogin = true
         defer { isCheckingLogin = false }
 
-        let dataStore = patronArchiver.websiteDataStore
         let providerTypes = PatronServiceManager.allProviderTypes
 
         // 1. Fast cookie-based login check
@@ -203,9 +202,8 @@ struct SettingsView: View {
             for providerType in providerTypes {
                 let identifier = providerType.siteIdentifier
                 group.addTask {
-                    let loggedIn = await LoginChecker.isLoggedIn(
-                        for: providerType,
-                        dataStore: dataStore
+                    let loggedIn = await patronArchiver.isLoggedIn(
+                        for: providerType
                     )
                     return (identifier, loggedIn)
                 }
@@ -225,9 +223,8 @@ struct SettingsView: View {
                 let identifier = providerType.siteIdentifier
                 guard loggedInIdentifiers.contains(identifier) else { continue }
                 group.addTask {
-                    let info = await LoginChecker.fetchAccountInfo(
-                        for: providerType,
-                        dataStore: dataStore
+                    let info = await patronArchiver.fetchAccountInfo(
+                        for: providerType
                     )
                     return (identifier, info)
                 }
@@ -269,20 +266,13 @@ struct SettingsView: View {
     }
 
     private func checkLoginStatus(for providerType: any PatronServiceProvider.Type) async {
-        let dataStore = patronArchiver.websiteDataStore
         let identifier = providerType.siteIdentifier
 
-        let loggedIn = await LoginChecker.isLoggedIn(
-            for: providerType,
-            dataStore: dataStore
-        )
+        let loggedIn = await patronArchiver.isLoggedIn(for: providerType)
 
         if loggedIn {
             loggedInIdentifiers.insert(identifier)
-            let info = await LoginChecker.fetchAccountInfo(
-                for: providerType,
-                dataStore: dataStore
-            )
+            let info = await patronArchiver.fetchAccountInfo(for: providerType)
             if let info {
                 accountInfoByIdentifier[identifier] = info
                 accountInfoFetchFailed.remove(identifier)

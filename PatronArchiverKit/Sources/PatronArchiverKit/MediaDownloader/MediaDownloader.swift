@@ -14,19 +14,14 @@ enum MediaDownloader {
         items: [MediaItem],
         to directory: URL,
         websiteDataStore: WKWebsiteDataStore,
-        userAgent: String? = nil,
+        urlSession: URLSession,
         onFileDownloaded: (@Sendable () -> Void)? = nil
     ) async throws -> [DownloadedMedia] {
         // Batch urlRequest creation to minimize main actor hops
         var requests: [URL: URLRequest] = [:]
         for item in items {
             var urlRequest = URLRequest(url: item.url)
-
             await websiteDataStore.addCookies(to: &urlRequest)
-            if let userAgent {
-                urlRequest.setValue(userAgent, forHTTPHeaderField: "User-Agent")
-            }
-
             requests[item.url] = urlRequest
         }
 
@@ -35,7 +30,7 @@ enum MediaDownloader {
                 let request = requests[item.url]!
                 group.addTask {
                     let redirectCollector = RedirectCollector()
-                    let (tempURL, response) = try await URLSession.shared.download(
+                    let (tempURL, response) = try await urlSession.download(
                         for: request,
                         delegate: redirectCollector
                     )
