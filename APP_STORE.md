@@ -40,6 +40,18 @@ Just paste a post URL, and PatronArchiver takes care of the rest. Track progress
 
 patreon,fanbox,pixiv,subscribestar,archive,backup,offline,PDF,MHTML,creator
 
+### Support URL
+
+https://github.com/sinoru/PatronArchiver/issues/new
+
+#### Marketing URL
+
+https://github.com/sinoru/PatronArchiver
+
+#### Copyright
+
+2026 Kang Jaehong
+
 ### Release Notes
 
 Initial release.
