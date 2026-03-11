@@ -48,6 +48,10 @@ https://github.com/sinoru/PatronArchiver/issues/new
 
 https://github.com/sinoru/PatronArchiver
 
+#### Privacy Policy URL
+
+https://sinoru.github.io/PatronArchiver/legal/privacy
+
 #### Copyright
 
 2026 Kang Jaehong
