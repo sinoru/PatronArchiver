@@ -8,11 +8,11 @@ PatronArchiver
 
 ### Subtitle
 
-Archive Your Favorite Creator Posts
+Archive Your Creator Posts
 
 ### Promotional Text
 
-Save your favorite creator posts for offline reading. PatronArchiver preserves posts from Patreon, pixivFANBOX, and SubscribeStar.adult as PDF, MHTML, and media files — so nothing gets lost.
+Save your favorite creator posts for offline reading. Preserve posts from Patreon, pixivFANBOX, and SubscribeStar.adult as PDF, MHTML, and media files.
 
 ### Description
 
