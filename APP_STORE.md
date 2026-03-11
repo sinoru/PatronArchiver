@@ -8,7 +8,7 @@ PatronArchiver
 
 ### Subtitle
 
-Archive Patreon, FANBOX & More
+Archive Your Favorite Creator Posts
 
 ### Promotional Text
 
@@ -16,7 +16,7 @@ Save your favorite creator posts for offline reading. PatronArchiver preserves p
 
 ### Description
 
-PatronArchiver makes it easy to save posts from Patreon, pixivFANBOX, and SubscribeStar.adult directly to your device. Whether you want to keep a personal backup or read content offline, PatronArchiver has you covered.
+PatronArchiver makes it easy to save posts from your favorite creator platforms directly to your device. Whether you want to keep a personal backup or read content offline, PatronArchiver has you covered.
 
 Save in Multiple Formats
 Each post is archived as a PDF, an MHTML web archive, and individual media files — all neatly organized in a single folder. Choose the format that works best for you.
