@@ -50,7 +50,7 @@ https://github.com/sinoru/PatronArchiver
 
 #### Privacy Policy URL
 
-https://sinoru.github.io/PatronArchiver/legal/privacy
+https://patronarchiver.sinoru.dev/legal/privacy
 
 #### Copyright
 

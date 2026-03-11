@@ -1,3 +1,4 @@
 theme: minima
 title: PatronArchiver
-baseurl: /PatronArchiver
+url: https://patronarchiver.sinoru.dev
+baseurl: ""
