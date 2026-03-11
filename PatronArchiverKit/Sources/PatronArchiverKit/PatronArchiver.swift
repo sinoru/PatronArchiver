@@ -1,9 +1,6 @@
 import Foundation
 import OSLog
 import WebKit
-#if os(iOS)
-@preconcurrency import BackgroundTasks
-#endif
 
 @MainActor
 @Observable
@@ -16,12 +13,6 @@ public final class PatronArchiver {
     public var settings = AppSettings()
     public let websiteDataStore = WKWebsiteDataStore.default()
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
-
-    #if os(iOS)
-    private static let bgTaskIdentifier = "dev.sinoru.PatronArchiver.archive"
-    private var activeBGTask: BGContinuedProcessingTask?
-    private var bgProgressObservation: NSKeyValueObservation?
-    #endif
 
     #if os(macOS)
     private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = .withSecurityScope
@@ -82,14 +73,6 @@ extension PatronArchiver {
             await processJob(job)
         }
         activeTasks[job.id] = task
-
-        #if os(iOS)
-        if activeBGTask == nil {
-            submitBackgroundTask(for: job)
-        } else if let bgTask = activeBGTask {
-            observeJobProgress(job, for: bgTask)
-        }
-        #endif
     }
 
     private func processJob(_ job: ArchiveJob) async {
@@ -309,77 +292,9 @@ extension PatronArchiver {
         guard let nextJob = jobs.first(where: {
             if case .queued = $0.status { return true }
             return false
-        }) else {
-            #if os(iOS)
-            completeBackgroundTaskIfNeeded()
-            #endif
-            return
-        }
+        }) else { return }
         startJobIfPossible(nextJob)
     }
-
-    // MARK: - iOS Background Task
-
-    #if os(iOS)
-    private func submitBackgroundTask(for job: ArchiveJob) {
-        BGTaskScheduler.shared.register(
-            forTaskWithIdentifier: Self.bgTaskIdentifier,
-            using: .main
-        ) { [weak self] bgTask in
-            guard let bgTask = bgTask as? BGContinuedProcessingTask else { return }
-            MainActor.assumeIsolated {
-                guard let self else { return }
-                self.activeBGTask = bgTask
-                bgTask.progress.totalUnitCount = 100
-                self.observeJobProgress(job, for: bgTask)
-
-                bgTask.expirationHandler = { [weak self] in
-                    Task { @MainActor [weak self] in
-                        guard let self else { return }
-                        for (_, task) in self.activeTasks {
-                            task.cancel()
-                        }
-                        self.bgProgressObservation?.invalidate()
-                        self.bgProgressObservation = nil
-                        self.activeBGTask?.setTaskCompleted(success: false)
-                        self.activeBGTask = nil
-                    }
-                }
-            }
-        }
-
-        let request = BGContinuedProcessingTaskRequest(
-            identifier: Self.bgTaskIdentifier,
-            title: String(localized: "Archiving Post"),
-            subtitle: job.inputURL.host() ?? ""
-        )
-
-        do {
-            try BGTaskScheduler.shared.submit(request)
-        } catch {
-            Self.logger.error(
-                "Failed to submit BG task: \(error.localizedDescription, privacy: .public)"
-            )
-        }
-    }
-
-    private func observeJobProgress(_ job: ArchiveJob, for bgTask: BGContinuedProcessingTask) {
-        bgProgressObservation?.invalidate()
-        bgProgressObservation = job.progress.observe(
-            \.completedUnitCount,
-            options: [.new]
-        ) { [weak bgTask] progress, _ in
-            bgTask?.progress.completedUnitCount = progress.completedUnitCount
-        }
-    }
-
-    private func completeBackgroundTaskIfNeeded() {
-        bgProgressObservation?.invalidate()
-        bgProgressObservation = nil
-        activeBGTask?.setTaskCompleted(success: true)
-        activeBGTask = nil
-    }
-    #endif
 
     private func resolveBaseDirectory() -> URL {
         var isStale = false
