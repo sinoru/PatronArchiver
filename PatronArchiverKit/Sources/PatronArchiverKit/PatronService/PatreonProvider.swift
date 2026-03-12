@@ -141,28 +141,6 @@ struct PatreonProvider: PatronServiceProvider {
                 } catch {}
             }
 
-            // DOM fallback: images
-            if (!media.some(m => m.type === 'image')) {
-                const postCard = document.querySelector('[data-tag="post-card"]');
-                if (postCard) {
-                    postCard.querySelectorAll('img[src*="patreonusercontent.com"]').forEach(img => {
-                        if (!media.some(m => m.url === img.src)) {
-                            media.push({ url: img.src, type: 'image', filename: null });
-                        }
-                    });
-                }
-            }
-
-            // DOM fallback: attachments
-            if (!media.some(m => m.type === 'archive')) {
-                document.querySelectorAll('a[data-tag="post-attachment-link"]').forEach(a => {
-                    if (a.href && !media.some(m => m.url === a.href)) {
-                        const nameEl = a.querySelector('p');
-                        media.push({ url: a.href, type: 'archive', filename: nameEl?.textContent?.trim() || null });
-                    }
-                });
-            }
-
             return media;
         })()
         """
