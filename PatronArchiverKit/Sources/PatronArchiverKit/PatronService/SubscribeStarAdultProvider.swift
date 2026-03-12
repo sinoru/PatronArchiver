@@ -138,8 +138,8 @@ struct SubscribeStarAdultProvider: PatronServiceProvider {
             const pathMatch = location.pathname.match(/posts\\/(\\d+)/);
             meta.postID = pathMatch ? pathMatch[1] : '';
 
-            // Title from trix-content h1
-            const titleEl = document.querySelector('.trix-content h1');
+            // Title from first child of trix-content (h1 or div)
+            const titleEl = document.querySelector('.trix-content > :first-child');
             meta.title = titleEl?.textContent?.trim() || document.title;
 
             // Author from sidebar star_link-name
