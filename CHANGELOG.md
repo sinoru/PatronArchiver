@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0+alpha.7] - 2026-03-14
+
+### Added
+
+- Allow archiving public posts without login
+
+## [1.0.0+alpha.6] - 2026-03-13
+
+### Added
+
+- Multilingual Privacy Policy pages for GitHub Pages
+- Support URL, marketing URL, and copyright to App Store metadata
+- Custom domain patronarchiver.sinoru.dev for GitHub Pages
+
+### Fixed
+
+- Patreon media extraction collecting comment images on text-only posts
+- SubscribeStar.adult post title parsing for non-heading titles
+
+### Changed
+
+- Moved ITSAppUsesNonExemptEncryption to target level and allow arbitrary loads
+- Shortened App Store subtitle and promotional text to meet character limits
+- Removed direct service name mentions from App Store subtitle and description
+
+## [1.0.0+alpha.5] - 2026-03-11
+
+### Changed
+
+- Merged preloading status into loading with granular progress
+- Consolidated URLSession management and absorbed LoginChecker into PatronArchiver
+
+### Removed
+
+- BGContinuedProcessingTask due to incompatibility with WKWebView background rendering
+
 ## [1.0.0+alpha.4] - 2026-03-10
 
 ### Fixed
@@ -74,7 +110,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopted Swift 6.0 strict concurrency with MainActor isolation
 - Replaced glob-based URL matching with Swift Regex
 
-[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.4...HEAD
+[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.7...HEAD
+[1.0.0+alpha.7]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.6...v1.0.0+alpha.7
+[1.0.0+alpha.6]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.5...v1.0.0+alpha.6
+[1.0.0+alpha.5]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.4...v1.0.0+alpha.5
 [1.0.0+alpha.4]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.3...v1.0.0+alpha.4
 [1.0.0+alpha.3]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.2...v1.0.0+alpha.3
 [1.0.0+alpha.2]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.1...v1.0.0+alpha.2
