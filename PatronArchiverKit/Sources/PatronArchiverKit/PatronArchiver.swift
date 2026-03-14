@@ -137,10 +137,7 @@ extension PatronArchiver {
 
             // 3. Check login
             let isLoggedIn = await self.isLoggedIn(for: type(of: provider))
-            Self.logger.info("Login status: \(isLoggedIn)")
-            if !isLoggedIn {
-                throw JobError.loginRequired(type(of: provider).siteIdentifier)
-            }
+            Self.logger.info("Login status for \(type(of: provider).siteIdentifier, privacy: .public): \(isLoggedIn)")
 
             // 4. Load lazy content
             try Task.checkCancellation()
@@ -358,15 +355,12 @@ private final class NoRedirectDelegate: NSObject, URLSessionTaskDelegate, Sendab
 
 enum JobError: LocalizedError {
     case unsupportedSite
-    case loginRequired(String)
     case overwriteDeclined
 
     var errorDescription: String? {
         switch self {
         case .unsupportedSite:
             "This site is not supported."
-        case .loginRequired(let site):
-            "Login required for \(site)."
         case .overwriteDeclined:
             "Overwrite declined by user."
         }
