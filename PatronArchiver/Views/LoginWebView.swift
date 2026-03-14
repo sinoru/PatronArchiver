@@ -77,13 +77,13 @@ extension LoginWebView {
             websiteDataStore.httpCookieStore.add(self)
         }
 
-        deinit {
+        isolated deinit {
             websiteDataStore.httpCookieStore.remove(self)
         }
 
         func cookiesDidChange(in cookieStore: WKHTTPCookieStore) {
             guard !hasDetectedLogin else { return }
-            Task { @MainActor in
+            Task {
                 let cookies = await cookieStore.allCookies()
                 guard providerType.isLoggedIn(cookies: cookies) else { return }
                 hasDetectedLogin = true
