@@ -52,81 +52,78 @@ struct MainView: View {
     var body: some View {
         NavigationStack {
             JobListView(archiver: patronArchiver)
-                .safeAreaInset(edge: .bottom) {
+                .background {
                     archiveWebViewArea
                 }
-            .onAppear {
-                patronArchiver.webView = webView
-                webView.load(URLRequest(url: URL(string: "about:blank")!))
-            }
-            .navigationTitle("PatronArchiver")
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.large)
-            #endif
-            .toolbar {
+                .onAppear {
+                    patronArchiver.webView = webView
+                    webView.load(URLRequest(url: URL(string: "about:blank")!))
+                }
+                .navigationTitle("PatronArchiver")
                 #if os(iOS)
-                ToolbarItemGroup(placement: .bottomBar) {
-                    urlTextField
-                        .keyboardType(.URL)
-                        .textInputAutocapitalization(.never)
-                    addButton
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        showSettings = true
-                    } label: {
-                        Image(systemName: "gear")
-                    }
-                }
-                #else
-                ToolbarItem(placement: .principal) {
-                    urlTextField
-                        .textFieldStyle(.roundedBorder)
-                        .frame(width: 300)
-                }
-                ToolbarItem(placement: .principal) {
-                    addButton
-                }
+                .navigationBarTitleDisplayMode(.large)
                 #endif
-            }
-            #if os(iOS)
-            .sheet(isPresented: $showSettings) {
-                NavigationStack {
-                    SettingsView(patronArchiver: patronArchiver)
-                        .navigationTitle("Settings")
-                        .navigationBarTitleDisplayMode(.inline)
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") {
-                                    showSettings = false
+                .toolbar {
+                    #if os(iOS)
+                    ToolbarItemGroup(placement: .bottomBar) {
+                        urlTextField
+                            .keyboardType(.URL)
+                            .textInputAutocapitalization(.never)
+                        addButton
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            showSettings = true
+                        } label: {
+                            Image(systemName: "gear")
+                        }
+                    }
+                    #else
+                    ToolbarItem(placement: .principal) {
+                        urlTextField
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 300)
+                    }
+                    ToolbarItem(placement: .principal) {
+                        addButton
+                    }
+                    #endif
+                }
+                #if os(iOS)
+                .sheet(isPresented: $showSettings) {
+                    NavigationStack {
+                        SettingsView(patronArchiver: patronArchiver)
+                            .navigationTitle("Settings")
+                            .navigationBarTitleDisplayMode(.inline)
+                            .toolbar {
+                                ToolbarItem(placement: .confirmationAction) {
+                                    Button("Done") {
+                                        showSettings = false
+                                    }
                                 }
                             }
-                        }
+                    }
                 }
-            }
-            #endif
-            #if os(macOS)
-            .frame(minWidth: 635, minHeight: 400)
-            #endif
+                #endif
+                #if os(macOS)
+                .frame(minWidth: 635, minHeight: 400)
+                #endif
         }
     }
 
     @ViewBuilder
     private var archiveWebViewArea: some View {
         let renderSize = patronArchiver.renderSize
-        let previewHeight: CGFloat = 200
-        let scale = previewHeight / renderSize.height
-        let previewWidth = renderSize.width * scale
 
         ArchiveWebViewRepresentable(webView: webView)
             .frame(width: renderSize.width, height: renderSize.height)
-            .scaleEffect(scale, anchor: .topLeading)
-            .frame(width: previewWidth, height: previewHeight, alignment: .topLeading)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-            .shadow(radius: 2)
-            .frame(maxWidth: .infinity, alignment: .center)
+            .scaleEffect(
+                1.0 / max(renderSize.width, renderSize.height),
+                anchor: .topLeading
+            )
+            .frame(width: 1, height: 1, alignment: .topLeading)
+            .opacity(0.01)
             .allowsHitTesting(false)
-            .padding()
     }
 
     private func submitURL() async {
