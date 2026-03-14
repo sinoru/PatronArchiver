@@ -19,6 +19,7 @@ final class PatronArchiverUITestsLaunchTests: XCTestCase {
 
     func testLaunch() throws {
         let app = XCUIApplication()
+        app.launch()
         app.activate()
 
         // Insert steps here to perform after app launch but before taking a screenshot,

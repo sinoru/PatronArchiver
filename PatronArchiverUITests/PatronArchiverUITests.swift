@@ -8,6 +8,7 @@ final class PatronArchiverUITests: XCTestCase {
 
     func testURLInputFieldExists() throws {
         let app = XCUIApplication()
+        app.launch()
         app.activate()
 
         let textField = app.textFields["Enter post URL..."]
@@ -16,6 +17,7 @@ final class PatronArchiverUITests: XCTestCase {
 
     func testAddButtonExists() throws {
         let app = XCUIApplication()
+        app.launch()
         app.activate()
 
         let button = app.buttons["Add"].firstMatch
@@ -24,6 +26,7 @@ final class PatronArchiverUITests: XCTestCase {
 
     func testEmptyStateShowsNoJobs() throws {
         let app = XCUIApplication()
+        app.launch()
         app.activate()
 
         let noJobs = app.staticTexts["No Jobs"]

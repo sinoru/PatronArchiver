@@ -8,6 +8,7 @@ final class ScreenshotTests: XCTestCase {
 
         app = XCUIApplication()
         app.launchArguments.append("-DemoMode")
+        app.launch()
         app.activate()
 
         // Wait for app to fully launch
