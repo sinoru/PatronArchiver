@@ -65,12 +65,10 @@ struct MainView: View {
             #endif
             .toolbar {
                 #if os(iOS)
-                ToolbarItem(placement: .bottomBar) {
+                ToolbarItemGroup(placement: .bottomBar) {
                     urlTextField
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
-                }
-                ToolbarItem(placement: .bottomBar) {
                     addButton
                 }
                 ToolbarItem(placement: .topBarTrailing) {

@@ -12,7 +12,7 @@ struct MHTMLDumperTests {
         let collectionError = MHTMLError.collectionFailed
         let pageURLError = MHTMLError.noPageURL
 
-        #expect(collectionError is MHTMLError)
-        #expect(pageURLError is MHTMLError)
+        #expect(collectionError == .collectionFailed)
+        #expect(pageURLError == .noPageURL)
     }
 }

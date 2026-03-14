@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- iOS bottom toolbar items not grouped together
+
 ## [1.0.0+alpha.7] - 2026-03-14
 
 ### Added
