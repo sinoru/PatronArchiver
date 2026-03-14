@@ -79,12 +79,10 @@ struct MainView: View {
                         }
                     }
                     #else
-                    ToolbarItem(placement: .principal) {
+                    ToolbarItemGroup(placement: .principal) {
                         urlTextField
                             .textFieldStyle(.roundedBorder)
                             .frame(width: 300)
-                    }
-                    ToolbarItem(placement: .principal) {
                         addButton
                     }
                     #endif
