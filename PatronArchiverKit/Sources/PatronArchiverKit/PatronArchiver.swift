@@ -16,7 +16,7 @@ public final class PatronArchiver {
     private var activeTasks: [UUID: Task<Void, Never>] = [:]
 
     #if DEBUG
-    public internal(set) var isDemoMode = false
+    var isDemoMode = false
     #endif
 
     private static let bookmarkResolutionOptions: URL.BookmarkResolutionOptions = {
