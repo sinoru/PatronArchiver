@@ -8,7 +8,6 @@ final class ScreenshotTests: XCTestCase {
 
         app = XCUIApplication()
         app.launchArguments.append("-DemoMode")
-        app.launchArguments.append(contentsOf: ["-ApplePersistenceIgnoreState", "YES"])
         app.activate()
 
         // Wait for app to fully launch

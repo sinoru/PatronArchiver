@@ -3,21 +3,25 @@ import SwiftUI
 
 @main
 struct PatronArchiverApp: App {
-    @State private var transactionObserver = TransactionObserver()
+    #if DEBUG
+    static var isDemoMode: Bool {
+        ProcessInfo.processInfo.arguments.contains("-DemoMode")
+    }
+    #endif
 
-    @State private var patronArchiver: PatronArchiver = {
+    @State
+    private var transactionObserver = TransactionObserver()
+
+    @State
+    private var patronArchiver: PatronArchiver = {
         let archiver = PatronArchiver()
         #if DEBUG
-        if ProcessInfo.processInfo.arguments.contains("-DemoMode") {
+        if isDemoMode {
             archiver.loadDemoJobs()
         }
         #endif
         return archiver
     }()
-
-    #if DEBUG
-    private let isDemoMode = ProcessInfo.processInfo.arguments.contains("-DemoMode")
-    #endif
 
     @State private var showTipJarSheet = false
     #if os(iOS)
@@ -36,12 +40,6 @@ struct PatronArchiverApp: App {
                 }
                 #endif
         }
-        #if DEBUG
-        .defaultSize(
-            width: isDemoMode ? 1440 : 635,
-            height: isDemoMode ? 900 : 400
-        )
-        #endif
         .commands {
             #if os(iOS)
             HelpCommands(
