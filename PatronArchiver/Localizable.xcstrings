@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@..." : {
+
+    },
     "%@%@%@" : {
       "localizations" : {
         "en" : {
@@ -38,6 +41,9 @@
     "Enter post URL..." : {
 
     },
+    "Feedback" : {
+
+    },
     "Finder Tags" : {
 
     },
@@ -57,6 +63,9 @@
 
     },
     "Not logged in" : {
+
+    },
+    "OK" : {
 
     },
     "Overwrite" : {
@@ -86,6 +95,9 @@
     "Scroll Delay" : {
 
     },
+    "Send Feedback..." : {
+
+    },
     "Settings" : {
 
     },
@@ -95,10 +107,22 @@
     "Storage" : {
 
     },
+    "Support" : {
+
+    },
+    "Thank You!" : {
+
+    },
+    "Tip Jar" : {
+
+    },
     "Verification failed" : {
 
     },
     "Where Froms" : {
+
+    },
+    "Your support is greatly appreciated!" : {
 
     }
   },

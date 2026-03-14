@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Tip Jar with consumable IAP for optional support
+- Send Feedback mail composer on iOS and macOS
+- Help menu commands for Tip Jar and Send Feedback
+- Transaction.updates listener via TransactionObserver for pending transaction handling
+
 ### Changed
 
 - Set app accent color to system green
@@ -15,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - iOS bottom toolbar items not grouped together
 - macOS principal toolbar items not grouped together
+- Duplicate newline in feedback mail diagnostic body
 
 ## [1.0.0+alpha.7] - 2026-03-14
 

@@ -79,6 +79,9 @@
             ReferencedContainer = "container:PatronArchiver.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
+      <StoreKitConfigurationFileReference
+         identifier = "../../PatronArchiver/PatronArchiver.storekit">
+      </StoreKitConfigurationFileReference>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

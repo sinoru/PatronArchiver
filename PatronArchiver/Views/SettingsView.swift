@@ -2,6 +2,9 @@ import PatronArchiverKit
 import SwiftUI
 import UniformTypeIdentifiers
 import WebKit
+#if canImport(MessageUI)
+import MessageUI
+#endif
 
 struct SettingsView: View {
     @Bindable private var patronArchiver: PatronArchiver
@@ -12,6 +15,11 @@ struct SettingsView: View {
     @State private var accountInfoByIdentifier: [String: AccountInfo] = [:]
     @State private var accountInfoFetchFailed: Set<String> = []
     @State private var isCheckingLogin = false
+
+    #if os(iOS)
+    @Environment(\.openURL) private var openURL
+    @State private var showMailCompose = false
+    #endif
 
     #if os(macOS)
     private static let bookmarkCreationOptions: URL.BookmarkCreationOptions = .withSecurityScope
@@ -145,6 +153,22 @@ struct SettingsView: View {
                     }
                 }
             }
+
+            #if os(iOS)
+            Section("Support") {
+                TipJarView()
+            }
+
+            Section("Feedback") {
+                Button("Send Feedback...") {
+                    if MFMailComposeViewController.canSendMail() {
+                        showMailCompose = true
+                    } else if let url = FeedbackMailComposer.mailtoURL {
+                        openURL(url)
+                    }
+                }
+            }
+            #endif
         }
         .formStyle(.grouped)
         #if os(macOS)
@@ -180,6 +204,11 @@ struct SettingsView: View {
             .frame(width: 800, height: 600)
             #endif
         }
+        #if os(iOS)
+        .sheet(isPresented: $showMailCompose) {
+            MailComposeView()
+        }
+        #endif
         .onChange(of: loginEntry) { oldValue, newValue in
             if newValue == nil, let closedEntry = oldValue {
                 Task {
