@@ -1,4 +1,5 @@
 import Foundation
+import OSLog
 #if canImport(AppKit)
 import AppKit
 #endif
@@ -12,6 +13,11 @@ import SwiftUI
 struct FeedbackMailComposer {
     static let emailAddress = "PatronArchiver@sinoru.dev"
     static let subject = "PatronArchiver Feedback"
+
+    private static let logSubsystems = [
+        "dev.sinoru.PatronArchiver",
+        "dev.sinoru.PatronArchiver.PatronArchiverKit",
+    ]
 
     static func diagnosticBody() -> String {
         let appVersion = Bundle.main.infoDictionary?[
@@ -40,6 +46,60 @@ struct FeedbackMailComposer {
             """
     }
 
+    /// Collects recent log entries from the current process.
+    static func collectLogData() -> Data? {
+        guard let store = try? OSLogStore(
+            scope: .currentProcessIdentifier
+        ) else {
+            return nil
+        }
+
+        let startDate = Date.now.addingTimeInterval(-30 * 60)
+        let position = store.position(date: startDate)
+
+        let subsystemPredicates = logSubsystems.map {
+            NSPredicate(format: "subsystem == %@", $0)
+        }
+        let predicate = NSCompoundPredicate(
+            orPredicateWithSubpredicates: subsystemPredicates
+        )
+
+        guard let entries = try? store.getEntries(
+            at: position,
+            matching: predicate
+        ) else {
+            return nil
+        }
+
+        var lines: [String] = []
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSSSSSZ"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        let hostName = ProcessInfo.processInfo.hostName
+
+        for entry in entries {
+            guard let logEntry = entry as? OSLogEntryLog else { continue }
+
+            let timestamp = dateFormatter.string(from: logEntry.date)
+            let process = logEntry.process
+            let pid = logEntry.processIdentifier
+            let sender = logEntry.sender
+            let subsystem = logEntry.subsystem
+            let category = logEntry.category
+            let message = logEntry.composedMessage
+
+            lines.append(
+                "\(timestamp)  \(hostName) \(process)[\(pid)]:"
+                    + " (\(sender))"
+                    + " [\(subsystem):\(category)]"
+                    + " \(message)"
+            )
+        }
+
+        guard !lines.isEmpty else { return nil }
+        return lines.joined(separator: "\n").data(using: .utf8)
+    }
+
     static var mailtoURL: URL? {
         var components = URLComponents()
         components.scheme = "mailto"
@@ -61,7 +121,16 @@ struct FeedbackMailComposer {
         }
         service.recipients = [emailAddress]
         service.subject = subject
-        service.perform(withItems: [diagnosticBody()])
+
+        var items: [Any] = [diagnosticBody()]
+        if let logData = collectLogData() {
+            let logURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent("PatronArchiver-logs.log")
+            if (try? logData.write(to: logURL)) != nil {
+                items.append(logURL)
+            }
+        }
+        service.perform(withItems: items)
     }
     #endif
 }
@@ -83,6 +152,13 @@ struct MailComposeView: UIViewControllerRepresentable {
             FeedbackMailComposer.diagnosticBody(),
             isHTML: false
         )
+        if let logData = FeedbackMailComposer.collectLogData() {
+            controller.addAttachmentData(
+                logData,
+                mimeType: "text/plain",
+                fileName: "PatronArchiver-logs.log"
+            )
+        }
         return controller
     }
 

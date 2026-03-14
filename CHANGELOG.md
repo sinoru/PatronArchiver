@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Tip Jar with consumable IAP for optional support
 - Send Feedback mail composer on iOS and macOS
+- Diagnostic log attachment in feedback emails
 - Help menu commands for Tip Jar and Send Feedback
 - Transaction.updates listener via TransactionObserver for pending transaction handling
 
