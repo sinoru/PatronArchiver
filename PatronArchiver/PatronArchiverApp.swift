@@ -15,6 +15,10 @@ struct PatronArchiverApp: App {
         return archiver
     }()
 
+    #if DEBUG
+    private let isDemoMode = ProcessInfo.processInfo.arguments.contains("-DemoMode")
+    #endif
+
     @State private var showTipJarSheet = false
     #if os(iOS)
     @State private var showMailCompose = false
@@ -32,6 +36,12 @@ struct PatronArchiverApp: App {
                 }
                 #endif
         }
+        #if DEBUG
+        .defaultSize(
+            width: isDemoMode ? 1440 : 635,
+            height: isDemoMode ? 900 : 400
+        )
+        #endif
         .commands {
             #if os(iOS)
             HelpCommands(
