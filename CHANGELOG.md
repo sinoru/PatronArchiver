@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Set app accent color to system green
+- Moved macOS window sizing from view to scene level with defaultSize and defaultPosition
 
 ### Fixed
 

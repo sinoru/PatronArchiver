@@ -4,7 +4,7 @@ import SwiftUI
 @main
 struct PatronArchiverApp: App {
     #if DEBUG
-    static var isDemoMode: Bool {
+    private static var isDemoMode: Bool {
         ProcessInfo.processInfo.arguments.contains("-DemoMode")
     }
     #endif
@@ -39,6 +39,21 @@ struct PatronArchiverApp: App {
                     MailComposeView()
                 }
                 #endif
+                #if os(macOS)
+                #if DEBUG
+                .frame(
+                    minWidth: Self.isDemoMode ? 1440 : 635,
+                    maxWidth: Self.isDemoMode ? 1440 : nil,
+                    minHeight: Self.isDemoMode ? 900 : 400,
+                    maxHeight: Self.isDemoMode ? 900 : nil
+                )
+                #else
+                .frame(
+                    minWidth: 635,
+                    minHeight: 400
+                )
+                #endif
+                #endif
         }
         .commands {
             #if os(iOS)
@@ -50,6 +65,20 @@ struct PatronArchiverApp: App {
             HelpCommands(showTipJarSheet: $showTipJarSheet)
             #endif
         }
+        #if os(macOS)
+        #if DEBUG
+        .defaultSize(
+            width: Self.isDemoMode ? 1440 : 635,
+            height: Self.isDemoMode ? 900 : 400
+        )
+        .defaultPosition(Self.isDemoMode ? .topLeading : .center)
+        #else
+        .defaultSize(
+            width: 635,
+            height: 400
+        )
+        #endif
+        #endif
 
         #if os(macOS)
         Settings {

@@ -104,21 +104,6 @@ struct MainView: View {
                 }
                 #endif
         }
-        #if os(macOS)
-        #if DEBUG
-        .frame(
-            minWidth: PatronArchiverApp.isDemoMode ? 1440 : 635,
-            maxWidth: PatronArchiverApp.isDemoMode ? 1440 : nil,
-            minHeight: PatronArchiverApp.isDemoMode ? 900 : 400,
-            maxHeight: PatronArchiverApp.isDemoMode ? 900 : nil
-        )
-        #else
-        .frame(
-            minWidth: 635,
-            minHeight: 400
-        )
-        #endif
-        #endif
     }
 
     @ViewBuilder
