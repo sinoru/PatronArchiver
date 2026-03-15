@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Moved macOS window sizing from view to scene level with defaultSize and defaultPosition
+
+## [1.0.0+rc.3] - 2026-03-15
+
+## [1.0.0+rc.2] - 2026-03-15
+
+## [1.0.0+rc.1] - 2026-03-15
+
 ### Added
 
 - Tip Jar with consumable IAP for optional support
@@ -18,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Set app accent color to system green
-- Moved macOS window sizing from view to scene level with defaultSize and defaultPosition
 
 ### Fixed
 
@@ -129,7 +138,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopted Swift 6.0 strict concurrency with MainActor isolation
 - Replaced glob-based URL matching with Swift Regex
 
-[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.7...HEAD
+[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.3...HEAD
+[1.0.0+rc.3]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.2...v1.0.0+rc.3
+[1.0.0+rc.2]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.1...v1.0.0+rc.2
+[1.0.0+rc.1]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.7...v1.0.0+rc.1
 [1.0.0+alpha.7]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.6...v1.0.0+alpha.7
 [1.0.0+alpha.6]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.5...v1.0.0+alpha.6
 [1.0.0+alpha.5]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.4...v1.0.0+alpha.5
