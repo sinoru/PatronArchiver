@@ -1,12 +1,17 @@
 import XCTest
 
 final class ScreenshotTests: XCTestCase {
+    override class var runsForEachTargetApplicationUIConfiguration: Bool {
+        true
+    }
+
     private var app: XCUIApplication!
 
     override func setUpWithError() throws {
         continueAfterFailure = false
 
         app = XCUIApplication()
+        app.launchArguments.append(contentsOf: ["-ApplePersistenceIgnoreState", "YES"])
         app.launchArguments.append("-DemoMode")
         app.launch()
         app.activate()
@@ -30,5 +35,4 @@ final class ScreenshotTests: XCTestCase {
         attachment.lifetime = .keepAlways
         add(attachment)
     }
-
 }
