@@ -62,4 +62,5 @@ jobs:
           -project PatronArchiver.xcodeproj
           -scheme PatronArchiver
           ${{ matrix.test-destinations }}
+          -disable-concurrent-destination-testing
           CODE_SIGNING_ALLOWED=NO
