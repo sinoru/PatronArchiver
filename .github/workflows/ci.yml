@@ -46,7 +46,7 @@ jobs:
               -destination 'platform=iOS Simulator,name=iPad (A16)'
               -destination 'platform=iOS Simulator,name=iPad mini (A17 Pro)'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Analyze & Build for Testing
         run: >
