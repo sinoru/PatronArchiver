@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upload xcresult test bundles as CI artifacts for test failure diagnostics
 - Include `.xcresult` extension in CI test artifact names for clarity
 - Set virtual display to 1920×1200 before macOS CI tests to ensure 1440×900 screenshot capture succeeds
+- Run resolution tool with sudo and treat failure as a warning to prevent CI from halting on permission errors
 
 ## [1.0.0+rc.3] - 2026-03-15
 

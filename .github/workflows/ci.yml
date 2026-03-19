@@ -53,9 +53,9 @@ jobs:
         run: |
           system_profiler SPDisplaysDataType
           if [ -f "/Library/Application Support/VMware Tools/vmware-resolutionSet" ]; then
-            "/Library/Application Support/VMware Tools/vmware-resolutionSet" 1920 1200
+            sudo "/Library/Application Support/VMware Tools/vmware-resolutionSet" 1920 1200 || echo "::warning::vmware-resolutionSet failed"
           elif [ -f "/Library/Application Support/Veertu/Anka/addons/change_res" ]; then
-            "/Library/Application Support/Veertu/Anka/addons/change_res" 1920x1200x32@30
+            sudo "/Library/Application Support/Veertu/Anka/addons/change_res" 1920x1200x32@30 || echo "::warning::change_res failed"
           else
             echo "::warning::No known resolution tool found"
           fi
