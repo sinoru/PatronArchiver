@@ -48,6 +48,20 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Set screen resolution
+        if: matrix.platform == 'macOS'
+        run: |
+          system_profiler SPDisplaysDataType | grep Resolution
+          if [ -f "/Library/Application Support/VMware Tools/vmware-resolutionSet" ]; then
+            "/Library/Application Support/VMware Tools/vmware-resolutionSet" 1920 1200
+          elif [ -f "/Library/Application Support/Veertu/Anka/addons/change_res" ]; then
+            "/Library/Application Support/Veertu/Anka/addons/change_res" 1920x1200x32@30
+          else
+            echo "::warning::No known resolution tool found"
+          fi
+          sleep 2
+          system_profiler SPDisplaysDataType | grep Resolution
+
       - name: Analyze & Build for Testing
         run: >
           xcodebuild analyze build-for-testing
