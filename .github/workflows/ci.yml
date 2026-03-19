@@ -32,19 +32,19 @@ jobs:
             test-destinations: >-
               -destination 'platform=macOS'
           - platform: iPhone
-            build-destination: 'platform=iOS Simulator,name=iPhone 16 Pro'
+            build-destination: 'platform=iOS Simulator,name=iPhone 17 Pro'
             test-destinations: >-
-              -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
-              -destination 'platform=iOS Simulator,name=iPhone 16 Pro Max'
-              -destination 'platform=iOS Simulator,name=iPhone 16'
-              -destination 'platform=iOS Simulator,name=iPhone SE (3rd generation)'
+              -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
+              -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max'
+              -destination 'platform=iOS Simulator,name=iPhone 17'
+              -destination 'platform=iOS Simulator,name=iPhone Air'
           - platform: iPad
-            build-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4) 16GB'
+            build-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4)'
             test-destinations: >-
-              -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M4) 16GB'
-              -destination 'platform=iOS Simulator,name=iPad Air 13-inch (M2)'
-              -destination 'platform=iOS Simulator,name=iPad (10th generation)'
-              -destination 'platform=iOS Simulator,name=iPad mini (6th generation)'
+              -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M4)'
+              -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M3)'
+              -destination 'platform=iOS Simulator,name=iPad (A16)'
+              -destination 'platform=iOS Simulator,name=iPad mini (A17 Pro)'
     steps:
       - uses: actions/checkout@v4
 
