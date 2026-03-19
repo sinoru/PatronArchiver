@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Moved macOS window sizing from view to scene level with defaultSize and defaultPosition
 - Upgrade actions/checkout from v4 to v5 in CI workflow
+- Upload xcresult test bundles as CI artifacts for test failure diagnostics
 
 ## [1.0.0+rc.3] - 2026-03-15
 
