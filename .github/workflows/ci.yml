@@ -39,9 +39,9 @@ jobs:
               -destination 'platform=iOS Simulator,name=iPhone 17'
               -destination 'platform=iOS Simulator,name=iPhone Air'
           - platform: iPad
-            build-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4)'
+            build-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
             test-destinations: >-
-              -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M4)'
+              -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
               -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M3)'
               -destination 'platform=iOS Simulator,name=iPad (A16)'
               -destination 'platform=iOS Simulator,name=iPad mini (A17 Pro)'
