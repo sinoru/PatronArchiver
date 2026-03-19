@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- GitHub Actions CI workflow with build, analyze, and test jobs across macOS and iOS simulators
+
 ### Changed
 
 - Moved macOS window sizing from view to scene level with defaultSize and defaultPosition

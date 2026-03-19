@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.github/FUNDING.yml'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'LICENSE'
+      - '.github/FUNDING.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    name: CI (${{ matrix.platform }})
+    runs-on: macos-26
+    strategy:
+      matrix:
+        include:
+          - platform: macOS
+            build-destination: 'platform=macOS'
+            test-destinations: >-
+              -destination 'platform=macOS'
+          - platform: iPhone
+            build-destination: 'platform=iOS Simulator,name=iPhone 16 Pro'
+            test-destinations: >-
+              -destination 'platform=iOS Simulator,name=iPhone 16 Pro'
+              -destination 'platform=iOS Simulator,name=iPhone 16 Pro Max'
+              -destination 'platform=iOS Simulator,name=iPhone 16'
+              -destination 'platform=iOS Simulator,name=iPhone SE (3rd generation)'
+          - platform: iPad
+            build-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4) 16GB'
+            test-destinations: >-
+              -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M4) 16GB'
+              -destination 'platform=iOS Simulator,name=iPad Air 13-inch (M2)'
+              -destination 'platform=iOS Simulator,name=iPad (10th generation)'
+              -destination 'platform=iOS Simulator,name=iPad mini (6th generation)'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Analyze & Build for Testing
+        run: >
+          xcodebuild analyze build-for-testing
+          -project PatronArchiver.xcodeproj
+          -scheme PatronArchiver
+          -destination '${{ matrix.build-destination }}'
+          CODE_SIGNING_ALLOWED=NO
+
+      - name: Test
+        run: >
+          xcodebuild test-without-building
+          -project PatronArchiver.xcodeproj
+          -scheme PatronArchiver
+          ${{ matrix.test-destinations }}
+          CODE_SIGNING_ALLOWED=NO
