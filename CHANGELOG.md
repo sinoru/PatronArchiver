@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Set virtual display to 1920×1200 before macOS CI tests to ensure 1440×900 screenshot capture succeeds
 - Run resolution tool with sudo and treat failure as a warning to prevent CI from halting on permission errors
 - Try displaymode (CoreGraphics API) as the primary resolution setter before falling back to VMware/Anka tools in CI
+- Change CI virtual display resolution from 1920×1200 to 1920×1080
 
 ## [1.0.0+rc.3] - 2026-03-15
 

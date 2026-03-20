@@ -61,12 +61,12 @@ jobs:
           /tmp/displaymode d || true
 
           # Try displaymode first (CoreGraphics API)
-          if /tmp/displaymode t 1920 1200; then
+          if /tmp/displaymode t 1920 1080; then
             echo "Resolution set via displaymode"
           elif [ -f "/Library/Application Support/VMware Tools/vmware-resolutionSet" ]; then
-            sudo "/Library/Application Support/VMware Tools/vmware-resolutionSet" 1920 1200 || echo "::warning::vmware-resolutionSet failed"
+            sudo "/Library/Application Support/VMware Tools/vmware-resolutionSet" 1920 1080 || echo "::warning::vmware-resolutionSet failed"
           elif [ -f "/Library/Application Support/Veertu/Anka/addons/change_res" ]; then
-            sudo "/Library/Application Support/Veertu/Anka/addons/change_res" 1920x1200x32@30 || echo "::warning::change_res failed"
+            sudo "/Library/Application Support/Veertu/Anka/addons/change_res" 1920x1080x32@30 || echo "::warning::change_res failed"
           else
             echo "::warning::No known resolution tool found"
           fi
