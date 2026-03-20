@@ -47,6 +47,11 @@ struct PatronArchiverApp: App {
                     minHeight: Self.isDemoMode ? 900 : 400,
                     maxHeight: Self.isDemoMode ? 900 : nil
                 )
+                .background {
+                    if Self.isDemoMode {
+                        WindowPositionEnforcer()
+                    }
+                }
                 #else
                 .frame(
                     minWidth: 635,
@@ -71,7 +76,6 @@ struct PatronArchiverApp: App {
             width: Self.isDemoMode ? 1440 : 635,
             height: Self.isDemoMode ? 900 : 400
         )
-        .defaultPosition(Self.isDemoMode ? .topLeading : .center)
         #else
         .defaultSize(
             width: 635,

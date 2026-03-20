@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remove system_profiler diagnostics and VMware/Veertu resolution fallbacks from CI; use displaymode exclusively
 - Capture app-level screenshot instead of window-level in macOS screenshot tests
 
+### Fixed
+
+- Demo mode window drifts to bottom-right in Light mode CI screenshots due to WindowServer cascading; enforce top-left position via WindowPositionEnforcer on every launch
+
 ## [1.0.0+rc.3] - 2026-03-15
 
 ## [1.0.0+rc.2] - 2026-03-15
