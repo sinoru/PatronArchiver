@@ -30,7 +30,7 @@ final class ScreenshotTests: XCTestCase {
         // Verify demo data loaded (empty state should not appear)
         XCTAssertFalse(app.staticTexts["No Jobs"].exists)
 
-        let attachment = XCTAttachment(screenshot: app.windows.firstMatch.screenshot())
+        let attachment = XCTAttachment(screenshot: app.screenshot())
         attachment.name = "01_MainView"
         attachment.lifetime = .keepAlways
         add(attachment)

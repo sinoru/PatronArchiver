@@ -51,8 +51,6 @@ jobs:
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
         run: |
-          system_profiler SPDisplaysDataType
-
           # Download displaymode v1.4.0
           curl -fsSL https://github.com/p00ya/displaymode/releases/download/v1.4.0/displaymode -o /tmp/displaymode
           chmod +x /tmp/displaymode
@@ -60,19 +58,14 @@ jobs:
           # List available display modes for diagnostics
           /tmp/displaymode d || true
 
-          # Try displaymode first (CoreGraphics API)
+          # Set resolution via displaymode (CoreGraphics API)
           if /tmp/displaymode t 1920 1080; then
             echo "Resolution set via displaymode"
-          elif [ -f "/Library/Application Support/VMware Tools/vmware-resolutionSet" ]; then
-            sudo "/Library/Application Support/VMware Tools/vmware-resolutionSet" 1920 1080 || echo "::warning::vmware-resolutionSet failed"
-          elif [ -f "/Library/Application Support/Veertu/Anka/addons/change_res" ]; then
-            sudo "/Library/Application Support/Veertu/Anka/addons/change_res" 1920x1080x32@30 || echo "::warning::change_res failed"
           else
-            echo "::warning::No known resolution tool found"
+            echo "::warning::Failed to set resolution"
           fi
 
           sleep 2
-          system_profiler SPDisplaysDataType
           /tmp/displaymode d || true
 
       - name: Analyze & Build for Testing
