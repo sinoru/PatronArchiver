@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Try displaymode (CoreGraphics API) as the primary resolution setter before falling back to VMware/Anka tools in CI
 - Change CI virtual display resolution from 1920×1200 to 1920×1080
 - Remove system_profiler diagnostics and VMware/Veertu resolution fallbacks from CI; use displaymode exclusively
-- Capture app-level screenshot instead of window-level in macOS screenshot tests
+- Capture both app-level and window-level screenshots in macOS screenshot tests
 
 ### Fixed
 
