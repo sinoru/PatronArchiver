@@ -7,27 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- GitHub Actions CI workflow with build, analyze, and test jobs across macOS and iOS simulators
-
 ### Changed
 
 - Moved macOS window sizing from view to scene level with defaultSize and defaultPosition
-- Upgrade actions/checkout from v4 to v5 in CI workflow
-- Upgrade actions/upload-artifact from v4 to v7 in CI workflow
-- Upload xcresult test bundles as CI artifacts for test failure diagnostics
-- Include `.xcresult` extension in CI test artifact names for clarity
-- Set virtual display to 1920×1200 before macOS CI tests to ensure 1440×900 screenshot capture succeeds
-- Run resolution tool with sudo and treat failure as a warning to prevent CI from halting on permission errors
-- Try displaymode (CoreGraphics API) as the primary resolution setter before falling back to VMware/Anka tools in CI
-- Change CI virtual display resolution from 1920×1200 to 1920×1080
-- Remove system_profiler diagnostics and VMware/Veertu resolution fallbacks from CI; use displaymode exclusively
-- Capture both app-level and window-level screenshots in macOS screenshot tests
-
-### Fixed
-
-- Demo window position in Light mode CI screenshots unreliable with NSViewRepresentable-based WindowPositionEnforcer (SwiftUI overwrites position after viewDidMoveToWindow); replace with .task modifier that runs after SwiftUI completes window layout
 
 ## [1.0.0+rc.3] - 2026-03-15
 
