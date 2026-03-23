@@ -1,5 +1,8 @@
 import PatronArchiverKit
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 @main
 struct PatronArchiverApp: App {
@@ -47,9 +50,12 @@ struct PatronArchiverApp: App {
                     minHeight: Self.isDemoMode ? 900 : 400,
                     maxHeight: Self.isDemoMode ? 900 : nil
                 )
-                .background {
+                .task {
                     if Self.isDemoMode {
-                        WindowPositionEnforcer()
+                        guard let window = NSApp.keyWindow, let screen = window.screen else { return }
+                        window.setFrameTopLeftPoint(
+                            NSPoint(x: screen.visibleFrame.minX, y: screen.visibleFrame.maxY)
+                        )
                     }
                 }
                 #else
@@ -76,6 +82,7 @@ struct PatronArchiverApp: App {
             width: Self.isDemoMode ? 1440 : 635,
             height: Self.isDemoMode ? 900 : 400
         )
+        .defaultPosition(.topLeading)
         #else
         .defaultSize(
             width: 635,

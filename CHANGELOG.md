@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Demo mode window drifts to bottom-right in Light mode CI screenshots due to WindowServer cascading; enforce top-left position via WindowPositionEnforcer on every launch
+- Demo window position in Light mode CI screenshots unreliable with NSViewRepresentable-based WindowPositionEnforcer (SwiftUI overwrites position after viewDidMoveToWindow); replace with .task modifier that runs after SwiftUI completes window layout
 
 ## [1.0.0+rc.3] - 2026-03-15
 
