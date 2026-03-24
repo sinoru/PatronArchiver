@@ -44,11 +44,12 @@ struct PatronArchiverApp: App {
                 #endif
                 #if os(macOS)
                 #if DEBUG
+                // 848 = 900 (target window height) - 52 (unified title bar + toolbar chrome)
                 .frame(
                     minWidth: Self.isDemoMode ? 1440 : 635,
                     maxWidth: Self.isDemoMode ? 1440 : nil,
-                    minHeight: Self.isDemoMode ? 900 : 400,
-                    maxHeight: Self.isDemoMode ? 900 : nil
+                    minHeight: Self.isDemoMode ? 848 : 400,
+                    maxHeight: Self.isDemoMode ? 848 : nil
                 )
                 .task {
                     if Self.isDemoMode {
@@ -80,7 +81,7 @@ struct PatronArchiverApp: App {
         #if DEBUG
         .defaultSize(
             width: Self.isDemoMode ? 1440 : 635,
-            height: Self.isDemoMode ? 900 : 400
+            height: Self.isDemoMode ? 848 : 400
         )
         .defaultPosition(.topLeading)
         #else
