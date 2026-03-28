@@ -28,19 +28,16 @@ jobs:
       matrix:
         include:
           - platform: macOS
-            build-destination: 'platform=macOS'
+            build-destination: 'generic/platform=macOS'
             test-destinations: >-
               -destination 'platform=macOS'
-          - platform: iPhone
-            build-destination: 'platform=iOS Simulator,name=iPhone 17 Pro'
+          - platform: iOS
+            build-destination: 'generic/platform=iOS Simulator'
             test-destinations: >-
               -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
               -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max'
               -destination 'platform=iOS Simulator,name=iPhone 17'
               -destination 'platform=iOS Simulator,name=iPhone Air'
-          - platform: iPad
-            build-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
-            test-destinations: >-
               -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
               -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M3)'
               -destination 'platform=iOS Simulator,name=iPad (A16)'
