@@ -90,6 +90,13 @@ jobs:
           name: TestProducts-${{ matrix.platform }}
           path: ${{ runner.temp }}/Products.xctestproducts
 
+      - name: Re-sign Test Products
+        run: |
+          find '${{ runner.temp }}/Products.xctestproducts' \
+            -type d \( -name '*.app' -o -name '*.xctest' \) | while read -r bundle; do
+            /usr/bin/codesign --force --sign - "$bundle"
+          done
+
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
         run: |
