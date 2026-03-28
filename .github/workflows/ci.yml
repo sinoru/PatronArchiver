@@ -99,14 +99,6 @@ jobs:
       - name: Extract Test Products
         run: ditto -x -k '${{ runner.temp }}/Products.xctestproducts.zip' '${{ runner.temp }}'
 
-      - name: Inspect Test Products
-        if: matrix.platform == 'macOS'
-        run: |
-          echo "=== Executable permissions ==="
-          find '${{ runner.temp }}/Products.xctestproducts' -path '*/Contents/MacOS/*' -type f | while read -r f; do
-            ls -l "$f"
-          done
-
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
         run: |
@@ -127,42 +119,12 @@ jobs:
           sleep 2
           /tmp/displaymode d || true
 
-      - name: Record log start time
-        id: log-start
-        run: echo "timestamp=$(date -u '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_OUTPUT"
-
       - name: Test
         run: >
           xcodebuild test-without-building
           -testProductsPath '${{ runner.temp }}/Products.xctestproducts'
           -destination '${{ matrix.test-destination }}'
           -resultBundlePath '${{ runner.temp }}/TestResults.xcresult'
-
-      - name: Collect system logs on failure
-        if: failure()
-        run: |
-          echo "=== PatronArchiver mentions ==="
-          log show --start '${{ steps.log-start.outputs.timestamp }}' \
-            --predicate 'eventMessage CONTAINS "PatronArchiver"' \
-            --style compact 2>&1 | tail -300
-
-          echo ""
-          echo "=== Runningboard ==="
-          log show --start '${{ steps.log-start.outputs.timestamp }}' \
-            --predicate 'subsystem == "com.apple.runningboard"' \
-            --style compact 2>&1 | tail -300
-
-          echo ""
-          echo "=== AMFI / taskgated / syspolicyd ==="
-          log show --start '${{ steps.log-start.outputs.timestamp }}' \
-            --predicate 'process == "amfid" OR process == "taskgated" OR process == "syspolicyd" OR subsystem == "com.apple.amfi"' \
-            --style compact 2>&1 | tail -300
-
-          echo ""
-          echo "=== launchd spawn errors ==="
-          log show --start '${{ steps.log-start.outputs.timestamp }}' \
-            --predicate 'process == "launchd" AND eventMessage CONTAINS "spawn"' \
-            --style compact 2>&1 | tail -100
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v7
