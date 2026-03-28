@@ -40,20 +40,20 @@ jobs:
           -project PatronArchiver.xcodeproj
           -scheme PatronArchiver
           -destination '${{ matrix.build-destination }}'
-          -testProductsPath '${{ runner.temp }}/Products.xctestproducts'
+          -testProductsPath '${{ runner.temp }}/PatronArchiver.xctestproducts'
           CODE_SIGNING_ALLOWED=NO
 
       - name: Archive Test Products
         run: >
           ditto -c -k --sequesterRsrc --keepParent
-          '${{ runner.temp }}/Products.xctestproducts'
-          '${{ runner.temp }}/Products.xctestproducts.zip'
+          '${{ runner.temp }}/PatronArchiver.xctestproducts'
+          '${{ runner.temp }}/PatronArchiver.xctestproducts.zip'
 
       - name: Upload Test Products
         uses: actions/upload-artifact@v7
         with:
-          name: TestProducts-${{ matrix.platform }}
-          path: ${{ runner.temp }}/Products.xctestproducts.zip
+          name: PatronArchiver-${{ matrix.platform }}.xctestproducts
+          path: ${{ runner.temp }}/PatronArchiver.xctestproducts.zip
 
   test:
     name: Test (${{ matrix.destination-name }})
@@ -93,11 +93,11 @@ jobs:
       - name: Download Test Products
         uses: actions/download-artifact@v7
         with:
-          name: TestProducts-${{ matrix.platform }}
+          name: PatronArchiver-${{ matrix.platform }}.xctestproducts
           path: ${{ runner.temp }}
 
       - name: Extract Test Products
-        run: ditto -x -k '${{ runner.temp }}/Products.xctestproducts.zip' '${{ runner.temp }}'
+        run: ditto -x -k '${{ runner.temp }}/PatronArchiver.xctestproducts.zip' '${{ runner.temp }}'
 
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
@@ -122,13 +122,13 @@ jobs:
       - name: Test
         run: >
           xcodebuild test-without-building
-          -testProductsPath '${{ runner.temp }}/Products.xctestproducts'
+          -testProductsPath '${{ runner.temp }}/PatronArchiver.xctestproducts'
           -destination '${{ matrix.test-destination }}'
-          -resultBundlePath '${{ runner.temp }}/TestResults.xcresult'
+          -resultBundlePath '${{ runner.temp }}/PatronArchiver.xcresult'
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: TestResults-${{ matrix.destination-name }}.xcresult
-          path: ${{ runner.temp }}/TestResults.xcresult
+          name: PatronArchiver-${{ matrix.destination-name }}.xcresult
+          path: ${{ runner.temp }}/PatronArchiver.xcresult
