@@ -9,7 +9,6 @@ enum MediaDownloader {
         let downloadRedirects: [URL]
     }
 
-    @concurrent
     static func download(
         items: [MediaItem],
         to directory: URL,
@@ -64,7 +63,7 @@ enum MediaDownloader {
         }
     }
 
-    private nonisolated static func resolveDestinationURL(
+    private static func resolveDestinationURL(
         for item: MediaItem,
         in directory: URL,
         response: HTTPURLResponse?,
@@ -84,7 +83,7 @@ enum MediaDownloader {
         return destinationURL
     }
 
-    private nonisolated static func resolveBaseURL(
+    private static func resolveBaseURL(
         for item: MediaItem,
         in directory: URL,
         response: HTTPURLResponse?,

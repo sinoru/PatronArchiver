@@ -2,8 +2,8 @@ import Foundation
 import WebKit
 
 struct PatreonProvider: PatronServiceProvider {
-    static let matchPatterns: [any RegexComponent] = [
-        /https:\/\/(www\.)?patreon\.com\/posts\/.+/,
+    nonisolated(unsafe) static let matchPatterns: [Regex<Substring>] = [
+        /https:\/\/(?:www\.)?patreon\.com\/posts\/.+/,
     ]
     static let loginURL = URL(string: "https://www.patreon.com/login")!
     static let accountCheckURL = URL(string: "https://www.patreon.com/settings/basics")!

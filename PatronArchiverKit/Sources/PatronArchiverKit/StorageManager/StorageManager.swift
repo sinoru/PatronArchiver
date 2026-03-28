@@ -2,12 +2,12 @@ import Foundation
 import OSLog
 
 enum StorageManager {
-    private nonisolated static let logger = Logger(
+    private static let logger = Logger(
         subsystem: Logger.moduleSubsystem,
         category: "StorageManager"
     )
 
-    private nonisolated static let dateFormatter: DateFormatter = {
+    private static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd'T'HHmmss'Z'"
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -22,7 +22,7 @@ enum StorageManager {
 
     // MARK: - Phase 1: Prepare all files in staging directory
 
-    nonisolated static func prepareSave(
+    static func prepareSave(
         metadata: PostMetadata,
         pageTitle: String,
         pdfData: Data?,
@@ -91,7 +91,7 @@ enum StorageManager {
 
     // MARK: - Phase 2: Move staging to final location
 
-    nonisolated static func commitSave(_ preparedSave: PreparedSave, overwrite: Bool) throws {
+    static func commitSave(_ preparedSave: PreparedSave, overwrite: Bool) throws {
         let fm = FileManager.default
         let finalDirectory = preparedSave.finalDirectory
 
@@ -114,14 +114,14 @@ enum StorageManager {
 
     // MARK: - Check if post folder already exists
 
-    nonisolated static func postFolderExists(metadata: PostMetadata, baseDirectory: URL) throws -> Bool {
+    static func postFolderExists(metadata: PostMetadata, baseDirectory: URL) throws -> Bool {
         let postFolder = try makePostFolderURL(metadata: metadata, baseDirectory: baseDirectory)
         return FileManager.default.fileExists(atPath: postFolder.path(percentEncoded: false))
     }
 
     // MARK: - Discard staging on cancel
 
-    nonisolated static func discardPreparedSave(_ preparedSave: PreparedSave) {
+    static func discardPreparedSave(_ preparedSave: PreparedSave) {
         do {
             try FileManager.default.removeItem(at: preparedSave.stagingDirectory)
             logger.debug(
@@ -132,7 +132,7 @@ enum StorageManager {
         }
     }
 
-    nonisolated static func makePostFolderURL(metadata: PostMetadata, baseDirectory: URL) throws -> URL {
+    static func makePostFolderURL(metadata: PostMetadata, baseDirectory: URL) throws -> URL {
         guard let authorFolder = FileNameSanitizer.sanitize(metadata.authorName) else {
             throw FileNameSanitizer.FileNameSanitizerError.emptyFileName
         }
@@ -148,7 +148,7 @@ enum StorageManager {
             .appendingPathComponent(postFolder)
     }
 
-    nonisolated static func temporaryDownloadDirectory() throws -> URL {
+    static func temporaryDownloadDirectory() throws -> URL {
         let tempDir = FileManager.default.temporaryDirectory
             .appendingPathComponent("PatronArchiver-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)

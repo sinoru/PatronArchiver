@@ -5,7 +5,7 @@ import RawStructuredFieldValues
 /// Uses RFC 9651 structured field parsing for parameter extraction
 /// (semicolon splitting, quoted-string handling), then applies
 /// RFC 5987 ext-value decoding for `filename*` parameters.
-nonisolated struct ContentDisposition {
+struct ContentDisposition {
     /// The disposition type, e.g. `"attachment"` or `"inline"`.
     let type: String
 

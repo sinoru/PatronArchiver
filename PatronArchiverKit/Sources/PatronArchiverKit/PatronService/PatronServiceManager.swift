@@ -23,7 +23,7 @@ public struct PatronServiceManager: Sendable {
         return nil
     }
 
-    private static func wholeMatch(_ string: String, pattern: some RegexComponent) -> Bool {
+    private static func wholeMatch(_ string: String, pattern: Regex<Substring>) -> Bool {
         string.wholeMatch(of: pattern) != nil
     }
 }

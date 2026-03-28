@@ -6,7 +6,7 @@ public struct AccountInfo: Sendable {
 }
 
 public protocol PatronServiceProvider: Sendable {
-    static var matchPatterns: [any RegexComponent] { get }
+    static var matchPatterns: [Regex<Substring>] { get }
     static var loginURL: URL { get }
     static var accountCheckURL: URL { get }
     static var siteIdentifier: String { get }
@@ -14,22 +14,22 @@ public protocol PatronServiceProvider: Sendable {
     init()
 
     static func isLoggedIn(cookies: [HTTPCookie]) -> Bool
-    func preloadContent(in webView: WKWebView) async throws
-    func extractMediaURLs(in webView: WKWebView) async throws -> [MediaItem]
-    func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone?
-    func extractMetadata(in webView: WKWebView, timeZone: TimeZone?) async throws -> PostMetadata
+    @MainActor func preloadContent(in webView: WKWebView) async throws
+    @MainActor func extractMediaURLs(in webView: WKWebView) async throws -> [MediaItem]
+    @MainActor func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone?
+    @MainActor func extractMetadata(in webView: WKWebView, timeZone: TimeZone?) async throws -> PostMetadata
 
     static func parseAccountInfo(from data: Data) -> AccountInfo?
 }
 
 extension PatronServiceProvider {
-    func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone? { nil }
+    @MainActor func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone? { nil }
 
-    func evaluateJavaScript(_ script: String, in webView: WKWebView) async throws -> Any? {
+    @MainActor func evaluateJavaScript(_ script: String, in webView: WKWebView) async throws -> Any? {
         try await webView.evaluateJavaScript(script)
     }
 
-    func callAsyncJavaScript(
+    @MainActor func callAsyncJavaScript(
         _ script: String,
         arguments: [String: Any] = [:],
         in webView: WKWebView

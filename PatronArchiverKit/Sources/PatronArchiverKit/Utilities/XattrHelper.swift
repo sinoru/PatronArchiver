@@ -1,7 +1,7 @@
 import Foundation
 
 enum XattrHelper {
-    nonisolated static func setWhereFroms(_ urls: [URL], on path: String) throws {
+    static func setWhereFroms(_ urls: [URL], on path: String) throws {
         let strings = urls.map(\.absoluteString)
         let plistData = try PropertyListSerialization.data(
             fromPropertyList: strings,
@@ -16,7 +16,7 @@ enum XattrHelper {
         }
     }
 
-    nonisolated static func setContentDates(
+    static func setContentDates(
         createdAt: Date,
         modifiedAt: Date?,
         on path: String
@@ -62,7 +62,7 @@ enum XattrHelper {
         }
     }
 
-    nonisolated static func setUserTags(_ tags: [String], on path: String) throws {
+    static func setUserTags(_ tags: [String], on path: String) throws {
         guard !tags.isEmpty else { return }
         let plistData = try PropertyListSerialization.data(
             fromPropertyList: tags,

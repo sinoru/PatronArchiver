@@ -548,7 +548,7 @@ extension MHTMLArchiver {
 // MARK: - Content-Type Classification
 
 /// Determines whether the given Content-Type should use quoted-printable encoding.
-private nonisolated func isTextBasedContentType(_ contentType: String) -> Bool {
+private func isTextBasedContentType(_ contentType: String) -> Bool {
     let mimeType = contentType
         .split(separator: ";").first?
         .trimmingCharacters(in: .whitespaces)
@@ -565,11 +565,11 @@ private nonisolated func isTextBasedContentType(_ contentType: String) -> Bool {
 
 // MARK: - Quoted-Printable Encoding (RFC 2045)
 
-private nonisolated let crlf: [UInt8] = [0x0D, 0x0A]
-private nonisolated let softLineBreak: [UInt8] = [0x3D, 0x0D, 0x0A] // "=\r\n"
-private nonisolated let hexDigits: [UInt8] = Array("0123456789ABCDEF".utf8)
+private let crlf: [UInt8] = [0x0D, 0x0A]
+private let softLineBreak: [UInt8] = [0x3D, 0x0D, 0x0A] // "=\r\n"
+private let hexDigits: [UInt8] = Array("0123456789ABCDEF".utf8)
 
-private nonisolated func quotedPrintableEncode(_ string: String) -> Data {
+private func quotedPrintableEncode(_ string: String) -> Data {
     let bytes = Array(string.utf8)
     var result = Data()
     result.reserveCapacity(bytes.count + bytes.count / 10)
@@ -637,7 +637,7 @@ private nonisolated func quotedPrintableEncode(_ string: String) -> Data {
 }
 
 /// Check if the whitespace byte at `from` is trailing (followed only by whitespace until line end or EOF).
-private nonisolated func isTrailingWhitespace(bytes: [UInt8], from index: Int) -> Bool {
+private func isTrailingWhitespace(bytes: [UInt8], from index: Int) -> Bool {
     var j = index + 1
     while j < bytes.count {
         let b = bytes[j]
@@ -661,7 +661,7 @@ private nonisolated func isTrailingWhitespace(bytes: [UInt8], from index: Int) -
 /// one or more `=?UTF-8?B?…?=` encoded-words separated by `CRLF SPACE`,
 /// splitting at UTF-8 character boundaries so that each encoded-word
 /// does not exceed 75 characters (RFC 2047 §2).
-private nonisolated func rfc2047Encode(_ text: String) -> String {
+private func rfc2047Encode(_ text: String) -> String {
     // If all ASCII, no encoding needed
     if text.utf8.allSatisfy({ $0 < 0x80 }) {
         return text
@@ -701,14 +701,14 @@ private nonisolated func rfc2047Encode(_ text: String) -> String {
 }
 
 /// Returns `true` if the byte is a UTF-8 continuation byte (10xxxxxx).
-private nonisolated func isContinuationByte(_ byte: UInt8) -> Bool {
+private func isContinuationByte(_ byte: UInt8) -> Bool {
     byte & 0xC0 == 0x80
 }
 
 // MARK: - RFC 2822 Date Formatter
 
 private enum MHTMLDateFormatter {
-    nonisolated static let shared: DateFormatter = {
+    static let shared: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "EEE, dd MMM yyyy HH:mm:ss Z"

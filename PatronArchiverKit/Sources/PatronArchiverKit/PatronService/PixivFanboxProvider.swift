@@ -2,7 +2,7 @@ import Foundation
 import WebKit
 
 struct PixivFanboxProvider: PatronServiceProvider {
-    static let matchPatterns: [any RegexComponent] = [
+    nonisolated(unsafe) static let matchPatterns: [Regex<Substring>] = [
         /https:\/\/[^\/]+\.fanbox\.cc\/posts\/.+/,
         /https:\/\/www\.fanbox\.cc\/@[^\/]+\/posts\/.+/,
     ]

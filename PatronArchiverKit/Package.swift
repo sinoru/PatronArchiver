@@ -5,6 +5,7 @@ import PackageDescription
 
 let package = Package(
     name: "PatronArchiverKit",
+    defaultLocalization: "en",
     platforms: [
         .macOS(.v26),
         .iOS(.v26),
@@ -28,19 +29,12 @@ let package = Package(
                 .product(name: "RawStructuredFieldValues", package: "swift-http-structured-headers"),
             ],
             resources: [
-                .process("Localizable.xcstrings"),
                 .copy("LazyContentLoader/LazyContentLoader.js"),
-            ],
-            swiftSettings: [
-                .defaultIsolation(MainActor.self),
             ]
         ),
         .testTarget(
             name: "PatronArchiverKitTests",
-            dependencies: ["PatronArchiverKit"],
-            swiftSettings: [
-                .defaultIsolation(MainActor.self),
-            ]
+            dependencies: ["PatronArchiverKit"]
         ),
     ]
 )

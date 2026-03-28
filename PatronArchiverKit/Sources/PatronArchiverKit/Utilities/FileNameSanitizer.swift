@@ -1,9 +1,9 @@
 import Foundation
 
 enum FileNameSanitizer {
-    private nonisolated static let maxBytes = 255
+    private static let maxBytes = 255
 
-    nonisolated static func sanitize(_ name: String) -> String? {
+    static func sanitize(_ name: String) -> String? {
         var sanitized = name
             .replacingOccurrences(of: "/", with: "_")
             .replacingOccurrences(of: ":", with: "\\")
@@ -42,7 +42,7 @@ enum FileNameSanitizer {
         return sanitized
     }
 
-    nonisolated static func sanitizePath(_ components: [String]) throws -> String {
+    static func sanitizePath(_ components: [String]) throws -> String {
         try components.map {
             guard let sanitized = sanitize($0) else {
                 throw FileNameSanitizerError.emptyFileName
