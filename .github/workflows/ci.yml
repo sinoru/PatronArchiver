@@ -93,7 +93,7 @@ jobs:
       - name: Re-sign Test Products
         run: |
           find '${{ runner.temp }}/Products.xctestproducts' \
-            -type d \( -name '*.app' -o -name '*.xctest' \) | while read -r bundle; do
+            -depth -type d \( -name '*.app' -o -name '*.xctest' -o -name '*.framework' \) | while read -r bundle; do
             /usr/bin/codesign --force --sign - "$bundle"
           done
 
