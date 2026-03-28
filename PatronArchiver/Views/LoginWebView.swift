@@ -31,7 +31,7 @@ struct LoginWebView: NSViewRepresentable {
 #else
 struct LoginWebView: UIViewRepresentable {
     let url: URL
-    let providerType: any PatronServiceProvider.Type
+    let providerType: any PatronServiceProviding.Type
     let websiteDataStore: WKWebsiteDataStore
     var onLoginDetected: (() -> Void)?
 
