@@ -43,11 +43,17 @@ jobs:
           -testProductsPath '${{ runner.temp }}/Products.xctestproducts'
           CODE_SIGNING_ALLOWED=NO
 
+      - name: Archive Test Products
+        run: >
+          tar czf '${{ runner.temp }}/Products.xctestproducts.tar.gz'
+          -C '${{ runner.temp }}'
+          Products.xctestproducts
+
       - name: Upload Test Products
         uses: actions/upload-artifact@v7
         with:
           name: TestProducts-${{ matrix.platform }}
-          path: ${{ runner.temp }}/Products.xctestproducts
+          path: ${{ runner.temp }}/Products.xctestproducts.tar.gz
 
   test:
     name: Test (${{ matrix.destination-name }})
@@ -88,27 +94,18 @@ jobs:
         uses: actions/download-artifact@v7
         with:
           name: TestProducts-${{ matrix.platform }}
-          path: ${{ runner.temp }}/Products.xctestproducts
+          path: ${{ runner.temp }}
 
-      - name: Strip Quarantine
-        run: xattr -cr '${{ runner.temp }}/Products.xctestproducts'
+      - name: Extract Test Products
+        run: tar xzf '${{ runner.temp }}/Products.xctestproducts.tar.gz' -C '${{ runner.temp }}'
 
       - name: Inspect Test Products
         if: matrix.platform == 'macOS'
         run: |
-          echo "=== Bundle structure ==="
-          find '${{ runner.temp }}/Products.xctestproducts' -type d \( -name '*.app' -o -name '*.xctest' -o -name '*.framework' \) | sort
-
-          echo ""
-          echo "=== Code signing status ==="
-          find '${{ runner.temp }}/Products.xctestproducts' -type d \( -name '*.app' -o -name '*.xctest' \) | sort | while read -r bundle; do
-            echo "--- $bundle ---"
-            codesign -dvvv "$bundle" 2>&1 || true
-            echo ""
-          done
-
           echo "=== Executable permissions ==="
-          find '${{ runner.temp }}/Products.xctestproducts' -type f -perm +111 -name '*.app' -o -type f -perm +111 ! -name '*.*' | head -20
+          find '${{ runner.temp }}/Products.xctestproducts' -path '*/Contents/MacOS/*' -type f | while read -r f; do
+            ls -l "$f"
+          done
 
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
