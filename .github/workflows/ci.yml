@@ -21,29 +21,74 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  ci:
-    name: CI (${{ matrix.platform }})
+  build:
+    name: Build (${{ matrix.platform }})
     runs-on: macos-26
     strategy:
       matrix:
         include:
           - platform: macOS
             build-destination: 'generic/platform=macOS'
-            test-destinations: >-
-              -destination 'platform=macOS'
           - platform: iOS
             build-destination: 'generic/platform=iOS Simulator'
-            test-destinations: >-
-              -destination 'platform=iOS Simulator,name=iPhone 17 Pro'
-              -destination 'platform=iOS Simulator,name=iPhone 17 Pro Max'
-              -destination 'platform=iOS Simulator,name=iPhone 17'
-              -destination 'platform=iOS Simulator,name=iPhone Air'
-              -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
-              -destination 'platform=iOS Simulator,name=iPad Air 11-inch (M3)'
-              -destination 'platform=iOS Simulator,name=iPad (A16)'
-              -destination 'platform=iOS Simulator,name=iPad mini (A17 Pro)'
     steps:
       - uses: actions/checkout@v5
+
+      - name: Analyze & Build for Testing
+        run: >
+          xcodebuild analyze build-for-testing
+          -project PatronArchiver.xcodeproj
+          -scheme PatronArchiver
+          -destination '${{ matrix.build-destination }}'
+          -testProductsPath '${{ runner.temp }}/Products.xctestproducts'
+          CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload Test Products
+        uses: actions/upload-artifact@v7
+        with:
+          name: TestProducts-${{ matrix.platform }}
+          path: ${{ runner.temp }}/Products.xctestproducts
+
+  test:
+    name: Test (${{ matrix.destination-name }})
+    needs: build
+    runs-on: macos-26
+    strategy:
+      matrix:
+        include:
+          - platform: macOS
+            destination-name: Mac
+            test-destination: 'platform=macOS'
+          - platform: iOS
+            destination-name: iPhone 17 Pro
+            test-destination: 'platform=iOS Simulator,name=iPhone 17 Pro'
+          - platform: iOS
+            destination-name: iPhone 17 Pro Max
+            test-destination: 'platform=iOS Simulator,name=iPhone 17 Pro Max'
+          - platform: iOS
+            destination-name: iPhone 17
+            test-destination: 'platform=iOS Simulator,name=iPhone 17'
+          - platform: iOS
+            destination-name: iPhone Air
+            test-destination: 'platform=iOS Simulator,name=iPhone Air'
+          - platform: iOS
+            destination-name: iPad Pro 13-inch (M5)
+            test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
+          - platform: iOS
+            destination-name: iPad Air 11-inch (M3)
+            test-destination: 'platform=iOS Simulator,name=iPad Air 11-inch (M3)'
+          - platform: iOS
+            destination-name: iPad (A16)
+            test-destination: 'platform=iOS Simulator,name=iPad (A16)'
+          - platform: iOS
+            destination-name: iPad mini (A17 Pro)
+            test-destination: 'platform=iOS Simulator,name=iPad mini (A17 Pro)'
+    steps:
+      - name: Download Test Products
+        uses: actions/download-artifact@v7
+        with:
+          name: TestProducts-${{ matrix.platform }}
+          path: ${{ runner.temp }}/Products.xctestproducts
 
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
@@ -65,27 +110,16 @@ jobs:
           sleep 2
           /tmp/displaymode d || true
 
-      - name: Analyze & Build for Testing
-        run: >
-          xcodebuild analyze build-for-testing
-          -project PatronArchiver.xcodeproj
-          -scheme PatronArchiver
-          -destination '${{ matrix.build-destination }}'
-          CODE_SIGNING_ALLOWED=NO
-
       - name: Test
         run: >
           xcodebuild test-without-building
-          -project PatronArchiver.xcodeproj
-          -scheme PatronArchiver
-          ${{ matrix.test-destinations }}
-          -disable-concurrent-destination-testing
+          -testProductsPath '${{ runner.temp }}/Products.xctestproducts'
+          -destination '${{ matrix.test-destination }}'
           -resultBundlePath '${{ runner.temp }}/TestResults.xcresult'
-          CODE_SIGNING_ALLOWED=NO
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: TestResults-${{ matrix.platform }}.xcresult
+          name: TestResults-${{ matrix.destination-name }}.xcresult
           path: ${{ runner.temp }}/TestResults.xcresult
