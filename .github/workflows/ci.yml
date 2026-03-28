@@ -93,8 +93,12 @@ jobs:
       - name: Re-sign Test Products
         run: |
           find '${{ runner.temp }}/Products.xctestproducts' \
-            -depth -type d \( -name '*.app' -o -name '*.xctest' -o -name '*.framework' \) | while read -r bundle; do
-            /usr/bin/codesign --force --sign - "$bundle"
+            -depth -type d \( -name '*.app' -o -name '*.xctest' \) | while read -r bundle; do
+            if [[ "$bundle" == *.app ]]; then
+              /usr/bin/codesign --force --sign - --deep "$bundle"
+            else
+              /usr/bin/codesign --force --sign - "$bundle"
+            fi
           done
 
       - name: Set screen resolution
