@@ -90,16 +90,8 @@ jobs:
           name: TestProducts-${{ matrix.platform }}
           path: ${{ runner.temp }}/Products.xctestproducts
 
-      - name: Re-sign Test Products
-        run: |
-          find '${{ runner.temp }}/Products.xctestproducts' \
-            -depth -type d \( -name '*.app' -o -name '*.xctest' \) | while read -r bundle; do
-            if [[ "$bundle" == *.app ]]; then
-              /usr/bin/codesign --force --sign - --deep "$bundle"
-            else
-              /usr/bin/codesign --force --sign - "$bundle"
-            fi
-          done
+      - name: Strip Quarantine
+        run: xattr -cr '${{ runner.temp }}/Products.xctestproducts'
 
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
