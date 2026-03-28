@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Broadened deployment targets to support last 3 OS versions (macOS 14+, iOS 17+)
 - Moved macOS window sizing from view to scene level with defaultSize and defaultPosition
 - Replaced manual Content-Disposition parsing with RFC 6266-compliant parser supporting filename* (ext-value)
 - Added HTML download attribute as media filename fallback before URL path component

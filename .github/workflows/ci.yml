@@ -58,37 +58,92 @@ jobs:
   test:
     name: Test (${{ matrix.destination-name }})
     needs: build
-    runs-on: macos-26
+    runs-on: ${{ matrix.runs-on || 'macos-latest' }}
     strategy:
       matrix:
         include:
+          # macOS 26
           - platform: macOS
             destination-name: Mac
             test-destination: 'platform=macOS'
+            runs-on: macos-26
+          # iOS 26
           - platform: iOS
             destination-name: iPhone 17 Pro
             test-destination: 'platform=iOS Simulator,name=iPhone 17 Pro'
+            runs-on: macos-26
           - platform: iOS
             destination-name: iPhone 17 Pro Max
             test-destination: 'platform=iOS Simulator,name=iPhone 17 Pro Max'
+            runs-on: macos-26
           - platform: iOS
             destination-name: iPhone 17
             test-destination: 'platform=iOS Simulator,name=iPhone 17'
+            runs-on: macos-26
           - platform: iOS
             destination-name: iPhone Air
             test-destination: 'platform=iOS Simulator,name=iPhone Air'
+            runs-on: macos-26
           - platform: iOS
             destination-name: iPad Pro 13-inch (M5)
             test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
+            runs-on: macos-26
           - platform: iOS
             destination-name: iPad Air 11-inch (M3)
             test-destination: 'platform=iOS Simulator,name=iPad Air 11-inch (M3)'
+            runs-on: macos-26
           - platform: iOS
             destination-name: iPad (A16)
             test-destination: 'platform=iOS Simulator,name=iPad (A16)'
+            runs-on: macos-26
           - platform: iOS
             destination-name: iPad mini (A17 Pro)
             test-destination: 'platform=iOS Simulator,name=iPad mini (A17 Pro)'
+            runs-on: macos-26
+          # macOS 15
+          - platform: macOS
+            destination-name: Mac (macOS 15)
+            test-destination: 'platform=macOS'
+            runs-on: macos-15
+          # iOS 18
+          - platform: iOS
+            destination-name: iPhone 16 Pro (iOS 18)
+            test-destination: 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'
+            runs-on: macos-15
+          - platform: iOS
+            destination-name: iPhone 16 (iOS 18)
+            test-destination: 'platform=iOS Simulator,name=iPhone 16,OS=18.5'
+            runs-on: macos-15
+          - platform: iOS
+            destination-name: iPad Pro 13-inch M4 (iOS 18)
+            test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=18.5'
+            runs-on: macos-15
+          - platform: iOS
+            destination-name: iPad Air 13-inch M2 (iOS 18)
+            test-destination: 'platform=iOS Simulator,name=iPad Air 13-inch (M2),OS=18.5'
+            runs-on: macos-15
+          # macOS 14
+          - platform: macOS
+            destination-name: Mac (macOS 14)
+            test-destination: 'platform=macOS'
+            runs-on: macos-14
+          # iOS 17
+          - platform: iOS
+            destination-name: iPhone 15 Pro (iOS 17)
+            test-destination: 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5'
+            runs-on: macos-14
+          - platform: iOS
+            destination-name: iPhone 15 (iOS 17)
+            test-destination: 'platform=iOS Simulator,name=iPhone 15,OS=17.5'
+            runs-on: macos-14
+          - platform: iOS
+            destination-name: iPad Pro 13-inch M4 (iOS 17)
+            test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=17.5'
+            runs-on: macos-14
+          - platform: iOS
+            destination-name: iPad Air 13-inch M2 (iOS 17)
+            test-destination: 'platform=iOS Simulator,name=iPad Air 13-inch (M2),OS=17.5'
+            runs-on: macos-14
     steps:
       - name: Download Test Products
         uses: actions/download-artifact@v7
