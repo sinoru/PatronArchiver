@@ -150,11 +150,11 @@ jobs:
             runs-on: macos-14
           - platform: iOS
             destination-name: iOS 17 - iPad Pro 12.9-inch (6th generation)
-            test-destination: 'platform=iOS Simulator,name=iPad Pro (12.9-inch) (6th generation),OS=17.5'
+            test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=17.5'
             runs-on: macos-14
           - platform: iOS
             destination-name: iOS 17 - iPad Air (5th generation)
-            test-destination: 'platform=iOS Simulator,name=iPad Air (5th generation),OS=17.5'
+            test-destination: 'platform=iOS Simulator,name=iPad Air 11-inch (M2),OS=17.5'
             runs-on: macos-14
           - platform: iOS
             destination-name: iOS 17 - iPad (10th generation)
