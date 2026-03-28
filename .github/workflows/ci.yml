@@ -70,31 +70,31 @@ jobs:
           # iOS 26 (2025 devices)
           - platform: iOS
             destination-name: iOS 26 - iPhone 17 Pro Max
-            test-destination: 'platform=iOS Simulator,name=iPhone 17 Pro Max'
+            test-destination: 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.2'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 26 - iPhone 17
-            test-destination: 'platform=iOS Simulator,name=iPhone 17'
+            test-destination: 'platform=iOS Simulator,name=iPhone 17,OS=26.2'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 26 - iPhone Air
-            test-destination: 'platform=iOS Simulator,name=iPhone Air'
+            test-destination: 'platform=iOS Simulator,name=iPhone Air,OS=26.2'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 26 - iPad Pro 13-inch (M5)
-            test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
+            test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M5),OS=26.2'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 26 - iPad Air 11-inch (M3)
-            test-destination: 'platform=iOS Simulator,name=iPad Air 11-inch (M3)'
+            test-destination: 'platform=iOS Simulator,name=iPad Air 11-inch (M3),OS=26.2'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 26 - iPad (A16)
-            test-destination: 'platform=iOS Simulator,name=iPad (A16)'
+            test-destination: 'platform=iOS Simulator,name=iPad (A16),OS=26.2'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 26 - iPad mini (A17 Pro)
-            test-destination: 'platform=iOS Simulator,name=iPad mini (A17 Pro)'
+            test-destination: 'platform=iOS Simulator,name=iPad mini (A17 Pro),OS=26.2'
             runs-on: macos-26
           # macOS 15
           - platform: macOS
@@ -150,7 +150,7 @@ jobs:
             runs-on: macos-14
           - platform: iOS
             destination-name: iOS 17 - iPad Pro 12.9-inch (6th generation)
-            test-destination: 'platform=iOS Simulator,name=iPad Pro 12.9-inch (6th generation),OS=17.5'
+            test-destination: 'platform=iOS Simulator,name=iPad Pro (12.9-inch) (6th generation),OS=17.5'
             runs-on: macos-14
           - platform: iOS
             destination-name: iOS 17 - iPad Air (5th generation)
