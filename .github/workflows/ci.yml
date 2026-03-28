@@ -144,16 +144,28 @@ jobs:
       - name: Collect system logs on failure
         if: failure()
         run: |
-          echo "=== Runningboard / launchd logs ==="
+          echo "=== PatronArchiver mentions ==="
           log show --start '${{ steps.log-start.outputs.timestamp }}' \
-            --predicate 'subsystem == "com.apple.runningboard" OR process == "launchd"' \
-            --style compact --last 5m 2>&1 | tail -200
+            --predicate 'eventMessage CONTAINS "PatronArchiver"' \
+            --style compact 2>&1 | tail -300
 
           echo ""
-          echo "=== Security / code signing logs ==="
+          echo "=== Runningboard ==="
           log show --start '${{ steps.log-start.outputs.timestamp }}' \
-            --predicate 'subsystem == "com.apple.security" OR eventMessage CONTAINS "codesign"' \
-            --style compact --last 5m 2>&1 | tail -100
+            --predicate 'subsystem == "com.apple.runningboard"' \
+            --style compact 2>&1 | tail -300
+
+          echo ""
+          echo "=== AMFI / taskgated / syspolicyd ==="
+          log show --start '${{ steps.log-start.outputs.timestamp }}' \
+            --predicate 'process == "amfid" OR process == "taskgated" OR process == "syspolicyd" OR subsystem == "com.apple.amfi"' \
+            --style compact 2>&1 | tail -300
+
+          echo ""
+          echo "=== launchd spawn errors ==="
+          log show --start '${{ steps.log-start.outputs.timestamp }}' \
+            --predicate 'process == "launchd" AND eventMessage CONTAINS "spawn"' \
+            --style compact 2>&1 | tail -100
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v7
