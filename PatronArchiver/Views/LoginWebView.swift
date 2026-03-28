@@ -2,8 +2,7 @@ import PatronArchiverKit
 import SwiftUI
 import WebKit
 
-#if os(macOS)
-struct LoginWebView: NSViewRepresentable {
+struct LoginWebView: View {
     let url: URL
     let providerType: any PatronServiceProviding.Type
     let websiteDataStore: WKWebsiteDataStore
@@ -16,7 +15,10 @@ struct LoginWebView: NSViewRepresentable {
             onLoginDetected: onLoginDetected
         )
     }
+}
 
+#if os(macOS)
+extension LoginWebView: NSViewRepresentable {
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = websiteDataStore
@@ -29,20 +31,7 @@ struct LoginWebView: NSViewRepresentable {
     func updateNSView(_ nsView: WKWebView, context: Context) {}
 }
 #else
-struct LoginWebView: UIViewRepresentable {
-    let url: URL
-    let providerType: any PatronServiceProviding.Type
-    let websiteDataStore: WKWebsiteDataStore
-    var onLoginDetected: (() -> Void)?
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(
-            providerType: providerType,
-            websiteDataStore: websiteDataStore,
-            onLoginDetected: onLoginDetected
-        )
-    }
-
+extension LoginWebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
         configuration.websiteDataStore = websiteDataStore
