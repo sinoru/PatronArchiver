@@ -64,85 +64,105 @@ jobs:
         include:
           # macOS 26
           - platform: macOS
-            destination-name: Mac
+            destination-name: macOS 26 - Mac
             test-destination: 'platform=macOS'
             runs-on: macos-26
-          # iOS 26
+          # iOS 26 (2025 devices)
           - platform: iOS
-            destination-name: iPhone 17 Pro
-            test-destination: 'platform=iOS Simulator,name=iPhone 17 Pro'
-            runs-on: macos-26
-          - platform: iOS
-            destination-name: iPhone 17 Pro Max
+            destination-name: iOS 26 - iPhone 17 Pro Max
             test-destination: 'platform=iOS Simulator,name=iPhone 17 Pro Max'
             runs-on: macos-26
           - platform: iOS
-            destination-name: iPhone 17
+            destination-name: iOS 26 - iPhone 17
             test-destination: 'platform=iOS Simulator,name=iPhone 17'
             runs-on: macos-26
           - platform: iOS
-            destination-name: iPhone Air
+            destination-name: iOS 26 - iPhone Air
             test-destination: 'platform=iOS Simulator,name=iPhone Air'
             runs-on: macos-26
           - platform: iOS
-            destination-name: iPad Pro 13-inch (M5)
+            destination-name: iOS 26 - iPad Pro 13-inch (M5)
             test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M5)'
             runs-on: macos-26
           - platform: iOS
-            destination-name: iPad Air 11-inch (M3)
+            destination-name: iOS 26 - iPad Air 11-inch (M3)
             test-destination: 'platform=iOS Simulator,name=iPad Air 11-inch (M3)'
             runs-on: macos-26
           - platform: iOS
-            destination-name: iPad (A16)
+            destination-name: iOS 26 - iPad (A16)
             test-destination: 'platform=iOS Simulator,name=iPad (A16)'
             runs-on: macos-26
           - platform: iOS
-            destination-name: iPad mini (A17 Pro)
+            destination-name: iOS 26 - iPad mini (A17 Pro)
             test-destination: 'platform=iOS Simulator,name=iPad mini (A17 Pro)'
             runs-on: macos-26
           # macOS 15
           - platform: macOS
-            destination-name: Mac (macOS 15)
+            destination-name: macOS 15 - Mac
             test-destination: 'platform=macOS'
             runs-on: macos-15
-          # iOS 18
+          # iOS 18 (2024 devices)
           - platform: iOS
-            destination-name: iPhone 16 Pro (iOS 18)
-            test-destination: 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'
+            destination-name: iOS 18 - iPhone 16 Pro Max
+            test-destination: 'platform=iOS Simulator,name=iPhone 16 Pro Max,OS=18.5'
             runs-on: macos-15
           - platform: iOS
-            destination-name: iPhone 16 (iOS 18)
+            destination-name: iOS 18 - iPhone 16
             test-destination: 'platform=iOS Simulator,name=iPhone 16,OS=18.5'
             runs-on: macos-15
           - platform: iOS
-            destination-name: iPad Pro 13-inch M4 (iOS 18)
+            destination-name: iOS 18 - iPhone 16e
+            test-destination: 'platform=iOS Simulator,name=iPhone 16e,OS=18.5'
+            runs-on: macos-15
+          - platform: iOS
+            destination-name: iOS 18 - iPad Pro 13-inch (M4)
             test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=18.5'
             runs-on: macos-15
           - platform: iOS
-            destination-name: iPad Air 13-inch M2 (iOS 18)
-            test-destination: 'platform=iOS Simulator,name=iPad Air 13-inch (M2),OS=18.5'
+            destination-name: iOS 18 - iPad Air 11-inch (M2)
+            test-destination: 'platform=iOS Simulator,name=iPad Air 11-inch (M2),OS=18.5'
+            runs-on: macos-15
+          - platform: iOS
+            destination-name: iOS 18 - iPad (10th generation)
+            test-destination: 'platform=iOS Simulator,name=iPad (10th generation),OS=18.5'
+            runs-on: macos-15
+          - platform: iOS
+            destination-name: iOS 18 - iPad mini (A17 Pro)
+            test-destination: 'platform=iOS Simulator,name=iPad mini (A17 Pro),OS=18.5'
             runs-on: macos-15
           # macOS 14
           - platform: macOS
-            destination-name: Mac (macOS 14)
+            destination-name: macOS 14 - Mac
             test-destination: 'platform=macOS'
             runs-on: macos-14
-          # iOS 17
+          # iOS 17 (2023 devices)
           - platform: iOS
-            destination-name: iPhone 15 Pro (iOS 17)
-            test-destination: 'platform=iOS Simulator,name=iPhone 15 Pro,OS=17.5'
+            destination-name: iOS 17 - iPhone 15 Pro Max
+            test-destination: 'platform=iOS Simulator,name=iPhone 15 Pro Max,OS=17.5'
             runs-on: macos-14
           - platform: iOS
-            destination-name: iPhone 15 (iOS 17)
+            destination-name: iOS 17 - iPhone 15
             test-destination: 'platform=iOS Simulator,name=iPhone 15,OS=17.5'
             runs-on: macos-14
           - platform: iOS
-            destination-name: iPad Pro 13-inch M4 (iOS 17)
-            test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=17.5'
+            destination-name: iOS 17 - iPhone SE (3rd generation)
+            test-destination: 'platform=iOS Simulator,name=iPhone SE (3rd generation),OS=17.5'
             runs-on: macos-14
           - platform: iOS
-            destination-name: iPad Air 13-inch M2 (iOS 17)
-            test-destination: 'platform=iOS Simulator,name=iPad Air 13-inch (M2),OS=17.5'
+            destination-name: iOS 17 - iPad Pro 12.9-inch (6th generation)
+            test-destination: 'platform=iOS Simulator,name=iPad Pro 12.9-inch (6th generation),OS=17.5'
+            runs-on: macos-14
+          - platform: iOS
+            destination-name: iOS 17 - iPad Air (5th generation)
+            test-destination: 'platform=iOS Simulator,name=iPad Air (5th generation),OS=17.5'
+            runs-on: macos-14
+          - platform: iOS
+            destination-name: iOS 17 - iPad (10th generation)
+            test-destination: 'platform=iOS Simulator,name=iPad (10th generation),OS=17.5'
+            runs-on: macos-14
+          - platform: iOS
+            destination-name: iOS 17 - iPad mini (6th generation)
+            test-destination: 'platform=iOS Simulator,name=iPad mini (6th generation),OS=17.5'
             runs-on: macos-14
     steps:
       - name: Download Test Products
