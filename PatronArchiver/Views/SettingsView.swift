@@ -294,7 +294,7 @@ struct SettingsView: View {
         accountInfoFetchFailed.remove(entry.identifier)
     }
 
-    private func checkLoginStatus(for providerType: any PatronServiceProvider.Type) async {
+    private func checkLoginStatus(for providerType: any PatronServiceProviding.Type) async {
         let identifier = providerType.siteIdentifier
 
         let loggedIn = await patronArchiver.isLoggedIn(for: providerType)
@@ -320,7 +320,7 @@ struct SettingsView: View {
 private struct SiteEntry: Identifiable, Equatable {
     let identifier: String
     let loginURL: URL
-    let providerType: any PatronServiceProvider.Type
+    let providerType: any PatronServiceProviding.Type
     var id: String { identifier }
 
     static func == (lhs: SiteEntry, rhs: SiteEntry) -> Bool {

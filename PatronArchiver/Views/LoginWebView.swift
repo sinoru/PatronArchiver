@@ -5,7 +5,7 @@ import WebKit
 #if os(macOS)
 struct LoginWebView: NSViewRepresentable {
     let url: URL
-    let providerType: any PatronServiceProvider.Type
+    let providerType: any PatronServiceProviding.Type
     let websiteDataStore: WKWebsiteDataStore
     var onLoginDetected: (() -> Void)?
 
@@ -58,13 +58,13 @@ struct LoginWebView: UIViewRepresentable {
 
 extension LoginWebView {
     final class Coordinator: NSObject, WKHTTPCookieStoreObserver {
-        let providerType: any PatronServiceProvider.Type
+        let providerType: any PatronServiceProviding.Type
         let websiteDataStore: WKWebsiteDataStore
         let onLoginDetected: (() -> Void)?
         private var hasDetectedLogin = false
 
         init(
-            providerType: any PatronServiceProvider.Type,
+            providerType: any PatronServiceProviding.Type,
             websiteDataStore: WKWebsiteDataStore,
             onLoginDetected: (() -> Void)?
         ) {

@@ -1,7 +1,7 @@
 import Foundation
 
 public struct PatronServiceManager: Sendable {
-    public static let allProviderTypes: [any PatronServiceProvider.Type] = [
+    public static let allProviderTypes: [any PatronServiceProviding.Type] = [
         PatreonProvider.self,
         PixivFanboxProvider.self,
         SubscribeStarAdultProvider.self,
@@ -11,7 +11,7 @@ public struct PatronServiceManager: Sendable {
 
     private init() {}
 
-    func provider(for url: URL) -> (any PatronServiceProvider)? {
+    func provider(for url: URL) -> (any PatronServiceProviding)? {
         let urlString = url.absoluteString
         for providerType in Self.allProviderTypes {
             for pattern in providerType.matchPatterns {

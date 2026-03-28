@@ -45,7 +45,7 @@ public final class PatronArchiver {
 
 extension PatronArchiver {
     /// Checks login status by examining cookies only — fast, no network request.
-    public func isLoggedIn(for providerType: any PatronServiceProvider.Type) async -> Bool {
+    public func isLoggedIn(for providerType: any PatronServiceProviding.Type) async -> Bool {
         let cookies = await websiteDataStore.httpCookieStore.allCookies()
         return providerType.isLoggedIn(cookies: cookies)
     }
@@ -53,7 +53,7 @@ extension PatronArchiver {
     /// Fetches account info by making an HTTP request to the provider's accountCheckURL.
     ///
     /// - Returns: The account info if successfully fetched, nil otherwise.
-    public func fetchAccountInfo(for providerType: any PatronServiceProvider.Type) async -> AccountInfo? {
+    public func fetchAccountInfo(for providerType: any PatronServiceProviding.Type) async -> AccountInfo? {
         let url = providerType.accountCheckURL
         var urlRequest = URLRequest(url: url)
         await websiteDataStore.addCookies(to: &urlRequest)

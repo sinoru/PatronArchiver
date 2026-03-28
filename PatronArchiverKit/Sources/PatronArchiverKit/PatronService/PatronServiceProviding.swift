@@ -1,11 +1,7 @@
 import Foundation
 import WebKit
 
-public struct AccountInfo: Sendable {
-    public let displayName: String
-}
-
-public protocol PatronServiceProvider: Sendable {
+public protocol PatronServiceProviding: Sendable {
     static var matchPatterns: [Regex<Substring>] { get }
     static var loginURL: URL { get }
     static var accountCheckURL: URL { get }
@@ -22,7 +18,7 @@ public protocol PatronServiceProvider: Sendable {
     static func parseAccountInfo(from data: Data) -> AccountInfo?
 }
 
-extension PatronServiceProvider {
+extension PatronServiceProviding {
     @MainActor func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone? { nil }
 
     @MainActor func evaluateJavaScript(_ script: String, in webView: WKWebView) async throws -> Any? {
@@ -48,17 +44,5 @@ extension PatronServiceProvider {
         if let date = formatter.date(from: string) { return date }
         formatter.formatOptions = [.withInternetDateTime]
         return formatter.date(from: string)
-    }
-}
-
-enum ProviderError: LocalizedError {
-    case metadataExtractionFailed
-    case mediaExtractionFailed
-
-    var errorDescription: String? {
-        switch self {
-        case .metadataExtractionFailed: "Failed to extract metadata."
-        case .mediaExtractionFailed: "Failed to extract media."
-        }
     }
 }

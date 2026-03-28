@@ -1,13 +1,6 @@
 import Foundation
 import WebKit
 
-// MARK: - Errors
-
-enum MHTMLError: Error {
-    case collectionFailed
-    case noPageURL
-}
-
 // MARK: - MHTMLArchiver
 
 /// RFC 2557 MHTML archive generator.
