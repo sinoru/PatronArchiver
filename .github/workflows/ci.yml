@@ -45,15 +45,15 @@ jobs:
 
       - name: Archive Test Products
         run: >
-          tar czf '${{ runner.temp }}/Products.xctestproducts.tar.gz'
-          -C '${{ runner.temp }}'
-          Products.xctestproducts
+          ditto -c -k --sequesterRsrc --keepParent
+          '${{ runner.temp }}/Products.xctestproducts'
+          '${{ runner.temp }}/Products.xctestproducts.zip'
 
       - name: Upload Test Products
         uses: actions/upload-artifact@v7
         with:
           name: TestProducts-${{ matrix.platform }}
-          path: ${{ runner.temp }}/Products.xctestproducts.tar.gz
+          path: ${{ runner.temp }}/Products.xctestproducts.zip
 
   test:
     name: Test (${{ matrix.destination-name }})
@@ -97,7 +97,7 @@ jobs:
           path: ${{ runner.temp }}
 
       - name: Extract Test Products
-        run: tar xzf '${{ runner.temp }}/Products.xctestproducts.tar.gz' -C '${{ runner.temp }}'
+        run: ditto -x -k '${{ runner.temp }}/Products.xctestproducts.zip' '${{ runner.temp }}'
 
       - name: Inspect Test Products
         if: matrix.platform == 'macOS'
