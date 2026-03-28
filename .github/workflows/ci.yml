@@ -194,6 +194,24 @@ jobs:
           sleep 2
           /tmp/displaymode d || true
 
+      # WORKAROUND: Standalone SPM test bundles (e.g. PatronArchiverKitTests) resolve
+      # @rpath frameworks via DYLD_FRAMEWORK_PATH → __SHAREDFRAMEWORKS__, which
+      # points to the *local* Xcode's SharedFrameworks. When the build Xcode (26)
+      # is newer than the test-runner Xcode (16.x/15.x), frameworks like
+      # Testing.framework have ABI differences and dlopen fails with missing symbols.
+      # Apple's xctestproducts embeds these frameworks inside the .app bundle but
+      # does not make them available to standalone SPM test bundles.
+      # Copying all build-time frameworks into __TESTROOT__/Debug/ ensures
+      # DYLD_FRAMEWORK_PATH finds compatible copies first.
+      # Remove this step once Apple fixes xctestproducts to properly provide
+      # frameworks for standalone test bundles across Xcode versions.
+      - name: 'Workaround: Provide build-time frameworks for standalone test bundles'
+        if: matrix.platform == 'macOS'
+        run: >
+          cp -R
+          '${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug/PatronArchiver.app/Contents/Frameworks/'*
+          '${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug/'
+
       - name: Test
         run: >
           xcodebuild test-without-building
