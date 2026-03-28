@@ -4,6 +4,7 @@ public struct MediaItem: Sendable {
     public let url: URL
     public let type: MediaType
     public let filename: String?
+    public let downloadAttribute: String?
     public let referrerURL: URL?
 }
 
@@ -36,6 +37,7 @@ extension MediaItem {
             url: url,
             type: MediaType(dictionary["type"] as? String),
             filename: dictionary["filename"] as? String,
+            downloadAttribute: dictionary["downloadAttribute"] as? String,
             referrerURL: referrerURL
         )
     }

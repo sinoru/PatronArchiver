@@ -16,11 +16,17 @@ let package = Package(
             targets: ["PatronArchiverKit"]
         ),
     ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-http-structured-headers.git", from: "1.6.0"),
+    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "PatronArchiverKit",
+            dependencies: [
+                .product(name: "RawStructuredFieldValues", package: "swift-http-structured-headers"),
+            ],
             resources: [
                 .process("Localizable.xcstrings"),
                 .copy("LazyContentLoader/LazyContentLoader.js"),

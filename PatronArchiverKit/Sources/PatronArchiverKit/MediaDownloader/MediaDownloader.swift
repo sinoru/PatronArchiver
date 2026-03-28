@@ -95,26 +95,26 @@ enum MediaDownloader {
             return directory.appending(component: filename)
         }
 
-        // 2. Try Content-Disposition header
+        // 2. Try Content-Disposition header (filename* takes precedence per RFC 6266)
         if let disposition = response?.value(forHTTPHeaderField: "Content-Disposition"),
-           let range = disposition.range(of: "filename=") {
-            var filename = String(disposition[range.upperBound...])
-            if let semicolonIndex = filename.firstIndex(of: ";") {
-                filename = String(filename[..<semicolonIndex])
-            }
-            filename = filename.trimmingCharacters(in: CharacterSet(charactersIn: "\"' "))
-            if !filename.isEmpty {
-                return directory.appending(component: filename)
-            }
+           let parsed = ContentDisposition(headerValue: disposition),
+           let filename = parsed.filename,
+           !filename.isEmpty {
+            return directory.appending(component: filename)
         }
 
-        // 3. Fall back to URL last path component
+        // 3. Try HTML download attribute
+        if let downloadAttr = item.downloadAttribute, !downloadAttr.isEmpty {
+            return directory.appending(component: downloadAttr)
+        }
+
+        // 4. Fall back to URL last path component
         let lastComponent = item.url.lastPathComponent
         if !lastComponent.isEmpty && lastComponent != "/" {
             return directory.appending(component: lastComponent)
         }
 
-        // 4. Generate indexed filename, using UTType for extension when possible
+        // 5. Generate indexed filename, using UTType for extension when possible
         var fileURL = directory.appending(component: "\(item.type)_\(String(format: "%03d", index + 1))")
         if let mimeType = response?.mimeType,
            let utType = UTType(mimeType: mimeType),

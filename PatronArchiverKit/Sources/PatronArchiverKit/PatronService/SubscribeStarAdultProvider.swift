@@ -103,6 +103,7 @@ struct SubscribeStarAdultProvider: PatronServiceProvider {
                                 url: new URL(item.url, location.href).href,
                                 type: item.type || 'image',
                                 filename: item.original_filename || null,
+                                downloadAttribute: null,
                             });
                         }
                     }
@@ -112,7 +113,7 @@ struct SubscribeStarAdultProvider: PatronServiceProvider {
             // Inline images in trix-content (not already captured)
             document.querySelectorAll('.trix-content img').forEach(img => {
                 if (img.src && !media.some(m => m.url === img.src)) {
-                    media.push({ url: img.src, type: 'image', filename: null });
+                    media.push({ url: img.src, type: 'image', filename: null, downloadAttribute: null });
                 }
             });
 

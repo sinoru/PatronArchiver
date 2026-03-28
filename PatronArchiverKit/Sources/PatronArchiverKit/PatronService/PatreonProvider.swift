@@ -108,7 +108,7 @@ struct PatreonProvider: PatronServiceProvider {
                         for (const id of imageIds) {
                             const item = mediaById[id];
                             if (item) {
-                                media.push({ url: urlOf(item), type: 'image', filename: item.attributes.file_name || null });
+                                media.push({ url: urlOf(item), type: 'image', filename: item.attributes.file_name || null, downloadAttribute: null });
                             }
                         }
 
@@ -120,7 +120,7 @@ struct PatreonProvider: PatronServiceProvider {
                                 for (const node of (nodes || [])) {
                                     if (node.type === 'image' && node.attrs?.src) {
                                         if (!media.some(m => m.url === node.attrs.src)) {
-                                            media.push({ url: node.attrs.src, type: 'image', filename: null });
+                                            media.push({ url: node.attrs.src, type: 'image', filename: null, downloadAttribute: null });
                                         }
                                     }
                                     if (node.content) walk(node.content);
@@ -134,7 +134,7 @@ struct PatreonProvider: PatronServiceProvider {
                         for (const id of attachmentIds) {
                             const item = mediaById[id];
                             if (item) {
-                                media.push({ url: urlOf(item), type: 'archive', filename: item.attributes.file_name || null });
+                                media.push({ url: urlOf(item), type: 'archive', filename: item.attributes.file_name || null, downloadAttribute: null });
                             }
                         }
                     }

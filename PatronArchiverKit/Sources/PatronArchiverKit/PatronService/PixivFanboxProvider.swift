@@ -78,14 +78,14 @@ struct PixivFanboxProvider: PatronServiceProvider {
             document.querySelectorAll('article a[target="_blank"]').forEach(a => {
                 const href = a.href;
                 if (href && (href.includes('downloads.fanbox.cc') || href.includes('fanbox.pixiv.net'))) {
-                    media.push({ url: href, type: 'image', filename: null });
+                    media.push({ url: href, type: 'image', filename: null, downloadAttribute: a.download || null });
                 }
             });
 
             // Image posts: img tags inside article, NOT inside a download link
             document.querySelectorAll('article img').forEach(img => {
                 if (img.src && !img.closest('a[target="_blank"]') && !media.some(m => m.url === img.src)) {
-                    media.push({ url: img.src, type: 'image', filename: null });
+                    media.push({ url: img.src, type: 'image', filename: null, downloadAttribute: null });
                 }
             });
 
@@ -96,7 +96,8 @@ struct PixivFanboxProvider: PatronServiceProvider {
                     media.push({
                         url: a.href,
                         type: 'archive',
-                        filename: nameEl?.textContent?.trim() || null
+                        filename: nameEl?.textContent?.trim() || null,
+                        downloadAttribute: a.download || null,
                     });
                 }
             });
