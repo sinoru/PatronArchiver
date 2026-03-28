@@ -172,11 +172,15 @@ jobs:
       # Remove this step once Apple fixes xctestproducts to properly provide
       # frameworks for standalone test bundles across Xcode versions.
       - name: 'Workaround: Provide build-time frameworks for standalone test bundles'
-        if: matrix.platform == 'macOS'
-        run: >
-          cp -R
-          '${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug/PatronArchiver.app/Contents/Frameworks/'*
-          '${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug/'
+        run: |
+          if [ '${{ matrix.platform }}' = 'macOS' ]; then
+            src='${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug/PatronArchiver.app/Contents/Frameworks'
+            dst='${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug'
+          else
+            src='${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug-iphonesimulator/PatronArchiver.app/Frameworks'
+            dst='${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug-iphonesimulator'
+          fi
+          cp -R "$src/"* "$dst/"
 
       - name: Test
         run: >
