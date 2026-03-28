@@ -93,6 +93,23 @@ jobs:
       - name: Strip Quarantine
         run: xattr -cr '${{ runner.temp }}/Products.xctestproducts'
 
+      - name: Inspect Test Products
+        if: matrix.platform == 'macOS'
+        run: |
+          echo "=== Bundle structure ==="
+          find '${{ runner.temp }}/Products.xctestproducts' -type d \( -name '*.app' -o -name '*.xctest' -o -name '*.framework' \) | sort
+
+          echo ""
+          echo "=== Code signing status ==="
+          find '${{ runner.temp }}/Products.xctestproducts' -type d \( -name '*.app' -o -name '*.xctest' \) | sort | while read -r bundle; do
+            echo "--- $bundle ---"
+            codesign -dvvv "$bundle" 2>&1 || true
+            echo ""
+          done
+
+          echo "=== Executable permissions ==="
+          find '${{ runner.temp }}/Products.xctestproducts' -type f -perm +111 -name '*.app' -o -type f -perm +111 ! -name '*.*' | head -20
+
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
         run: |
@@ -113,12 +130,30 @@ jobs:
           sleep 2
           /tmp/displaymode d || true
 
+      - name: Record log start time
+        id: log-start
+        run: echo "timestamp=$(date -u '+%Y-%m-%d %H:%M:%S')" >> "$GITHUB_OUTPUT"
+
       - name: Test
         run: >
           xcodebuild test-without-building
           -testProductsPath '${{ runner.temp }}/Products.xctestproducts'
           -destination '${{ matrix.test-destination }}'
           -resultBundlePath '${{ runner.temp }}/TestResults.xcresult'
+
+      - name: Collect system logs on failure
+        if: failure()
+        run: |
+          echo "=== Runningboard / launchd logs ==="
+          log show --start '${{ steps.log-start.outputs.timestamp }}' \
+            --predicate 'subsystem == "com.apple.runningboard" OR process == "launchd"' \
+            --style compact --last 5m 2>&1 | tail -200
+
+          echo ""
+          echo "=== Security / code signing logs ==="
+          log show --start '${{ steps.log-start.outputs.timestamp }}' \
+            --predicate 'subsystem == "com.apple.security" OR eventMessage CONTAINS "codesign"' \
+            --style compact --last 5m 2>&1 | tail -100
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v7
