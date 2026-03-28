@@ -17,7 +17,7 @@ struct LoginWebView: View {
     }
 }
 
-#if os(macOS)
+#if canImport(AppKit)
 extension LoginWebView: NSViewRepresentable {
     func makeNSView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
@@ -30,7 +30,7 @@ extension LoginWebView: NSViewRepresentable {
 
     func updateNSView(_ nsView: WKWebView, context: Context) {}
 }
-#else
+#elseif canImport(UIKit)
 extension LoginWebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
         let configuration = WKWebViewConfiguration()
