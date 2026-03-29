@@ -139,9 +139,10 @@ struct SubscribeStarAdultProvider: PatronServiceProviding {
             const pathMatch = location.pathname.match(/posts\\/(\\d+)/);
             meta.postID = pathMatch ? pathMatch[1] : '';
 
-            // Title from first child of trix-content (h1 or div)
+            // Title: first non-empty line from the first child of trix-content (h1 or div).
+            // innerText + split ensures text after <br> (e.g. URLs) is excluded.
             const titleEl = document.querySelector('.trix-content > :first-child');
-            meta.title = titleEl?.textContent?.trim() || document.title;
+            meta.title = titleEl?.innerText?.split('\\n').find(l => l.trim())?.trim() || document.title;
 
             // Author from sidebar star_link-name
             const authorEl = document.querySelector('.star_link-name');

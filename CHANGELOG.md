@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced manual Content-Disposition parsing with RFC 6266-compliant parser supporting filename* (ext-value)
 - Added HTML download attribute as media filename fallback before URL path component
 
+### Fixed
+
+- SubscribeStar.adult post title including extra text after line breaks (e.g. URLs)
+
 ## [1.0.0+rc.3] - 2026-03-15
 
 ## [1.0.0+rc.2] - 2026-03-15
