@@ -40,9 +40,9 @@ jobs:
           path: |
             ~/Library/Developer/Xcode/DerivedData/CompilationCache.noindex
             ~/Library/Developer/Xcode/DerivedData/ModuleCache.noindex
-          key: xcode-cache-${{ runner.os }}-${{ github.sha }}
+          key: xcode-cache-${{ runner.os }}-${{ matrix.platform }}-${{ github.sha }}
           restore-keys: |
-            xcode-cache-${{ runner.os }}-
+            xcode-cache-${{ runner.os }}-${{ matrix.platform }}-
 
       - name: Analyze & Build for Testing
         run: >
