@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Consolidated shared build settings (code signing, Swift features, device family) to project level
+- Enabled compilation caching, mergeable libraries, and strict memory safety
 - Raised deployment targets to macOS 15.6 and iOS 18.6
 - Moved macOS window sizing from view to scene level with defaultSize and defaultPosition
 - Replaced manual Content-Disposition parsing with RFC 6266-compliant parser supporting filename* (ext-value)
