@@ -2,14 +2,14 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, develop, 'release/*', 'hotfix/*', 'support/*']
     paths-ignore:
       - '**.md'
       - 'docs/**'
       - 'LICENSE'
       - '.github/FUNDING.yml'
   pull_request:
-    branches: [main]
+    branches: [main, develop, 'release/*', 'hotfix/*', 'support/*']
     paths-ignore:
       - '**.md'
       - 'docs/**'
