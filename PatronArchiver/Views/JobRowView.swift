@@ -16,7 +16,7 @@ struct JobRowView: View {
                     .font(.caption)
                 if case .awaitingOverwriteConfirmation = job.status {
                     HStack(spacing: 8) {
-                        Button("Overwrite") {
+                        Button("Replace") {
                             archiver.confirmOverwrite(job)
                         }
                         .buttonStyle(.borderedProminent)
@@ -40,7 +40,7 @@ struct JobRowView: View {
             Button(role: .destructive) {
                 archiver.removeJob(job)
             } label: {
-                Label("Remove", systemImage: "trash")
+                Label("Delete", systemImage: "trash")
             }
             if !job.status.isTerminal {
                 Button {
@@ -66,7 +66,7 @@ struct JobRowView: View {
                 Button {
                     archiver.confirmOverwrite(job)
                 } label: {
-                    Label("Overwrite", systemImage: "arrow.triangle.2.circlepath")
+                    Label("Replace", systemImage: "arrow.triangle.2.circlepath")
                 }
                 Button {
                     archiver.skipOverwrite(job)
@@ -91,7 +91,7 @@ struct JobRowView: View {
             Button(role: .destructive) {
                 archiver.removeJob(job)
             } label: {
-                Label("Remove", systemImage: "trash")
+                Label("Delete", systemImage: "trash")
             }
         }
     }

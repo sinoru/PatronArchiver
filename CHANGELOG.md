@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Korean and Japanese localizations for app UI and error strings
+- Korean and Japanese App Store metadata
+
 ### Changed
 
 - Consolidated shared build settings (code signing, Swift features, device family) to project level
@@ -15,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Moved macOS window sizing from view to scene level with defaultSize and defaultPosition
 - Replaced manual Content-Disposition parsing with RFC 6266-compliant parser supporting filename* (ext-value)
 - Added HTML download attribute as media filename fallback before URL path component
+- Renamed UI labels for clarity: "Overwrite" → "Replace", "Remove" → "Delete", "Login/Logout" → "Sign In/Sign Out", "Save Directory" → "Save Location"
+- Made error strings localizable with String(localized:bundle:)
 
 ### Fixed
 

@@ -66,17 +66,17 @@ struct SettingsView: View {
                                     .foregroundStyle(.red)
                             }
                         } else {
-                            Text("Not logged in")
+                            Text("Not signed in")
                                 .foregroundStyle(.tertiary)
                         }
                         if loggedInIdentifiers.contains(entry.identifier) {
-                            Button("Logout") {
+                            Button("Sign Out") {
                                 Task {
                                     await logout(for: entry)
                                 }
                             }
                         } else {
-                            Button("Login") {
+                            Button("Sign In") {
                                 loginEntry = entry
                             }
                         }
@@ -112,7 +112,7 @@ struct SettingsView: View {
 
             Section("Storage") {
                 HStack {
-                    Text("Save Directory")
+                    Text("Save Location")
                     Spacer()
                     if let bookmark = patronArchiver.settings.savedDirectoryBookmark,
                        let url = try? {
@@ -188,7 +188,7 @@ struct SettingsView: View {
                         loginEntry = nil
                     }
                 )
-                .navigationTitle("Login")
+                .navigationTitle("Sign In")
                 #if os(iOS)
                 .navigationBarTitleDisplayMode(.inline)
                 #endif

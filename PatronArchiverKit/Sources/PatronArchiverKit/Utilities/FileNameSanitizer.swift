@@ -57,7 +57,7 @@ enum FileNameSanitizer {
         var errorDescription: String? {
             switch self {
             case .emptyFileName:
-                "File name is empty after sanitization."
+                String(localized: "File name is empty after sanitization.", bundle: Bundle.module)
             }
         }
     }
