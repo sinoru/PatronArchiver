@@ -34,6 +34,16 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Restore Xcode Cache
+        uses: actions/cache@v5
+        with:
+          path: |
+            ~/Library/Developer/Xcode/DerivedData/CompilationCache.noindex
+            ~/Library/Developer/Xcode/DerivedData/ModuleCache.noindex
+          key: xcode-cache-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            xcode-cache-${{ runner.os }}-
+
       - name: Analyze & Build for Testing
         run: >
           xcodebuild analyze build-for-testing
