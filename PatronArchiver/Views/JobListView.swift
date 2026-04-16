@@ -10,6 +10,7 @@ struct JobListView: View {
                 JobRowView(job: job, archiver: archiver)
             }
         }
+        .accessibilityIdentifier("jobList")
         .overlay {
             if archiver.jobs.isEmpty {
                 ContentUnavailableView(
@@ -17,6 +18,7 @@ struct JobListView: View {
                     systemImage: "tray",
                     description: Text("Enter a URL to start archiving.")
                 )
+                .accessibilityIdentifier("emptyState")
             }
         }
     }

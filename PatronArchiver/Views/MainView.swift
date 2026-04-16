@@ -30,6 +30,7 @@ struct MainView: View {
     @ViewBuilder
     private var urlTextField: some View {
         TextField("Enter post URL...", text: $urlText)
+            .accessibilityIdentifier("urlInput")
             .onSubmit { Task { await submitURL() } }
     }
 
@@ -45,6 +46,7 @@ struct MainView: View {
                 Image(systemName: "plus")
             }
             .accessibilityLabel(Text("Add"))
+            .accessibilityIdentifier("addButton")
             .disabled(urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
     }
@@ -77,6 +79,7 @@ struct MainView: View {
                         } label: {
                             Image(systemName: "gear")
                         }
+                        .accessibilityIdentifier("settingsButton")
                     }
                     #else
                     ToolbarItemGroup(placement: .principal) {
