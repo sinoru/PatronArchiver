@@ -25,9 +25,9 @@
 
 Bringing content to a fully loaded state is **the responsibility of `LazyContentLoader` (`WKWebView.loadLazyContent`)**. Page dumpers (MHTML, PDF) only capture the current DOM as-is. Do not try to solve loading issues inside the dumpers.
 
-### No third parties
+### No third-party dependencies
 
-Use only Apple frameworks: Foundation, WebKit, SwiftUI, etc.
+Use only Apple-bundled frameworks (Foundation, WebKit, SwiftUI, etc.) plus packages published under `github.com/apple/*` or `github.com/swiftlang/*` (treated as first-party Apple/Swift ecosystem). No other dependencies.
 
 ## Standards & Verification
 
@@ -41,7 +41,7 @@ Use only Apple frameworks: Foundation, WebKit, SwiftUI, etc.
 - Fast scrolling causes lazy-load misses. `LazyContentLoader` must scroll incrementally in 50%-of-viewport steps so that IntersectionObserver fires correctly.
 - `callAsyncJavaScript` wraps the script in an async function body, so top-level `await` is usable. Wrapping it again in an async IIFE means no Promise is returned and the call completes immediately.
 - In styled-components environments, use partial-match selectors like `[class*="PostTitle"]` (class names change every build).
-- iOS background: `BGContinuedProcessingTaskRequest` is planned (not yet implemented).
+- iOS background tasks are not implemented; `BGContinuedProcessingTask` was attempted but removed (1.0.0+alpha.5) due to WKWebView's lack of background rendering support.
 
 ## App Store Metadata
 

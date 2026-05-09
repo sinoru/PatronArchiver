@@ -17,8 +17,8 @@ A macOS/iOS app that archives posts from patron platforms into MHTML + PDF + med
 - **Multi-format archives** — each post is saved as a PDF, an MHTML web archive, and individual media files in a single folder
 - **Fully offline** — all archives live on your device; no account or internet connection required to re-read them
 - **Complete capture** — text, images, videos, attachments, and comments, including lazy-loaded content
-- **Auto-organized** — posts are grouped by creator and title; on Mac, Finder tags and origin URLs are attached for search
-- **iPhone, iPad, and Mac** — background archiving on iOS lets you keep using your device
+- **Auto-organized** — posts are grouped by creator and title; Finder tags and origin URLs are written as filesystem metadata (visible in Finder on Mac)
+- **iPhone, iPad, and Mac** — archive on any of your Apple devices
 
 ## Privacy
 
@@ -26,7 +26,7 @@ PatronArchiver does not collect, transmit, or share any personal data. There are
 
 ## Requirements
 
-- macOS 26.0+ / iOS 26.0+
+- macOS 15.6+ / iOS 18.6+
 - Xcode 26.0+ (for building from source)
 
 ## Build
