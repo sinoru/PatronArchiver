@@ -1,16 +1,6 @@
 # PatronArchiver
 
-A macOS/iOS SwiftUI app that archives posts from patronage platforms as MHTML + PDF + media.
-
-### Per-platform implementation status
-
-| Platform | Status |
-|----------|--------|
-| pixivFANBOX | Implemented |
-| Patreon | Implemented |
-| Fantia | Planned |
-| itch.io | Planned |
-| SubscribeStar.adult | Implemented |
+> User-facing project intro: see [README.md](README.md).
 
 ## Absolute Principles
 
