@@ -9,12 +9,10 @@ import MessageUI
 struct SettingsView: View {
     @Bindable private var patronArchiver: PatronArchiver
 
+    @State private var verificationWebViews: [String: WKWebView] = [:]
     @State private var isPickingFolder = false
     @State private var loginEntry: SiteEntry?
-    @State private var loggedInIdentifiers: Set<String> = []
-    @State private var accountInfoByIdentifier: [String: AccountInfo] = [:]
-    @State private var accountInfoFetchFailed: Set<String> = []
-    @State private var isCheckingLogin = false
+    @State private var accountStatuses: [String: AccountStatus] = [:]
 
     #if os(iOS)
     @Environment(\.openURL) private var openURL
@@ -45,40 +43,64 @@ struct SettingsView: View {
         self.patronArchiver = patronArchiver
     }
 
+    @ViewBuilder
+    private var verificationWebViewArea: some View {
+        let renderSize = patronArchiver.renderSize
+
+        ZStack {
+            ForEach(verificationWebViews.keys.sorted(), id: \.self) { identifier in
+                if let webView = verificationWebViews[identifier] {
+                    ArchiveWebViewRepresentable(webView: webView)
+                        .frame(width: renderSize.width, height: renderSize.height)
+                        .scaleEffect(
+                            1.0 / max(renderSize.width, renderSize.height),
+                            anchor: .topLeading
+                        )
+                        .frame(width: 1, height: 1, alignment: .topLeading)
+                        .opacity(0.01)
+                        .allowsHitTesting(false)
+                }
+            }
+        }
+    }
+
     var body: some View {
         Form {
             Section("Accounts") {
                 ForEach(siteEntries) { entry in
+                    let status = accountStatuses[entry.identifier] ?? .unknown
                     HStack {
                         Label(entry.identifier, systemImage: "globe")
                         Spacer()
-                        if isCheckingLogin {
+                        switch status {
+                        case .unknown, .verifying:
                             ProgressView()
                                 #if os(macOS)
                                 .controlSize(.small)
                                 #endif
-                        } else if loggedInIdentifiers.contains(entry.identifier) {
-                            if let info = accountInfoByIdentifier[entry.identifier] {
-                                Text(info.displayName)
-                                    .foregroundStyle(.secondary)
-                            } else if accountInfoFetchFailed.contains(entry.identifier) {
-                                Text("Verification failed")
-                                    .foregroundStyle(.red)
-                            }
-                        } else {
+                        case .notSignedIn:
                             Text("Not signed in")
                                 .foregroundStyle(.tertiary)
+                        case .verified(let info):
+                            Text(info.displayName)
+                                .foregroundStyle(.secondary)
+                        case .verificationFailed:
+                            Text("Verification failed")
+                                .foregroundStyle(.red)
                         }
-                        if loggedInIdentifiers.contains(entry.identifier) {
+                        switch status {
+                        case .notSignedIn:
+                            Button("Sign In") {
+                                loginEntry = entry
+                            }
+                        case .verified, .verificationFailed, .verifying:
                             Button("Sign Out") {
                                 Task {
                                     await logout(for: entry)
                                 }
                             }
-                        } else {
-                            Button("Sign In") {
-                                loginEntry = entry
-                            }
+                        case .unknown:
+                            EmptyView()
                         }
                     }
                 }
@@ -171,12 +193,22 @@ struct SettingsView: View {
             #endif
         }
         .formStyle(.grouped)
+        .background {
+            verificationWebViewArea
+        }
         #if os(macOS)
         .frame(width: 450)
         .padding()
         #endif
         .task {
             await checkAllLoginStatus()
+        }
+        .onDisappear {
+            for status in accountStatuses.values {
+                if case .verifying(let task) = status {
+                    task.cancel()
+                }
+            }
         }
         .sheet(item: $loginEntry) { entry in
             NavigationStack {
@@ -221,56 +253,82 @@ struct SettingsView: View {
     }
 
     private func checkAllLoginStatus() async {
-        isCheckingLogin = true
-        defer { isCheckingLogin = false }
-
         let providerTypes = PatronServiceManager.allProviderTypes
 
-        // 1. Fast cookie-based login check
+        // 1. Fast cookie-based login check (concurrent)
         await withTaskGroup(of: (String, Bool).self) { group in
             for providerType in providerTypes {
                 let identifier = providerType.siteIdentifier
                 group.addTask {
-                    let loggedIn = await patronArchiver.isLoggedIn(
-                        for: providerType
-                    )
+                    let loggedIn = await patronArchiver.isLoggedIn(for: providerType)
                     return (identifier, loggedIn)
                 }
             }
             for await (identifier, loggedIn) in group {
-                if loggedIn {
-                    loggedInIdentifiers.insert(identifier)
-                } else {
-                    loggedInIdentifiers.remove(identifier)
+                if !loggedIn {
+                    accountStatuses[identifier] = .notSignedIn
                 }
             }
         }
 
-        // 2. Fetch account info for logged-in providers
-        await withTaskGroup(of: (String, AccountInfo?).self) { group in
-            for providerType in providerTypes {
-                let identifier = providerType.siteIdentifier
-                guard loggedInIdentifiers.contains(identifier) else { continue }
-                group.addTask {
-                    let info = await patronArchiver.fetchAccountInfo(
-                        for: providerType
-                    )
-                    return (identifier, info)
-                }
-            }
-            for await (identifier, info) in group {
-                if let info {
-                    accountInfoByIdentifier[identifier] = info
-                    accountInfoFetchFailed.remove(identifier)
-                } else {
-                    accountInfoByIdentifier.removeValue(forKey: identifier)
-                    accountInfoFetchFailed.insert(identifier)
-                }
-            }
+        // 2. Verify logged-in providers (concurrent, fresh WKWebView per provider).
+        for providerType in providerTypes {
+            let identifier = providerType.siteIdentifier
+            if case .notSignedIn = accountStatuses[identifier] ?? .unknown { continue }
+            verify(providerType)
         }
     }
 
+    private func verify(_ providerType: any PatronServiceProviding.Type) {
+        let identifier = providerType.siteIdentifier
+
+        if case .verifying(let oldTask) = accountStatuses[identifier] {
+            oldTask.cancel()
+        }
+
+        let configuration = WKWebViewConfiguration()
+        configuration.websiteDataStore = patronArchiver.websiteDataStore
+        configuration.defaultWebpagePreferences.preferredContentMode = .desktop
+        let webView = WKWebView(
+            frame: CGRect(origin: .zero, size: patronArchiver.renderSize),
+            configuration: configuration
+        )
+        verificationWebViews[identifier] = webView
+
+        let task = Task {
+            defer {
+                if verificationWebViews[identifier] === webView {
+                    verificationWebViews[identifier] = nil
+                }
+            }
+
+            // WKWebView only renders when attached to the window — wait for layout.
+            // `window` is flagged unsafe under strict memory safety; reading it on the main actor is fine.
+            for _ in 0..<100 {
+                if unsafe webView.window != nil { break }
+                do {
+                    try await Task.sleep(for: .milliseconds(50))
+                } catch {
+                    return
+                }
+            }
+
+            let info = await patronArchiver.fetchAccountInfo(
+                for: providerType,
+                in: webView
+            )
+            if !Task.isCancelled {
+                accountStatuses[identifier] = info.map(AccountStatus.verified) ?? .verificationFailed
+            }
+        }
+        accountStatuses[identifier] = .verifying(task)
+    }
+
     private func logout(for entry: SiteEntry) async {
+        if case .verifying(let task) = accountStatuses[entry.identifier] {
+            task.cancel()
+        }
+
         let dataStore = patronArchiver.websiteDataStore
         let cookieStore = dataStore.httpCookieStore
         let allCookies = await cookieStore.allCookies()
@@ -289,31 +347,22 @@ struct SettingsView: View {
             }
         }
 
-        loggedInIdentifiers.remove(entry.identifier)
-        accountInfoByIdentifier.removeValue(forKey: entry.identifier)
-        accountInfoFetchFailed.remove(entry.identifier)
+        accountStatuses[entry.identifier] = .notSignedIn
     }
 
     private func checkLoginStatus(for providerType: any PatronServiceProviding.Type) async {
         let identifier = providerType.siteIdentifier
 
         let loggedIn = await patronArchiver.isLoggedIn(for: providerType)
-
-        if loggedIn {
-            loggedInIdentifiers.insert(identifier)
-            let info = await patronArchiver.fetchAccountInfo(for: providerType)
-            if let info {
-                accountInfoByIdentifier[identifier] = info
-                accountInfoFetchFailed.remove(identifier)
-            } else {
-                accountInfoByIdentifier.removeValue(forKey: identifier)
-                accountInfoFetchFailed.insert(identifier)
+        guard loggedIn else {
+            if case .verifying(let task) = accountStatuses[identifier] {
+                task.cancel()
             }
-        } else {
-            loggedInIdentifiers.remove(identifier)
-            accountInfoByIdentifier.removeValue(forKey: identifier)
-            accountInfoFetchFailed.remove(identifier)
+            accountStatuses[identifier] = .notSignedIn
+            return
         }
+
+        verify(providerType)
     }
 }
 
@@ -326,4 +375,12 @@ private struct SiteEntry: Identifiable, Equatable {
     static func == (lhs: SiteEntry, rhs: SiteEntry) -> Bool {
         lhs.identifier == rhs.identifier
     }
+}
+
+private enum AccountStatus {
+    case unknown
+    case notSignedIn
+    case verifying(Task<Void, Never>)
+    case verified(AccountInfo)
+    case verificationFailed
 }

@@ -9,37 +9,33 @@ struct SubscribeStarAdultProvider: PatronServiceProviding {
     static let accountCheckURL = URL(string: "https://subscribestar.adult/account/settings")!
     static let siteIdentifier = "SubscribeStar.adult"
 
-    static func parseAccountInfo(from data: Data) -> AccountInfo? {
-        guard let html = String(data: data, encoding: .utf8) else { return nil }
+    @MainActor static func extractAccountInfo(in webView: WKWebView) async throws -> AccountInfo? {
+        let tracker = RedirectTracker()
+        _ = try await tracker.load(accountCheckURL, in: webView)
 
-        // Cloudflare email protection: the email is XOR-obfuscated in a data-cfemail attribute
-        // e.g. <a href="/cdn-cgi/l/email-protection" data-cfemail="hex_encoded">
-        let cfPattern = #"settings_login-label">Email</div>\s*<div class="settings_login-value">.*?data-cfemail="([0-9a-fA-F]+)""#
-        if let cfRange = html.range(of: cfPattern, options: .regularExpression) {
-            let match = html[cfRange]
-            if let attrStart = match.range(of: "data-cfemail=\""),
-               let attrEnd = match.range(of: "\"", range: attrStart.upperBound..<match.endIndex) {
-                let encoded = String(match[attrStart.upperBound..<attrEnd.lowerBound])
-                if let email = decodeCFEmail(encoded), !email.isEmpty {
-                    return AccountInfo(displayName: email)
-                }
+        let script = """
+        (() => {
+            for (const label of document.querySelectorAll('.settings_login-label')) {
+                if (label.textContent.trim() !== 'Email') continue;
+                const value = label.nextElementSibling;
+                if (!value?.classList.contains('settings_login-value')) continue;
+                const cfEl = value.querySelector('[data-cfemail]');
+                if (cfEl) return { encoded: cfEl.getAttribute('data-cfemail') };
+                const plain = value.textContent.trim();
+                if (plain) return { plain };
             }
+            return null;
+        })()
+        """
+        guard let result = try await webView.evaluateJavaScript(script) as? [String: String] else {
+            return nil
         }
-
-        // Fallback: plain text email (no Cloudflare obfuscation)
-        let plainPattern = #"settings_login-label">Email</div>\s*<div class="settings_login-value">([^<]+)</div>"#
-        if let range = html.range(of: plainPattern, options: .regularExpression) {
-            let match = html[range]
-            if let valueStart = match.range(of: "settings_login-value\">"),
-               let valueEnd = match.range(of: "</div>", range: valueStart.upperBound..<match.endIndex) {
-                let email = String(match[valueStart.upperBound..<valueEnd.lowerBound])
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                if !email.isEmpty {
-                    return AccountInfo(displayName: email)
-                }
-            }
+        if let encoded = result["encoded"], let email = decodeCFEmail(encoded), !email.isEmpty {
+            return AccountInfo(displayName: email)
         }
-
+        if let plain = result["plain"], !plain.isEmpty {
+            return AccountInfo(displayName: plain)
+        }
         return nil
     }
 

@@ -15,7 +15,7 @@ public protocol PatronServiceProviding: Sendable {
     @MainActor func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone?
     @MainActor func extractMetadata(in webView: WKWebView, timeZone: TimeZone?) async throws -> PostMetadata
 
-    static func parseAccountInfo(from data: Data) -> AccountInfo?
+    @MainActor static func extractAccountInfo(in webView: WKWebView) async throws -> AccountInfo?
 }
 
 extension PatronServiceProviding {

@@ -22,10 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added HTML download attribute as media filename fallback before URL path component
 - Renamed UI labels for clarity: "Overwrite" → "Replace", "Remove" → "Delete", "Login/Logout" → "Sign In/Sign Out", "Save Directory" → "Save Location"
 - Made error strings localizable with String(localized:bundle:)
+- Switched account verification to WebView-based DOM extraction with per-provider status and cancellation in Settings
 
 ### Fixed
 
 - SubscribeStar.adult post title including extra text after line breaks (e.g. URLs)
+- Patreon account verification failing on the client-rendered settings page
 
 ## [1.0.0+rc.3] - 2026-03-15
 

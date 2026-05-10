@@ -9,40 +9,38 @@ struct PatreonProvider: PatronServiceProviding {
     static let accountCheckURL = URL(string: "https://www.patreon.com/settings/basics")!
     static let siteIdentifier = "Patreon"
 
-    static func parseAccountInfo(from data: Data) -> AccountInfo? {
-        guard let html = String(data: data, encoding: .utf8) else { return nil }
-        // Try __NEXT_DATA__ JSON for user info
-        let nextDataTag = #"<script id="__NEXT_DATA__" type="application/json">"#
-        if let startRange = html.range(of: nextDataTag),
-           let endRange = html.range(of: "</script>", range: startRange.upperBound..<html.endIndex),
-           let jsonData = String(
-               html[startRange.upperBound..<endRange.lowerBound]
-           ).data(using: .utf8),
-           let json = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
-           let props = json["props"] as? [String: Any],
-           let pageProps = props["pageProps"] as? [String: Any],
-           let envelope = pageProps["bootstrapEnvelope"] as? [String: Any],
-           let bootstrap = envelope["commonBootstrap"] as? [String: Any],
-           let userData = bootstrap["currentUser"] as? [String: Any],
-           let attributes = userData["data"] as? [String: Any],
-           let email = (attributes["attributes"] as? [String: Any])?["email"] as? String {
-            return AccountInfo(displayName: email)
-        }
-        // Fallback: parse <title> — typically "Settings | Name | Patreon"
-        if let titleStart = html.range(of: "<title>"),
-           let titleEnd = html.range(of: "</title>", range: titleStart.upperBound..<html.endIndex) {
-            let title = String(html[titleStart.upperBound..<titleEnd.lowerBound])
-            let parts = title.components(separatedBy: "|")
-                .map { $0.trimmingCharacters(in: .whitespaces) }
-            if parts.count >= 2, !parts[1].isEmpty, parts[1] != "Patreon" {
-                return AccountInfo(displayName: parts[1])
-            }
-        }
-        return nil
-    }
-
     static func isLoggedIn(cookies: [HTTPCookie]) -> Bool {
         cookies.contains { $0.name == "session_id" }
+    }
+
+    @MainActor static func extractAccountInfo(in webView: WKWebView) async throws -> AccountInfo? {
+        let tracker = RedirectTracker()
+        _ = try await tracker.load(accountCheckURL, in: webView)
+
+        // /settings/basics is client-rendered: poll until the email input is populated.
+        let script = """
+        (() => {
+            const emailInput = document.querySelector('[data-tag="settings-profile-email-box"] input')
+                ?? document.querySelector('input#email');
+            const nameInput = document.querySelector('[data-tag="settings-profile-name-box"] input');
+            return {
+                email: emailInput?.value ?? '',
+                name: nameInput?.value ?? '',
+            };
+        })()
+        """
+        for _ in 0..<40 {
+            try Task.checkCancellation()
+            let result = try await webView.evaluateJavaScript(script) as? [String: String]
+            let email = result?["email"] ?? ""
+            let name = result?["name"] ?? ""
+            if !email.isEmpty {
+                let displayName = name.isEmpty ? email : name
+                return AccountInfo(displayName: displayName)
+            }
+            try await Task.sleep(for: .milliseconds(250))
+        }
+        return nil
     }
 
     func preloadContent(in webView: WKWebView) async throws {
