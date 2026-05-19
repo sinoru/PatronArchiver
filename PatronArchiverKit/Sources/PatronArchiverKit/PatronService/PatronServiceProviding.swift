@@ -6,6 +6,7 @@ public protocol PatronServiceProviding: Sendable {
     static var loginURL: URL { get }
     static var accountCheckURL: URL { get }
     static var siteIdentifier: String { get }
+    static var alternateProviderType: (any PatronServiceProviding.Type)? { get }
 
     init()
 
@@ -19,6 +20,8 @@ public protocol PatronServiceProviding: Sendable {
 }
 
 extension PatronServiceProviding {
+    public static var alternateProviderType: (any PatronServiceProviding.Type)? { nil }
+
     @MainActor func resolveTimeZone(in webView: WKWebView) async throws -> TimeZone? { nil }
 
     @MainActor func evaluateJavaScript(_ script: String, in webView: WKWebView) async throws -> Any? {

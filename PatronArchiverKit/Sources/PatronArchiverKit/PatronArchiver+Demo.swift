@@ -28,10 +28,10 @@ extension PatronArchiver {
                 100
             ),
             (
-                "https://subscribestar.adult/posts/animation-process-11111",
+                "https://www.subscribestar.com/posts/animation-process-11111",
                 "Behind the Scenes - Animation Process",
                 "MotionLab",
-                "SubscribeStar.adult",
+                "SubscribeStar",
                 .downloading,
                 65
             ),

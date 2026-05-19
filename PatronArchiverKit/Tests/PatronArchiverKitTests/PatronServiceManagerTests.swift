@@ -27,6 +27,18 @@ struct PatronServiceManagerTests {
         #expect(type(of: provider) == PixivFanboxProvider.self)
     }
 
+    @Test func matchesSubscribeStarURL() throws {
+        let url = URL(string: "https://www.subscribestar.com/posts/2465042")!
+        let provider = try #require(PatronServiceManager.shared.provider(for: url))
+        #expect(type(of: provider) == SubscribeStarProvider.self)
+    }
+
+    @Test func matchesSubscribeStarURLWithoutWWW() throws {
+        let url = URL(string: "https://subscribestar.com/posts/2465042")!
+        let provider = try #require(PatronServiceManager.shared.provider(for: url))
+        #expect(type(of: provider) == SubscribeStarProvider.self)
+    }
+
     @Test func matchesSubscribeStarAdultURL() throws {
         let url = URL(string: "https://subscribestar.adult/posts/2332276")!
         let provider = try #require(PatronServiceManager.shared.provider(for: url))
@@ -39,8 +51,44 @@ struct PatronServiceManagerTests {
         #expect(provider == nil)
     }
 
-    @Test func allProviderTypesReturnsAllThree() {
-        let types = PatronServiceManager.allProviderTypes
+    @Test func userVisibleProviderTypesCount() {
+        let types = PatronServiceManager.userVisibleProviderTypes
         #expect(types.count == 3)
+    }
+
+    @Test func allProviderTypesIncludesAlternates() {
+        let types = PatronServiceManager.allProviderTypes
+        #expect(types.count == 4)
+    }
+
+    @Test func subscribeStarAlternateProviderType() throws {
+        let alternate = try #require(SubscribeStarProvider.alternateProviderType)
+        #expect(alternate is SubscribeStarAdultProvider.Type)
+    }
+
+    @Test func defaultAlternateProviderTypeIsNil() {
+        #expect(PatreonProvider.alternateProviderType == nil)
+        #expect(PixivFanboxProvider.alternateProviderType == nil)
+        #expect(SubscribeStarAdultProvider.alternateProviderType == nil)
+    }
+
+    @Test func subscribeStarIsLoggedInIsolatesByDomain() throws {
+        let adultCookie = try #require(HTTPCookie(properties: [
+            .name: "_personalization_id",
+            .value: "x",
+            .domain: ".subscribestar.adult",
+            .path: "/",
+        ]))
+        let comCookie = try #require(HTTPCookie(properties: [
+            .name: "_personalization_id",
+            .value: "y",
+            .domain: ".subscribestar.com",
+            .path: "/",
+        ]))
+
+        #expect(SubscribeStarProvider.isLoggedIn(cookies: [adultCookie]) == false)
+        #expect(SubscribeStarAdultProvider.isLoggedIn(cookies: [comCookie]) == false)
+        #expect(SubscribeStarProvider.isLoggedIn(cookies: [comCookie]) == true)
+        #expect(SubscribeStarAdultProvider.isLoggedIn(cookies: [adultCookie]) == true)
     }
 }

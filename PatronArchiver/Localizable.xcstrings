@@ -71,6 +71,22 @@
         }
       }
     },
+    "Additional Sign-In" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "追加のサインイン"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "추가 로그인"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "ja" : {
@@ -115,6 +131,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "콘텐츠 날짜"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "続行"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "계속"
           }
         }
       }
@@ -515,6 +547,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "건너뛰기"
+          }
+        }
+      }
+    },
+    "Some %@ content is hosted on a separate domain. Sign in there as well to access it." : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "一部の%@コンテンツは別のドメインでホストされています。アクセスするにはそちらにもサインインしてください。"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "일부 %@ 콘텐츠는 다른 도메인에 호스팅됩니다. 접근하려면 그쪽에도 로그인하세요."
           }
         }
       }

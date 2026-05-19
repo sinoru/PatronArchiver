@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Korean and Japanese localizations for app UI and error strings
 - Korean and Japanese App Store metadata
+- Optional secondary sign-in offered after a primary SubscribeStar account is signed in
 
 ### Changed
 
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed UI labels for clarity: "Overwrite" → "Replace", "Remove" → "Delete", "Login/Logout" → "Sign In/Sign Out", "Save Directory" → "Save Location"
 - Made error strings localizable with String(localized:bundle:)
 - Switched account verification to WebView-based DOM extraction with per-provider status and cancellation in Settings
+- SubscribeStar provider uses subscribestar.com as the primary domain; subscribestar.adult URLs continue to work via URL routing
 
 ### Fixed
 
