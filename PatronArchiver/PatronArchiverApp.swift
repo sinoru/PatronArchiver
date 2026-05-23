@@ -79,8 +79,6 @@ struct PatronArchiverApp: App {
         }
         #if os(macOS)
         #if DEBUG
-        .defaultLaunchBehavior(Self.isDemoMode ? .presented : .automatic)
-        .restorationBehavior(Self.isDemoMode ? .disabled : .automatic)
         .defaultSize(
             width: Self.isDemoMode ? 1440 : 635,
             height: Self.isDemoMode ? 848 : 400
