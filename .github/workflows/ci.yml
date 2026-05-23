@@ -53,15 +53,17 @@ jobs:
           -testProductsPath '${{ runner.temp }}/PatronArchiver.xctestproducts'
           CODE_SIGNING_ALLOWED=NO
 
-      # WORKAROUND: Xcode 26.4+ split swift-testing's interop into a
-      # separate lib_TestingInterop.dylib, but `xcodebuild
-      # build-for-testing` only embeds Testing.framework itself in
-      # .app/Frameworks — the sibling dylib (in
-      # Platforms/.../Developer/usr/lib) is left out, so dyld aborts the
-      # app on test machines whose Xcode toolchain predates the split.
-      # Copy every lib_*.dylib sibling alongside the embedded
+      # WORKAROUND: Xcode 26.4+ split swift-testing into multiple
+      # components alongside Testing.framework — lib_TestingInterop.dylib
+      # under Developer/usr/lib and _Testing_*.framework helpers under
+      # Developer/Library/Frameworks. `xcodebuild build-for-testing`
+      # only embeds Testing.framework itself in .app/Frameworks, so when
+      # the test stage runs on a machine whose Xcode toolchain predates
+      # the split, dyld can't resolve these helpers and the app aborts
+      # before any test starts. Copy every lib_*.dylib and
+      # _Testing_*.framework sibling alongside the embedded
       # Testing.framework so future splits are also covered.
-      - name: 'Workaround: Bundle swift-testing helper dylibs'
+      - name: 'Workaround: Bundle swift-testing helper components'
         run: |
           set -euo pipefail
           XCT_PRODUCTS='${{ runner.temp }}/PatronArchiver.xctestproducts'
@@ -76,19 +78,22 @@ jobs:
             app_fw='PatronArchiver.app/Frameworks'
             ui_fw='PatronArchiverUITests-Runner.app/Frameworks'
           fi
-          src_dir="$(xcode-select -p)/Platforms/$plat/Developer/usr/lib"
+          dev="$(xcode-select -p)/Platforms/$plat/Developer"
           dst_base="$XCT_PRODUCTS/Binaries/0/$cfg"
 
           shopt -s nullglob
-          siblings=("$src_dir"/lib_*.dylib)
-          if [ ${#siblings[@]} -eq 0 ]; then
-            echo "::notice::No lib_*.dylib found in $src_dir; nothing to bundle"
+          dylibs=("$dev/usr/lib"/lib_*.dylib)
+          subframeworks=("$dev/Library/Frameworks"/_Testing_*.framework)
+
+          if [ ${#dylibs[@]} -eq 0 ] && [ ${#subframeworks[@]} -eq 0 ]; then
+            echo "::notice::No swift-testing helpers found under $dev"
             exit 0
           fi
+
           for dst in "$dst_base/$app_fw" "$dst_base/$ui_fw"; do
             [ -d "$dst" ] || continue
-            for dylib in "${siblings[@]}"; do
-              cp -v "$dylib" "$dst/"
+            for src in "${dylibs[@]}" "${subframeworks[@]}"; do
+              cp -Rv "$src" "$dst/"
             done
           done
 
