@@ -116,75 +116,87 @@ jobs:
     strategy:
       matrix:
         include:
-          # macOS 26
+          # macOS — native, no simulator
           - platform: macOS
             destination-name: macOS 26 - Mac
             test-destination: 'platform=macOS'
             runs-on: macos-26
-          # iOS 26 (2025 devices)
-          - platform: iOS
-            destination-name: iOS 26 - iPhone 17 Pro Max
-            test-destination: 'platform=iOS Simulator,name=iPhone 17 Pro Max,OS=26.2'
-            runs-on: macos-26
-          - platform: iOS
-            destination-name: iOS 26 - iPhone 17
-            test-destination: 'platform=iOS Simulator,name=iPhone 17,OS=26.2'
-            runs-on: macos-26
-          - platform: iOS
-            destination-name: iOS 26 - iPhone Air
-            test-destination: 'platform=iOS Simulator,name=iPhone Air,OS=26.2'
-            runs-on: macos-26
-          - platform: iOS
-            destination-name: iOS 26 - iPad Pro 13-inch (M5)
-            test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M5),OS=26.2'
-            runs-on: macos-26
-          - platform: iOS
-            destination-name: iOS 26 - iPad Air 11-inch (M3)
-            test-destination: 'platform=iOS Simulator,name=iPad Air 11-inch (M3),OS=26.2'
-            runs-on: macos-26
-          - platform: iOS
-            destination-name: iOS 26 - iPad (A16)
-            test-destination: 'platform=iOS Simulator,name=iPad (A16),OS=26.2'
-            runs-on: macos-26
-          - platform: iOS
-            destination-name: iOS 26 - iPad mini (A17 Pro)
-            test-destination: 'platform=iOS Simulator,name=iPad mini (A17 Pro),OS=26.2'
-            runs-on: macos-26
-          # macOS 15
           - platform: macOS
             destination-name: macOS 15 - Mac
             test-destination: 'platform=macOS'
             runs-on: macos-15
-          # iOS 18 (2024 devices) — run on macos-26 with the iOS 18.6
-          # runtime installed on-demand, so build and test share the
-          # same Xcode toolchain (no cross-Xcode swift-testing ABI gap)
+          # iOS — all run on macos-26 so build and test share the same
+          # Xcode toolchain. The iOS 18.6 runtime is missing from this
+          # image and is installed on-demand by the setup step.
+          - platform: iOS
+            destination-name: iOS 26 - iPhone 17 Pro Max
+            device-name: iPhone 17 Pro Max
+            os-version: '26.2'
+            runs-on: macos-26
+          - platform: iOS
+            destination-name: iOS 26 - iPhone 17
+            device-name: iPhone 17
+            os-version: '26.2'
+            runs-on: macos-26
+          - platform: iOS
+            destination-name: iOS 26 - iPhone Air
+            device-name: iPhone Air
+            os-version: '26.2'
+            runs-on: macos-26
+          - platform: iOS
+            destination-name: iOS 26 - iPad Pro 13-inch (M5)
+            device-name: iPad Pro 13-inch (M5)
+            os-version: '26.2'
+            runs-on: macos-26
+          - platform: iOS
+            destination-name: iOS 26 - iPad Air 11-inch (M3)
+            device-name: iPad Air 11-inch (M3)
+            os-version: '26.2'
+            runs-on: macos-26
+          - platform: iOS
+            destination-name: iOS 26 - iPad (A16)
+            device-name: iPad (A16)
+            os-version: '26.2'
+            runs-on: macos-26
+          - platform: iOS
+            destination-name: iOS 26 - iPad mini (A17 Pro)
+            device-name: iPad mini (A17 Pro)
+            os-version: '26.2'
+            runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPhone 16 Pro Max
-            test-destination: 'platform=iOS Simulator,name=iPhone 16 Pro Max,OS=18.6'
+            device-name: iPhone 16 Pro Max
+            os-version: '18.6'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPhone 16
-            test-destination: 'platform=iOS Simulator,name=iPhone 16,OS=18.6'
+            device-name: iPhone 16
+            os-version: '18.6'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPhone 16e
-            test-destination: 'platform=iOS Simulator,name=iPhone 16e,OS=18.6'
+            device-name: iPhone 16e
+            os-version: '18.6'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPad Pro 13-inch (M4)
-            test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=18.6'
+            device-name: iPad Pro 13-inch (M4)
+            os-version: '18.6'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPad Air 11-inch (M2)
-            test-destination: 'platform=iOS Simulator,name=iPad Air 11-inch (M2),OS=18.6'
+            device-name: iPad Air 11-inch (M2)
+            os-version: '18.6'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPad (10th generation)
-            test-destination: 'platform=iOS Simulator,name=iPad (10th generation),OS=18.6'
+            device-name: iPad (10th generation)
+            os-version: '18.6'
             runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPad mini (A17 Pro)
-            test-destination: 'platform=iOS Simulator,name=iPad mini (A17 Pro),OS=18.6'
+            device-name: iPad mini (A17 Pro)
+            os-version: '18.6'
             runs-on: macos-26
     steps:
       - name: Download Test Products
@@ -196,20 +208,36 @@ jobs:
       - name: Extract Test Products
         run: ditto -x -k '${{ runner.temp }}/PatronArchiver.xctestproducts.zip' '${{ runner.temp }}'
 
-      # macos-26 image ships only iOS 26.x simulators, so install the
-      # iOS 18.6 runtime on-demand when the matrix entry targets iOS 18.
-      # Using Apple's official `xcodebuild -downloadPlatform` keeps this
-      # dependency-free (no Apple ID, no third-party tools).
-      - name: Install iOS 18.6 simulator runtime
-        if: startsWith(matrix.destination-name, 'iOS 18 -')
+      # Provision a fresh, deterministic simulator for this matrix entry:
+      # install the runtime on-demand (no-op when already shipped in the
+      # runner image), wipe pre-existing devices, then create only the
+      # device this entry tests.
+      - name: Setup iOS simulator
+        if: matrix.platform == 'iOS'
+        env:
+          DEVICE_NAME: ${{ matrix.device-name }}
+          OS_VERSION: ${{ matrix.os-version }}
         run: |
           set -euo pipefail
-          if xcrun simctl list runtimes 2>/dev/null | grep -q 'iOS 18\.6 '; then
-            echo "iOS 18.6 runtime already installed"
-          else
-            echo "Downloading iOS 18.6 simulator runtime…"
-            sudo xcodebuild -downloadPlatform iOS -buildVersion 18.6
+
+          if ! xcrun simctl list runtimes 2>/dev/null | grep -q "iOS ${OS_VERSION} "; then
+            echo "Downloading iOS ${OS_VERSION} simulator runtime…"
+            sudo xcodebuild -downloadPlatform iOS -buildVersion "${OS_VERSION}"
           fi
+
+          runtime_id="com.apple.CoreSimulator.SimRuntime.iOS-${OS_VERSION//./-}"
+
+          xcrun simctl delete all
+
+          device_type=$(xcrun simctl list devicetypes -j \
+            | jq -r --arg name "$DEVICE_NAME" \
+              '.devicetypes[] | select(.name == $name) | .identifier')
+          if [ -z "$device_type" ]; then
+            echo "::error::Device type '$DEVICE_NAME' not found"
+            exit 1
+          fi
+          xcrun simctl create "$DEVICE_NAME" "$device_type" "$runtime_id"
+          echo "Created '$DEVICE_NAME' on iOS ${OS_VERSION}"
 
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
@@ -254,10 +282,12 @@ jobs:
           cp -R "$src/"* "$dst/"
 
       - name: Test
+        env:
+          TEST_DESTINATION: ${{ matrix.test-destination || format('platform=iOS Simulator,name={0},OS={1}', matrix.device-name, matrix.os-version) }}
         run: >
           xcodebuild test-without-building
           -testProductsPath '${{ runner.temp }}/PatronArchiver.xctestproducts'
-          -destination '${{ matrix.test-destination }}'
+          -destination "$TEST_DESTINATION"
           -resultBundlePath '${{ runner.temp }}/PatronArchiver.xcresult'
 
       - name: Upload Test Results
