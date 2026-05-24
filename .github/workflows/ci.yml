@@ -155,35 +155,37 @@ jobs:
             destination-name: macOS 15 - Mac
             test-destination: 'platform=macOS'
             runs-on: macos-15
-          # iOS 18 (2024 devices)
+          # iOS 18 (2024 devices) — run on macos-26 with the iOS 18.6
+          # runtime installed on-demand, so build and test share the
+          # same Xcode toolchain (no cross-Xcode swift-testing ABI gap)
           - platform: iOS
             destination-name: iOS 18 - iPhone 16 Pro Max
             test-destination: 'platform=iOS Simulator,name=iPhone 16 Pro Max,OS=18.6'
-            runs-on: macos-15
+            runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPhone 16
             test-destination: 'platform=iOS Simulator,name=iPhone 16,OS=18.6'
-            runs-on: macos-15
+            runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPhone 16e
             test-destination: 'platform=iOS Simulator,name=iPhone 16e,OS=18.6'
-            runs-on: macos-15
+            runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPad Pro 13-inch (M4)
             test-destination: 'platform=iOS Simulator,name=iPad Pro 13-inch (M4),OS=18.6'
-            runs-on: macos-15
+            runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPad Air 11-inch (M2)
             test-destination: 'platform=iOS Simulator,name=iPad Air 11-inch (M2),OS=18.6'
-            runs-on: macos-15
+            runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPad (10th generation)
             test-destination: 'platform=iOS Simulator,name=iPad (10th generation),OS=18.6'
-            runs-on: macos-15
+            runs-on: macos-26
           - platform: iOS
             destination-name: iOS 18 - iPad mini (A17 Pro)
             test-destination: 'platform=iOS Simulator,name=iPad mini (A17 Pro),OS=18.6'
-            runs-on: macos-15
+            runs-on: macos-26
     steps:
       - name: Download Test Products
         uses: actions/download-artifact@v7
@@ -193,6 +195,21 @@ jobs:
 
       - name: Extract Test Products
         run: ditto -x -k '${{ runner.temp }}/PatronArchiver.xctestproducts.zip' '${{ runner.temp }}'
+
+      # macos-26 image ships only iOS 26.x simulators, so install the
+      # iOS 18.6 runtime on-demand when the matrix entry targets iOS 18.
+      # Using Apple's official `xcodebuild -downloadPlatform` keeps this
+      # dependency-free (no Apple ID, no third-party tools).
+      - name: Install iOS 18.6 simulator runtime
+        if: startsWith(matrix.destination-name, 'iOS 18 -')
+        run: |
+          set -euo pipefail
+          if xcrun simctl list runtimes 2>/dev/null | grep -q 'iOS 18\.6 '; then
+            echo "iOS 18.6 runtime already installed"
+          else
+            echo "Downloading iOS 18.6 simulator runtime…"
+            sudo xcodebuild -downloadPlatform iOS -buildVersion 18.6
+          fi
 
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
