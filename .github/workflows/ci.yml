@@ -126,37 +126,37 @@ jobs:
             destination-name: iOS 18 - iPhone 16 Pro Max
             device-name: iPhone 16 Pro Max
             os-version: '18.6'
-            runs-on: macos-26
+            runs-on: macos-15
           - platform: iOS
             destination-name: iOS 18 - iPhone 16
             device-name: iPhone 16
             os-version: '18.6'
-            runs-on: macos-26
+            runs-on: macos-15
           - platform: iOS
             destination-name: iOS 18 - iPhone 16e
             device-name: iPhone 16e
             os-version: '18.6'
-            runs-on: macos-26
+            runs-on: macos-15
           - platform: iOS
             destination-name: iOS 18 - iPad Pro 13-inch (M4)
             device-name: iPad Pro 13-inch (M4)
             os-version: '18.6'
-            runs-on: macos-26
+            runs-on: macos-15
           - platform: iOS
             destination-name: iOS 18 - iPad Air 11-inch (M2)
             device-name: iPad Air 11-inch (M2)
             os-version: '18.6'
-            runs-on: macos-26
+            runs-on: macos-15
           - platform: iOS
             destination-name: iOS 18 - iPad (10th generation)
             device-name: iPad (10th generation)
             os-version: '18.6'
-            runs-on: macos-26
+            runs-on: macos-15
           - platform: iOS
             destination-name: iOS 18 - iPad mini (A17 Pro)
             device-name: iPad mini (A17 Pro)
             os-version: '18.6'
-            runs-on: macos-26
+            runs-on: macos-15
     steps:
       - name: Select Xcode 26.3
         run: sudo xcodes select 26.3
@@ -169,50 +169,6 @@ jobs:
 
       - name: Extract Test Products
         run: ditto -x -k '${{ runner.temp }}/PatronArchiver.xctestproducts.zip' '${{ runner.temp }}'
-
-      # Provision a fresh, deterministic simulator for this matrix entry:
-      # install the runtime on-demand (no-op when already shipped in the
-      # runner image), wipe pre-existing devices, then create only the
-      # device this entry tests.
-      - name: Setup iOS simulator
-        if: matrix.platform == 'iOS'
-        id: setup-sim
-        env:
-          DEVICE_NAME: ${{ matrix.device-name }}
-          OS_VERSION: ${{ matrix.os-version }}
-        run: |
-          set -euo pipefail
-
-          if ! xcrun simctl list runtimes 2>/dev/null | grep -q "iOS ${OS_VERSION} "; then
-            echo "Downloading iOS ${OS_VERSION} simulator runtime…"
-            sudo xcodebuild -downloadPlatform iOS -buildVersion "${OS_VERSION}"
-          fi
-
-          runtime_id="com.apple.CoreSimulator.SimRuntime.iOS-${OS_VERSION//./-}"
-
-          xcrun simctl delete all
-
-          device_type=$(xcrun simctl list devicetypes -j \
-            | jq -r --arg name "$DEVICE_NAME" \
-              '.devicetypes[] | select(.name == $name) | .identifier')
-          if [ -z "$device_type" ]; then
-            echo "::error::Device type '$DEVICE_NAME' not found"
-            exit 1
-          fi
-          device_id=$(xcrun simctl create "$DEVICE_NAME" "$device_type" "$runtime_id")
-          echo "Created '$DEVICE_NAME' ($device_id) on iOS ${OS_VERSION}"
-
-          # Boot up front so xcodebuild doesn't hit its own boot timeout
-          # on a fresh runtime/device (notably iOS 18 freshly downloaded).
-          xcrun simctl boot "$device_id"
-          xcrun simctl bootstatus "$device_id" -b
-          echo "Simulator booted"
-
-          # Expose for the Test step so the destination targets the exact
-          # device we created — runtime downloads can spawn default
-          # devices of the same name in the background, making name+OS
-          # ambiguous.
-          echo "device_id=$device_id" >> "$GITHUB_OUTPUT"
 
       - name: Set screen resolution
         if: matrix.platform == 'macOS'
@@ -236,7 +192,7 @@ jobs:
 
       - name: Test
         env:
-          TEST_DESTINATION: ${{ matrix.test-destination || format('platform=iOS Simulator,id={0}', steps.setup-sim.outputs.device_id) }}
+          TEST_DESTINATION: ${{ matrix.test-destination || format('platform=iOS Simulator,name={0},OS={1}', matrix.device-name, matrix.os-version) }}
         run: >
           xcodebuild test-without-building
           -testProductsPath '${{ runner.temp }}/PatronArchiver.xctestproducts'
