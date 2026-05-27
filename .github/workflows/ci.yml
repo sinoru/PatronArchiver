@@ -34,6 +34,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Select Xcode 26.3
+        run: sudo xcodes select 26.3
+
       - name: Restore Xcode Cache
         uses: actions/cache@v5
         with:
@@ -52,50 +55,6 @@ jobs:
           -destination '${{ matrix.build-destination }}'
           -testProductsPath '${{ runner.temp }}/PatronArchiver.xctestproducts'
           CODE_SIGNING_ALLOWED=NO
-
-      # WORKAROUND: Xcode 26.4+ split swift-testing into multiple
-      # components alongside Testing.framework — lib_TestingInterop.dylib
-      # under Developer/usr/lib and _Testing_*.framework helpers under
-      # Developer/Library/Frameworks. `xcodebuild build-for-testing`
-      # only embeds Testing.framework itself in .app/Frameworks, so when
-      # the test stage runs on a machine whose Xcode toolchain predates
-      # the split, dyld can't resolve these helpers and the app aborts
-      # before any test starts. Copy every lib_*.dylib and
-      # _Testing_*.framework sibling alongside the embedded
-      # Testing.framework so future splits are also covered.
-      - name: 'Workaround: Bundle swift-testing helper components'
-        run: |
-          set -euo pipefail
-          XCT_PRODUCTS='${{ runner.temp }}/PatronArchiver.xctestproducts'
-          if [ '${{ matrix.platform }}' = 'macOS' ]; then
-            plat='MacOSX.platform'
-            cfg='Debug'
-            app_fw='PatronArchiver.app/Contents/Frameworks'
-            ui_fw='PatronArchiverUITests-Runner.app/Contents/Frameworks'
-          else
-            plat='iPhoneSimulator.platform'
-            cfg='Debug-iphonesimulator'
-            app_fw='PatronArchiver.app/Frameworks'
-            ui_fw='PatronArchiverUITests-Runner.app/Frameworks'
-          fi
-          dev="$(xcode-select -p)/Platforms/$plat/Developer"
-          dst_base="$XCT_PRODUCTS/Binaries/0/$cfg"
-
-          shopt -s nullglob
-          dylibs=("$dev/usr/lib"/lib_*.dylib)
-          subframeworks=("$dev/Library/Frameworks"/_Testing_*.framework)
-
-          if [ ${#dylibs[@]} -eq 0 ] && [ ${#subframeworks[@]} -eq 0 ]; then
-            echo "::notice::No swift-testing helpers found under $dev"
-            exit 0
-          fi
-
-          for dst in "$dst_base/$app_fw" "$dst_base/$ui_fw"; do
-            [ -d "$dst" ] || continue
-            for src in "${dylibs[@]}" "${subframeworks[@]}"; do
-              cp -Rv "$src" "$dst/"
-            done
-          done
 
       - name: Archive Test Products
         run: >
@@ -199,6 +158,9 @@ jobs:
             os-version: '18.6'
             runs-on: macos-26
     steps:
+      - name: Select Xcode 26.3
+        run: sudo xcodes select 26.3
+
       - name: Download Test Products
         uses: actions/download-artifact@v7
         with:
@@ -271,28 +233,6 @@ jobs:
 
           sleep 2
           /tmp/displaymode d || true
-
-      # WORKAROUND: Standalone SPM test bundles (e.g. PatronArchiverKitTests) resolve
-      # @rpath frameworks via DYLD_FRAMEWORK_PATH → __SHAREDFRAMEWORKS__, which
-      # points to the *local* Xcode's SharedFrameworks. When the build Xcode (26)
-      # is newer than the test-runner Xcode (16.x/15.x), frameworks like
-      # Testing.framework have ABI differences and dlopen fails with missing symbols.
-      # Apple's xctestproducts embeds these frameworks inside the .app bundle but
-      # does not make them available to standalone SPM test bundles.
-      # Copying all build-time frameworks into __TESTROOT__/Debug/ ensures
-      # DYLD_FRAMEWORK_PATH finds compatible copies first.
-      # Remove this step once Apple fixes xctestproducts to properly provide
-      # frameworks for standalone test bundles across Xcode versions.
-      - name: 'Workaround: Provide build-time frameworks for standalone test bundles'
-        run: |
-          if [ '${{ matrix.platform }}' = 'macOS' ]; then
-            src='${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug/PatronArchiver.app/Contents/Frameworks'
-            dst='${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug'
-          else
-            src='${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug-iphonesimulator/PatronArchiver.app/Frameworks'
-            dst='${{ runner.temp }}/PatronArchiver.xctestproducts/Binaries/0/Debug-iphonesimulator'
-          fi
-          cp -R "$src/"* "$dst/"
 
       - name: Test
         env:
