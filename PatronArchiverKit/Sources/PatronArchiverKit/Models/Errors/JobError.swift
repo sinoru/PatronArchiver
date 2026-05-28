@@ -7,9 +7,9 @@ enum JobError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .unsupportedSite:
-            "This site is not supported."
+            String(localized: "This site is not supported.", bundle: Bundle.module)
         case .overwriteDeclined:
-            "Overwrite declined by user."
+            String(localized: "Replace declined by user.", bundle: Bundle.module)
         }
     }
 }

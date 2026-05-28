@@ -7,16 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Korean and Japanese localizations for app UI and error strings
+- Korean and Japanese App Store metadata
+- Optional secondary sign-in offered after a primary SubscribeStar account is signed in
+
 ### Changed
 
+- Consolidated shared build settings (code signing, Swift features, device family) to project level
+- Enabled compilation caching, mergeable libraries, and strict memory safety
 - Raised deployment targets to macOS 15.6 and iOS 18.6
 - Moved macOS window sizing from view to scene level with defaultSize and defaultPosition
 - Replaced manual Content-Disposition parsing with RFC 6266-compliant parser supporting filename* (ext-value)
 - Added HTML download attribute as media filename fallback before URL path component
+- Renamed UI labels for clarity: "Overwrite" → "Replace", "Remove" → "Delete", "Login/Logout" → "Sign In/Sign Out", "Save Directory" → "Save Location"
+- Made error strings localizable with String(localized:bundle:)
+- Switched account verification to WebView-based DOM extraction with per-provider status and cancellation in Settings
+- SubscribeStar provider uses subscribestar.com as the primary domain; subscribestar.adult URLs continue to work via URL routing
 
 ### Fixed
 
 - SubscribeStar.adult post title including extra text after line breaks (e.g. URLs)
+- Patreon account verification failing on the client-rendered settings page
 
 ## [1.0.0+rc.3] - 2026-03-15
 

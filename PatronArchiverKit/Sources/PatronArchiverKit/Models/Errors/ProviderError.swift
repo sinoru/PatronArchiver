@@ -6,8 +6,10 @@ enum ProviderError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .metadataExtractionFailed: "Failed to extract metadata."
-        case .mediaExtractionFailed: "Failed to extract media."
+        case .metadataExtractionFailed:
+            String(localized: "Failed to extract metadata.", bundle: Bundle.module)
+        case .mediaExtractionFailed:
+            String(localized: "Failed to extract media.", bundle: Bundle.module)
         }
     }
 }

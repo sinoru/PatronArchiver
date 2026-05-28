@@ -17,17 +17,17 @@ final class PatronArchiverUITests: XCTestCase {
     }
 
     func testURLInputFieldExists() throws {
-        let textField = app.textFields["Enter post URL..."]
+        let textField = app.textFields["urlInput"]
         XCTAssertTrue(textField.waitForExistence(timeout: 5))
     }
 
     func testAddButtonExists() throws {
-        let button = app.buttons["Add"].firstMatch
+        let button = app.buttons["addButton"].firstMatch
         XCTAssertTrue(button.waitForExistence(timeout: 5))
     }
 
     func testEmptyStateShowsNoJobs() throws {
-        let noJobs = app.staticTexts["No Jobs"]
-        XCTAssertTrue(noJobs.waitForExistence(timeout: 5))
+        let emptyState = app.descendants(matching: .any)["emptyState"].firstMatch
+        XCTAssertTrue(emptyState.waitForExistence(timeout: 5))
     }
 }

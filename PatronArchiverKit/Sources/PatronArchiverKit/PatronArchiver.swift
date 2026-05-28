@@ -50,23 +50,29 @@ extension PatronArchiver {
         return providerType.isLoggedIn(cookies: cookies)
     }
 
-    /// Fetches account info by making an HTTP request to the provider's accountCheckURL.
+    /// Fetches account info by loading the provider's accountCheckURL in the given webView
+    /// and delegating extraction to the provider.
     ///
     /// - Returns: The account info if successfully fetched, nil otherwise.
-    public func fetchAccountInfo(for providerType: any PatronServiceProviding.Type) async -> AccountInfo? {
-        let url = providerType.accountCheckURL
-        var urlRequest = URLRequest(url: url)
-        await websiteDataStore.addCookies(to: &urlRequest)
-
-        let delegate = NoRedirectDelegate()
-        guard let (data, response) = try? await urlSession.data(for: urlRequest, delegate: delegate),
-              let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200
-        else {
+    public func fetchAccountInfo(
+        for providerType: any PatronServiceProviding.Type,
+        in webView: WKWebView
+    ) async -> AccountInfo? {
+        let identifier = providerType.siteIdentifier
+        do {
+            let info = try await providerType.extractAccountInfo(in: webView)
+            Self.logger.info(
+                "fetchAccountInfo \(identifier, privacy: .public) parsed=\(info != nil, privacy: .public)"
+            )
+            return info
+        } catch is CancellationError {
+            return nil
+        } catch {
+            Self.logger.error(
+                "fetchAccountInfo error for \(identifier, privacy: .public): \(error.localizedDescription, privacy: .public)"
+            )
             return nil
         }
-
-        return providerType.parseAccountInfo(from: data)
     }
 }
 
@@ -351,13 +357,3 @@ extension PatronArchiver {
     }
 }
 
-private final class NoRedirectDelegate: NSObject, URLSessionTaskDelegate, Sendable {
-    func urlSession(
-        _ session: URLSession,
-        task: URLSessionTask,
-        willPerformHTTPRedirection response: HTTPURLResponse,
-        newRequest request: URLRequest
-    ) async -> URLRequest? {
-        nil
-    }
-}

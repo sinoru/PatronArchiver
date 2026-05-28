@@ -10,31 +10,31 @@ struct PixivFanboxProvider: PatronServiceProviding {
     static let accountCheckURL = URL(string: "https://www.fanbox.cc/user/settings")!
     static let siteIdentifier = "pixivFANBOX"
 
-    static func parseAccountInfo(from data: Data) -> AccountInfo? {
-        guard let html = String(data: data, encoding: .utf8) else { return nil }
-
-        // Parse user name from #metadata content attribute JSON
-        // e.g. <meta id="metadata" name="metadata" content='{"context":{"user":{"name":"..."}}}'>
-        let metadataPattern = #"<meta[^>]+id="metadata"[^>]+content='([^']+)'"#
-        if let contentRange = html.range(of: metadataPattern, options: .regularExpression),
-           let jsonStart = html[contentRange].range(of: "content='") {
-            let jsonFragment = html[contentRange][jsonStart.upperBound...]
-                .prefix(while: { $0 != "'" })
-            if let jsonData = String(jsonFragment).data(using: .utf8),
-               let root = try? JSONSerialization.jsonObject(with: jsonData) as? [String: Any],
-               let context = root["context"] as? [String: Any],
-               let user = context["user"] as? [String: Any],
-               let name = user["name"] as? String,
-               !name.isEmpty {
-                return AccountInfo(displayName: name)
-            }
-        }
-
-        return nil
-    }
-
     static func isLoggedIn(cookies: [HTTPCookie]) -> Bool {
         cookies.contains { $0.name == "FANBOXSESSID" && $0.value.contains("_") }
+    }
+
+    @MainActor static func extractAccountInfo(in webView: WKWebView) async throws -> AccountInfo? {
+        let tracker = RedirectTracker()
+        _ = try await tracker.load(accountCheckURL, in: webView)
+
+        // Read user name from <meta id="metadata"> content JSON via DOM
+        // (avoids outerHTML quote-style normalization breaking regex parsing).
+        let script = """
+        (() => {
+            const meta = document.querySelector('meta#metadata');
+            if (!meta) return null;
+            try {
+                const data = JSON.parse(meta.content);
+                return data?.context?.user?.name ?? null;
+            } catch { return null; }
+        })()
+        """
+        guard let name = try await webView.evaluateJavaScript(script) as? String,
+              !name.isEmpty else {
+            return nil
+        }
+        return AccountInfo(displayName: name)
     }
 
     func preloadContent(in webView: WKWebView) async throws {
