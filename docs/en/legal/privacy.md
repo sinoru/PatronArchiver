@@ -24,7 +24,7 @@ All archived content — including PDFs, MHTML files, and media — is stored ex
 
 ## Third-Party Websites
 
-The App uses a built-in web browser (WKWebView) to access creator platform websites such as Patreon, pixivFANBOX, and SubscribeStar.adult. When you visit these websites through the App, their respective privacy policies apply. The App does not modify or intercept your interactions with these websites beyond what is necessary for archiving.
+The App uses a built-in web browser (WKWebView) to access creator platform websites such as Patreon, pixivFANBOX, and SubscribeStar. When you visit these websites through the App, their respective privacy policies apply. The App does not modify or intercept your interactions with these websites beyond what is necessary for archiving.
 
 ## Cookies
 

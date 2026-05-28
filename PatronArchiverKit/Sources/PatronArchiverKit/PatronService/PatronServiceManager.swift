@@ -1,11 +1,17 @@
 import Foundation
 
 public struct PatronServiceManager: Sendable {
-    public static let allProviderTypes: [any PatronServiceProviding.Type] = [
+    /// Providers shown in the user-facing site list (e.g., Settings).
+    public static let userVisibleProviderTypes: [any PatronServiceProviding.Type] = [
         PatreonProvider.self,
         PixivFanboxProvider.self,
-        SubscribeStarAdultProvider.self,
+        SubscribeStarProvider.self,
     ]
+
+    /// All providers, including alternates that are reachable via URL routing
+    /// but should not be listed in the user-facing UI.
+    public static let allProviderTypes: [any PatronServiceProviding.Type] = userVisibleProviderTypes
+        + [SubscribeStarAdultProvider.self]
 
     static let shared = PatronServiceManager()
 

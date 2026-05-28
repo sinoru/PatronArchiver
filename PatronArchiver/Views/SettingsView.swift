@@ -28,7 +28,7 @@ struct SettingsView: View {
     #endif
 
     private var siteEntries: [SiteEntry] {
-        PatronServiceManager.allProviderTypes.map { providerType in
+        PatronServiceManager.userVisibleProviderTypes.map { providerType in
             SiteEntry(
                 identifier: providerType.siteIdentifier,
                 loginURL: providerType.loginURL,
@@ -253,7 +253,7 @@ struct SettingsView: View {
     }
 
     private func checkAllLoginStatus() async {
-        let providerTypes = PatronServiceManager.allProviderTypes
+        let providerTypes = PatronServiceManager.userVisibleProviderTypes
 
         // 1. Fast cookie-based login check (concurrent)
         await withTaskGroup(of: (String, Bool).self) { group in
@@ -329,25 +329,31 @@ struct SettingsView: View {
             task.cancel()
         }
 
-        let dataStore = patronArchiver.websiteDataStore
-        let cookieStore = dataStore.httpCookieStore
-        let allCookies = await cookieStore.allCookies()
-        guard let host = entry.loginURL.host() else { return }
+        var hostsToClear: Set<String> = []
+        if let host = entry.loginURL.host() {
+            hostsToClear.insert(host)
+        }
+        if let alternate = entry.providerType.alternateProviderType,
+           let host = alternate.loginURL.host() {
+            hostsToClear.insert(host)
+        }
 
-        for cookie in allCookies {
-            let matches: Bool
-            if cookie.domain.hasPrefix(".") {
-                let domain = String(cookie.domain.dropFirst())
-                matches = host == domain || host.hasSuffix("." + domain)
-            } else {
-                matches = host == cookie.domain
-            }
-            if matches {
-                await cookieStore.deleteCookie(cookie)
-            }
+        let cookieStore = patronArchiver.websiteDataStore.httpCookieStore
+        let allCookies = await cookieStore.allCookies()
+
+        for cookie in allCookies where hostsToClear.contains(where: { Self.cookie(cookie, matches: $0) }) {
+            await cookieStore.deleteCookie(cookie)
         }
 
         accountStatuses[entry.identifier] = .notSignedIn
+    }
+
+    private static func cookie(_ cookie: HTTPCookie, matches host: String) -> Bool {
+        if cookie.domain.hasPrefix(".") {
+            let domain = String(cookie.domain.dropFirst())
+            return host == domain || host.hasSuffix("." + domain)
+        }
+        return host == cookie.domain
     }
 
     private func checkLoginStatus(for providerType: any PatronServiceProviding.Type) async {

@@ -12,7 +12,7 @@ Archive Your Creator Posts
 
 ### Promotional Text
 
-Save your favorite creator posts for offline reading. Preserve posts from Patreon, pixivFANBOX, and SubscribeStar.adult as PDF, MHTML, and media files.
+Save your favorite creator posts for offline reading. Preserve posts from Patreon, pixivFANBOX, and SubscribeStar as PDF, MHTML, and media files.
 
 ### Description
 
@@ -72,7 +72,7 @@ PatronArchiver
 
 ### Promotional Text
 
-좋아하는 크리에이터 게시물을 오프라인으로 저장하세요. Patreon, pixivFANBOX, SubscribeStar.adult의 게시물을 PDF, MHTML, 미디어 파일로 보존합니다.
+좋아하는 크리에이터 게시물을 오프라인으로 저장하세요. Patreon, pixivFANBOX, SubscribeStar의 게시물을 PDF, MHTML, 미디어 파일로 보존합니다.
 
 ### Description
 
@@ -132,7 +132,7 @@ PatronArchiver
 
 ### Promotional Text
 
-お気に入りのクリエイター投稿をオフラインで保存。Patreon、pixivFANBOX、SubscribeStar.adultの投稿をPDF、MHTML、メディアファイルとして保存します。
+お気に入りのクリエイター投稿をオフラインで保存。Patreon、pixivFANBOX、SubscribeStarの投稿をPDF、MHTML、メディアファイルとして保存します。
 
 ### Description
 
