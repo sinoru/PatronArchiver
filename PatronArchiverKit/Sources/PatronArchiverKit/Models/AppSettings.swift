@@ -37,12 +37,11 @@ public final class AppSettings {
         self.includesContentDates = defaults.object(forKey: "includesContentDates") as? Bool ?? true
     }
 
+    /// Default archive location: the app's sandbox container `Documents` directory.
+    ///
+    /// Always writable without any file-access entitlement on both macOS and iOS.
+    /// Users can override this by choosing their own folder (security-scoped bookmark).
     public var defaultSaveDirectory: URL {
-        #if os(macOS)
-        FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first!
-            .appending(path: "PatronArchiver", directoryHint: .isDirectory)
-        #else
         FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-        #endif
     }
 }

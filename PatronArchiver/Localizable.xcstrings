@@ -343,6 +343,22 @@
         }
       }
     },
+    "Open Save Folder" : {
+      "localizations" : {
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "保存フォルダを開く"
+          }
+        },
+        "ko" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "저장 폴더 열기"
+          }
+        }
+      }
+    },
     "PatronArchiver" : {
       "localizations" : {
         "ja" : {
