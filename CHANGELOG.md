@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - SubscribeStar.adult post title including extra text after line breaks (e.g. URLs)
 - Patreon account verification failing on the client-rendered settings page
+- Patreon post URLs that include the creator path segment (e.g. from email or share links) being rejected as an unsupported site
 
 ## [1.0.0+rc.3] - 2026-03-15
 

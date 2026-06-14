@@ -15,6 +15,18 @@ struct PatronServiceManagerTests {
         #expect(type(of: provider) == PatreonProvider.self)
     }
 
+    @Test func matchesPatreonCreatorPrefixedURL() throws {
+        let url = URL(string: "https://www.patreon.com/creator/posts/some-title-12345")!
+        let provider = try #require(PatronServiceManager.shared.provider(for: url))
+        #expect(type(of: provider) == PatreonProvider.self)
+    }
+
+    @Test func matchesPatreonCreatorPrefixedURLWithQuery() throws {
+        let url = URL(string: "https://www.patreon.com/creator/posts/some-title-12345?utm_campaign=patron_engagement&post_id=12345")!
+        let provider = try #require(PatronServiceManager.shared.provider(for: url))
+        #expect(type(of: provider) == PatreonProvider.self)
+    }
+
     @Test func matchesPixivFanboxURL() throws {
         let url = URL(string: "https://creator.fanbox.cc/posts/12345")!
         let provider = try #require(PatronServiceManager.shared.provider(for: url))
