@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-06-14
+
+### Fixed
+
+- Patreon post URLs that include the creator path segment (e.g. from email or share links) being rejected as an unsupported site
+
+## [1.1] - 2026-06-04
+
 ### Added
 
 - Korean and Japanese localizations for app UI and error strings
@@ -32,7 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - SubscribeStar.adult post title including extra text after line breaks (e.g. URLs)
 - Patreon account verification failing on the client-rendered settings page
-- Patreon post URLs that include the creator path segment (e.g. from email or share links) being rejected as an unsupported site
 
 ## [1.0.0+rc.3] - 2026-03-15
 
@@ -161,7 +168,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopted Swift 6.0 strict concurrency with MainActor isolation
 - Replaced glob-based URL matching with Swift Regex
 
-[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.3...HEAD
+[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/sinoru/PatronArchiver/compare/v1.1...v1.1.1
+[1.1]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.3...v1.1
 [1.0.0+rc.3]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.2...v1.0.0+rc.3
 [1.0.0+rc.2]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.1...v1.0.0+rc.2
 [1.0.0+rc.1]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.7...v1.0.0+rc.1
