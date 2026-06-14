@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Patreon post URLs that include the creator path segment (e.g. from email or share links) being rejected as an unsupported site
+- macOS toolbar Add button being pushed into the overflow menu at the default window width; the URL field now resizes with the window
 
 ## [1.1] - 2026-06-04
 
