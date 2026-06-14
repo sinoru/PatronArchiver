@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-06-14
+
+### Fixed
+
+- Patreon post URLs that include the creator path segment (e.g. from email or share links) being rejected as an unsupported site
+- macOS toolbar Add button being pushed into the overflow menu at the default window width; the URL field now resizes with the window
+
+## [1.1] - 2026-06-04
+
 ### Added
 
 - Korean and Japanese localizations for app UI and error strings
@@ -160,7 +169,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopted Swift 6.0 strict concurrency with MainActor isolation
 - Replaced glob-based URL matching with Swift Regex
 
-[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.3...HEAD
+[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/sinoru/PatronArchiver/compare/v1.1...v1.1.1
+[1.1]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.3...v1.1
 [1.0.0+rc.3]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.2...v1.0.0+rc.3
 [1.0.0+rc.2]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.1...v1.0.0+rc.2
 [1.0.0+rc.1]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.7...v1.0.0+rc.1

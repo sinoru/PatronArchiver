@@ -14,6 +14,11 @@ struct MainView: View {
     #if os(iOS)
     @State private var showSettings = false
     @Environment(\.openURL) private var openURL
+    #else
+    /// Width for the toolbar URL field, derived from the window width so the
+    /// field grows and shrinks as the window is resized. SwiftUI's toolbar does
+    /// not stretch a principal item to fill, so we size it from measured geometry.
+    @State private var addressFieldWidth: CGFloat = 280
     #endif
 
     init(
@@ -72,6 +77,16 @@ struct MainView: View {
                 .background {
                     archiveWebViewArea
                 }
+                #if os(macOS)
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.width
+                } action: { windowWidth in
+                    // Size the field to a fraction of the window so the side
+                    // margins scale with it; clamp to keep the add button visible
+                    // at the minimum width and avoid an over-wide field.
+                    addressFieldWidth = min(max(windowWidth * 0.4, 220), 700)
+                }
+                #endif
                 .onAppear {
                     patronArchiver.webView = webView
                     webView.load(URLRequest(url: URL(string: "about:blank")!))
@@ -100,11 +115,13 @@ struct MainView: View {
                         openFolderButton
                     }
                     #else
-                    ToolbarItemGroup(placement: .principal) {
-                        urlTextField
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 300)
-                        addButton
+                    ToolbarItem(placement: .principal) {
+                        HStack(spacing: 8) {
+                            urlTextField
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: addressFieldWidth)
+                            addButton
+                        }
                     }
                     ToolbarItem(placement: .primaryAction) {
                         openFolderButton
