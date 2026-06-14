@@ -7,11 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-06-14
+
+### Fixed
+
+- Patreon post URLs that include the creator path segment (e.g. from email or share links) being rejected as an unsupported site
+- macOS toolbar Add button being pushed into the overflow menu at the default window width; the URL field now resizes with the window
+
+## [1.1] - 2026-06-04
+
 ### Added
 
 - Korean and Japanese localizations for app UI and error strings
 - Korean and Japanese App Store metadata
 - Optional secondary sign-in offered after a primary SubscribeStar account is signed in
+- "Open Save Folder" toolbar button to open the current archive location (Finder on macOS, Files on iOS)
 
 ### Changed
 
@@ -25,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Made error strings localizable with String(localized:bundle:)
 - Switched account verification to WebView-based DOM extraction with per-provider status and cancellation in Settings
 - SubscribeStar provider uses subscribestar.com as the primary domain; subscribestar.adult URLs continue to work via URL routing
+- Default archive location moved to the app's sandbox container Documents folder (previously the Downloads folder on macOS)
 
 ### Fixed
 
@@ -158,7 +169,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopted Swift 6.0 strict concurrency with MainActor isolation
 - Replaced glob-based URL matching with Swift Regex
 
-[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.3...HEAD
+[Unreleased]: https://github.com/sinoru/PatronArchiver/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/sinoru/PatronArchiver/compare/v1.1...v1.1.1
+[1.1]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.3...v1.1
 [1.0.0+rc.3]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.2...v1.0.0+rc.3
 [1.0.0+rc.2]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+rc.1...v1.0.0+rc.2
 [1.0.0+rc.1]: https://github.com/sinoru/PatronArchiver/compare/v1.0.0+alpha.7...v1.0.0+rc.1

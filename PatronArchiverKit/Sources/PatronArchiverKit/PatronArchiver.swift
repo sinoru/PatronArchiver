@@ -343,7 +343,9 @@ extension PatronArchiver {
         startJobIfPossible(nextJob)
     }
 
-    private func resolveBaseDirectory() -> URL {
+    /// The directory archives are currently written to: the user-selected folder
+    /// (resolved from its security-scoped bookmark) or ``AppSettings/defaultSaveDirectory``.
+    public func resolveBaseDirectory() -> URL {
         var isStale = false
         if let bookmarkData = settings.savedDirectoryBookmark,
            let url = try? URL(

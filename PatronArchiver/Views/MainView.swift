@@ -1,6 +1,9 @@
 import PatronArchiverKit
 import SwiftUI
 import WebKit
+#if canImport(AppKit)
+import AppKit
+#endif
 
 struct MainView: View {
     private let patronArchiver: PatronArchiver
@@ -10,6 +13,12 @@ struct MainView: View {
     @State private var isResolving = false
     #if os(iOS)
     @State private var showSettings = false
+    @Environment(\.openURL) private var openURL
+    #else
+    /// Width for the toolbar URL field, derived from the window width so the
+    /// field grows and shrinks as the window is resized. SwiftUI's toolbar does
+    /// not stretch a principal item to fill, so we size it from measured geometry.
+    @State private var addressFieldWidth: CGFloat = 280
     #endif
 
     init(
@@ -51,12 +60,33 @@ struct MainView: View {
         }
     }
 
+    @ViewBuilder
+    private var openFolderButton: some View {
+        Button {
+            openSaveLocation()
+        } label: {
+            Image(systemName: "folder")
+        }
+        .accessibilityLabel(Text("Open Save Folder"))
+        .accessibilityIdentifier("openFolderButton")
+    }
+
     var body: some View {
         NavigationStack {
             JobListView(archiver: patronArchiver)
                 .background {
                     archiveWebViewArea
                 }
+                #if os(macOS)
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.width
+                } action: { windowWidth in
+                    // Size the field to a fraction of the window so the side
+                    // margins scale with it; clamp to keep the add button visible
+                    // at the minimum width and avoid an over-wide field.
+                    addressFieldWidth = min(max(windowWidth * 0.4, 220), 700)
+                }
+                #endif
                 .onAppear {
                     patronArchiver.webView = webView
                     webView.load(URLRequest(url: URL(string: "about:blank")!))
@@ -67,13 +97,7 @@ struct MainView: View {
                 #endif
                 .toolbar {
                     #if os(iOS)
-                    ToolbarItemGroup(placement: .bottomBar) {
-                        urlTextField
-                            .keyboardType(.URL)
-                            .textInputAutocapitalization(.never)
-                        addButton
-                    }
-                    ToolbarItem(placement: .topBarTrailing) {
+                    ToolbarItem(placement: .topBarLeading) {
                         Button {
                             showSettings = true
                         } label: {
@@ -81,12 +105,26 @@ struct MainView: View {
                         }
                         .accessibilityIdentifier("settingsButton")
                     }
-                    #else
-                    ToolbarItemGroup(placement: .principal) {
+                    ToolbarItemGroup(placement: .bottomBar) {
                         urlTextField
-                            .textFieldStyle(.roundedBorder)
-                            .frame(width: 300)
+                            .keyboardType(.URL)
+                            .textInputAutocapitalization(.never)
                         addButton
+                    }
+                    ToolbarItem(placement: .topBarTrailing) {
+                        openFolderButton
+                    }
+                    #else
+                    ToolbarItem(placement: .principal) {
+                        HStack(spacing: 8) {
+                            urlTextField
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: addressFieldWidth)
+                            addButton
+                        }
+                    }
+                    ToolbarItem(placement: .primaryAction) {
+                        openFolderButton
                     }
                     #endif
                 }
@@ -140,5 +178,23 @@ struct MainView: View {
 
         patronArchiver.enqueue(url: url)
         urlText = ""
+    }
+
+    /// Opens the current save location in Finder (macOS) or the Files app (iOS).
+    private func openSaveLocation() {
+        let url = patronArchiver.resolveBaseDirectory()
+        let didStart = url.startAccessingSecurityScopedResource()
+        defer { if didStart { url.stopAccessingSecurityScopedResource() } }
+        try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+
+        #if os(macOS)
+        NSWorkspace.shared.open(url)
+        #else
+        let path = url.path(percentEncoded: false)
+        if let encoded = path.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed),
+           let sharedURL = URL(string: "shareddocuments://\(encoded)") {
+            openURL(sharedURL)
+        }
+        #endif
     }
 }
